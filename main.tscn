@@ -17,13 +17,31 @@ func _ready():
 	self.event_processor = $EventProcessor
 	self.event_processor.set_sequence([
 		{ 'command': 'showMessageBox' },
-		'This',
-		'then',
-		'that',
+		\"From pitch black comes the background, just like that.\",
+		{ 'command': 'sprite', 'options': {
+			'action': 'show',
+			'key': 'bg',
+			'src': 'res://images/bg/nsicroom_day.png',
+			'position': 'background',
+		} },
+		\"Again!\",
+		\"Show it again!\",
+		{ 'command': 'sprite', 'options': {
+			'action': 'show',
+			'key': 'bg',
+			'src': 'res://images/bg/nsicroom_day.png',
+			'position': 'background',
+			'wait': false,
+		} },
+		\"And it can go poof just like that.\",
+		{ 'command': 'sprite', 'options': {
+			'action': 'hide',
+			'key': 'bg',
+		} },
+		\"So long, suckers.\",
 		{ 'command': 'hideMessageBox' },
 	])
 	self.event_processor.run()
-
 
 func _on_sequence_finished():
 	self.event_processor.run()

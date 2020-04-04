@@ -145,15 +145,18 @@ mouse_filter = 2
 custom_fonts/bold_font = SubResource( 2 )
 custom_fonts/normal_font = SubResource( 3 )
 custom_colors/default_color = Color( 0, 0, 0, 1 )
+custom_colors/font_color_shadow = Color( 0.141176, 0.141176, 0.141176, 0.32549 )
+custom_constants/shadow_offset_x = 3
+custom_constants/shadow_offset_y = 3
 bbcode_enabled = true
 meta_underlined = false
 scroll_active = false
 __meta__ = {
-"_edit_lock_": true,
 "_edit_use_anchors_": false
 }
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="ClickableArea"]
+visible = false
 shape = SubResource( 4 )
 one_way_collision = true
 __meta__ = {

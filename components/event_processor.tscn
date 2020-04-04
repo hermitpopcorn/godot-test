@@ -10,6 +10,10 @@ var sequence
 var current_index = 0
 var running = false
 
+var sprites = {}
+
+var wait_queue = []
+
 signal sequence_finished
 
 func _ready():
@@ -26,7 +30,6 @@ func run():
 
 func _advance_sequence():
 	self.current_index += 1
-	print(\"SEQUENCE: \" + str(self.current_index))
 	if (self.current_index < self.sequence.size()):
 		self._execute_sequence(self.current_index)
 	else:
@@ -41,15 +44,65 @@ func _execute_sequence(index: int):
 				self.message_box.hide()
 			'showMessageBox':
 				self.message_box.show()
+			'sprite':
+				self.show_sprite(entry.options)
 	elif (entry is String):
 		self.message_box.show_text(entry)
 
+func show_sprite(options: Dictionary):
+	var sprite
+	var wait_for_animation = true; if (options.has('wait')): wait_for_animation = options.wait
+	
+	if (options.action == \"show\"):
+		if (options.position == \"background\"):
+			# Remove existing image beforehand
+			if (self.sprites.has(options.key)):
+				self.sprites[options.key].queue_free()
+				$SpriteContainer.remove_child(self.sprites[options.key])
+				self.sprites.erase(options.key)
+			# Create new TextureRect
+			sprite = TextureRect.new()
+			sprite.texture = load(options.src)
+			sprite.expand = true
+			sprite.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+			sprite.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			sprite.set_size(Vector2(ProjectSettings.get_setting(\"display/window/size/width\"), ProjectSettings.get_setting(\"display/window/size/height\")))
+			sprite.set_position(Vector2(0, 0))
+			sprite.modulate.a = 0
+			$SpriteContainer.add_child(sprite)
+			self.sprites[options.key] = sprite
+			$SpriteContainer/SpriteTween.interpolate_property(sprite, 'modulate:a', 0, 1, options.duration if options.has('duration') else 1, Tween.TRANS_LINEAR, Tween.EASE_OUT_IN, options.delay if options.has('delay') else 0)
+			if (wait_for_animation): self.wait_queue.push_back(sprite)
+			$SpriteContainer/SpriteTween.start()
+	elif (options.action == \"hide\"):
+		sprite = self.sprites[options.key]
+		$SpriteContainer/SpriteTween.interpolate_property(sprite, 'modulate:a', 1, 0, options.duration if options.has('duration') else 1, Tween.TRANS_LINEAR, Tween.EASE_OUT_IN, options.delay if options.has('delay') else 0)
+		if (wait_for_animation): self.wait_queue.push_back(sprite)
+		$SpriteContainer/SpriteTween.start()
+	
+	# Immediately advance if queue is empty
+	if (self.wait_queue.size() == 0):
+		self._advance_sequence()
+
 func _on_next():
-	self._advance_sequence()
+	if (self.running):
+		# Cancel if queue is not empty
+		if (self.wait_queue.size() > 0): return false
+		
+		self._advance_sequence()
 
 func _on_MessageBox_finished_tweening():
 	if (self.running):
 		self._advance_sequence()
+
+func _on_sprite_tween_completed(object, key):
+	if (self.wait_queue.has(object)):
+		self.wait_queue.erase(object)
+		if (self.wait_queue.size() == 0):
+			self._advance_sequence()
+
+func _on_sprite_tween_all_completed():
+	pass
 "
 
 [node name="EventProcessor" type="Control"]
@@ -58,6 +111,12 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
+[node name="SpriteContainer" type="Node2D" parent="."]
+
+[node name="SpriteTween" type="Tween" parent="SpriteContainer"]
+
 [node name="MessageBox" parent="." instance=ExtResource( 1 )]
+[connection signal="tween_all_completed" from="SpriteContainer/SpriteTween" to="." method="_on_sprite_tween_all_completed"]
+[connection signal="tween_completed" from="SpriteContainer/SpriteTween" to="." method="_on_sprite_tween_completed"]
 [connection signal="finished_tweening" from="MessageBox" to="." method="_on_MessageBox_finished_tweening"]
 [connection signal="next" from="MessageBox" to="." method="_on_next"]
