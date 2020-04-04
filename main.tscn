@@ -1,26 +1,40 @@
-[gd_scene load_steps=4 format=2]
+[gd_scene load_steps=3 format=2]
 
-[ext_resource path="res://dialog.tscn" type="PackedScene" id=1]
-[ext_resource path="res://images/bg/nsicroom_day.png" type="Texture" id=2]
-[ext_resource path="res://main.gd" type="Script" id=3]
+[ext_resource path="res://components/event_processor.tscn" type="PackedScene" id=1]
+
+[sub_resource type="GDScript" id=1]
+script/source = "extends Control
+
+var event_processor
+
+func _ready():
+	# Center window on screen
+	var screen_size = OS.get_screen_size()
+	var window_size = OS.get_window_size()
+	OS.set_window_position(screen_size*0.5 - window_size*0.5)
+	
+	# Set sequence
+	self.event_processor = $EventProcessor
+	self.event_processor.set_sequence([
+		{ 'command': 'showMessageBox' },
+		'This',
+		'then',
+		'that',
+		{ 'command': 'hideMessageBox' },
+	])
+	self.event_processor.run()
+
+
+func _on_sequence_finished():
+	self.event_processor.run()
+"
 
 [node name="Scene" type="Control"]
 mouse_filter = 2
-script = ExtResource( 3 )
+script = SubResource( 1 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="TextureRect" type="TextureRect" parent="."]
-margin_right = 1920.0
-margin_bottom = 1080.0
-mouse_filter = 2
-texture = ExtResource( 2 )
-expand = true
-stretch_mode = 7
-__meta__ = {
-"_edit_use_anchors_": false
-}
-
-[node name="MessageBox" parent="." instance=ExtResource( 1 )]
-[connection signal="next" from="MessageBox" to="." method="_on_MessageBox_next"]
+[node name="EventProcessor" parent="." instance=ExtResource( 1 )]
+[connection signal="sequence_finished" from="EventProcessor" to="." method="_on_sequence_finished"]

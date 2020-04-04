@@ -9,22 +9,27 @@ script/source = "extends Control
 
 var message_display
 var message_speed = 0.05
-var typing_finsihed = true
+
 var timer
+var typing_finsihed = true
+
+var tween
+var tweening_finished = true
+var visibility
 
 signal finished_typing
+signal finished_tweening
 signal clicked
 signal next
 
 func _ready():
-	self.mouse_filter = MOUSE_FILTER_IGNORE
+	self.timer = $Timer
+	self.tween = $Tween
 	
-	self.message_display = get_node(\"ClickableArea/Message\")
+	self.message_display = $ClickableArea/Message
 	self.message_display.text = \"\"
 	
-	self.timer = Timer.new()
-	self.timer.connect(\"timeout\", self, \"_type_text_character\")
-	add_child(self.timer)
+	self.visibility = true if (self.modulate.a == 1) else false
 
 func show_text(text, options = []):
 	self.message_display.text = text
@@ -35,43 +40,87 @@ func show_text(text, options = []):
 func _type_text_character():
 	self.message_display.visible_characters += 1
 	if (self.message_display.visible_characters >= self.message_display.text.length()):
-		self._skip_typing() # same procedure anyway
+		self._end_typing()
 
 func _skip_typing():
 	self.timer.stop()
 	self.message_display.visible_characters = self.message_display.text.length()
+	self._end_typing()
+
+func _end_typing():
 	self.typing_finsihed = true
 	emit_signal('finished_typing')
 
+func hide(animate: bool = true):
+	self.toggle_visibility(false, animate)
+
+func show(animate: bool = true):
+	self.toggle_visibility(true, animate)
+
+func toggle_visibility(show: bool, animate: bool = true):
+	if (animate):
+		self.tween.interpolate_property(self, \"modulate:a\", (0 if show else 1), (1 if show else 0), 1, Tween.TRANS_LINEAR, Tween.EASE_IN)
+		self.tweening_finished = false
+		self.tween.start()
+	else:
+		self.modulate.a = (1 if show else 0)
+		self._end_tween()
+
+func _skip_tween():
+	self.tween.playback_speed = 10.0
+
+func _end_tween():
+	self.tween.playback_speed = 1.0
+	self.tween.remove_all()
+	self.tweening_finished = true
+	emit_signal('finished_tweening')
+
 func _advance():
-	if self.typing_finsihed:
+	if self.typing_finsihed && self.tweening_finished:
 		emit_signal('next')
 	else:
-		self._skip_typing()
+		if !self.typing_finsihed:
+			self._skip_typing()
+		if !self.tweening_finished:
+			self._skip_tween()
 
 func _on_click(viewport, event, shape_idx):
 	if (event is InputEventMouseButton):
 		if (event.button_index == BUTTON_LEFT and event.pressed):
 			emit_signal('clicked')
 			self._advance()
+
+func _on_tween_all_completed():
+	self._end_tween() # same procedure anyway
+
+func _on_tween_started(object, key):
+	if (object == self && key == ':modulate:a'):
+		if (self.visibility == false):
+			self.message_display.text = \"\"
+			self.message_display.visible_characters = 0
+
+func _on_tween_completed(object, key):
+	if (object == self && key == ':modulate:a'):
+		self.visibility = true if (self.modulate.a == 1) else false
 "
 
-[sub_resource type="DynamicFont" id=3]
+[sub_resource type="DynamicFont" id=2]
 size = 36
 use_mipmaps = true
 use_filter = true
 font_data = ExtResource( 3 )
 
-[sub_resource type="DynamicFont" id=4]
+[sub_resource type="DynamicFont" id=3]
 size = 36
 use_mipmaps = true
 use_filter = true
 font_data = ExtResource( 2 )
 
-[sub_resource type="RectangleShape2D" id=6]
+[sub_resource type="RectangleShape2D" id=4]
 extents = Vector2( 960, 147 )
 
 [node name="MessageBox" type="Control"]
+mouse_filter = 2
 script = SubResource( 1 )
 __meta__ = {
 "_edit_use_anchors_": false
@@ -93,8 +142,8 @@ margin_top = -74.0
 margin_right = 786.0
 margin_bottom = 108.0
 mouse_filter = 2
-custom_fonts/bold_font = SubResource( 3 )
-custom_fonts/normal_font = SubResource( 4 )
+custom_fonts/bold_font = SubResource( 2 )
+custom_fonts/normal_font = SubResource( 3 )
 custom_colors/default_color = Color( 0, 0, 0, 1 )
 bbcode_enabled = true
 meta_underlined = false
@@ -105,9 +154,17 @@ __meta__ = {
 }
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="ClickableArea"]
-shape = SubResource( 6 )
+shape = SubResource( 4 )
 one_way_collision = true
 __meta__ = {
 "_edit_lock_": true
 }
+
+[node name="Tween" type="Tween" parent="."]
+
+[node name="Timer" type="Timer" parent="."]
 [connection signal="input_event" from="ClickableArea" to="." method="_on_click"]
+[connection signal="tween_all_completed" from="Tween" to="." method="_on_tween_all_completed"]
+[connection signal="tween_completed" from="Tween" to="." method="_on_tween_completed"]
+[connection signal="tween_started" from="Tween" to="." method="_on_tween_started"]
+[connection signal="timeout" from="Timer" to="." method="_type_text_character"]

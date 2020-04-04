@@ -1,0 +1,63 @@
+[gd_scene load_steps=3 format=2]
+
+[ext_resource path="res://components/dialog.tscn" type="PackedScene" id=1]
+
+[sub_resource type="GDScript" id=1]
+script/source = "extends Control
+
+var message_box
+var sequence
+var current_index = 0
+var running = false
+
+signal sequence_finished
+
+func _ready():
+	self.message_box = $MessageBox
+	self.message_box.hide(false)
+
+func set_sequence(sequence: Array):
+	self.sequence = sequence
+
+func run():
+	self.running = true
+	self.current_index = -1
+	self._advance_sequence()
+
+func _advance_sequence():
+	self.current_index += 1
+	print(\"SEQUENCE: \" + str(self.current_index))
+	if (self.current_index < self.sequence.size()):
+		self._execute_sequence(self.current_index)
+	else:
+		self.running = false
+		emit_signal('sequence_finished')
+
+func _execute_sequence(index: int):
+	var entry = self.sequence[index]
+	if (entry is Dictionary):
+		match entry.command:
+			'hideMessageBox':
+				self.message_box.hide()
+			'showMessageBox':
+				self.message_box.show()
+	elif (entry is String):
+		self.message_box.show_text(entry)
+
+func _on_next():
+	self._advance_sequence()
+
+func _on_MessageBox_finished_tweening():
+	if (self.running):
+		self._advance_sequence()
+"
+
+[node name="EventProcessor" type="Control"]
+script = SubResource( 1 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="MessageBox" parent="." instance=ExtResource( 1 )]
+[connection signal="finished_tweening" from="MessageBox" to="." method="_on_MessageBox_finished_tweening"]
+[connection signal="next" from="MessageBox" to="." method="_on_next"]
