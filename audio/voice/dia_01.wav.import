@@ -1,0 +1,21 @@
+[remap]
+
+importer="wav"
+type="AudioStreamSample"
+path="res://.import/dia_01.wav-cb529cefc75783f9c4c94eac87f04a4a.sample"
+
+[deps]
+
+source_file="res://audio/voice/dia_01.wav"
+dest_files=[ "res://.import/dia_01.wav-cb529cefc75783f9c4c94eac87f04a4a.sample" ]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop=false
+compress/mode=0

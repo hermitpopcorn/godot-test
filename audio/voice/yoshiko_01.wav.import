@@ -1,0 +1,21 @@
+[remap]
+
+importer="wav"
+type="AudioStreamSample"
+path="res://.import/yoshiko_01.wav-c30ce4c4561e32b92e5bb94f5643acbd.sample"
+
+[deps]
+
+source_file="res://audio/voice/yoshiko_01.wav"
+dest_files=[ "res://.import/yoshiko_01.wav-c30ce4c4561e32b92e5bb94f5643acbd.sample" ]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop=false
+compress/mode=0

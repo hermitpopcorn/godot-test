@@ -3,10 +3,10 @@ extends Node
 class_name BaseScene
 
 func _input(event):
-	if (!$PausedIndicator.visible):
+	if (!$CanvasLayer/PausedIndicator.visible):
 		if event.is_action_pressed("ui_cancel"):
 			get_tree().paused = true
-			$PausedIndicator.visible = true
+			$CanvasLayer/PausedIndicator.visible = true
 
 func center_window():
 	var screen_size = OS.get_screen_size()

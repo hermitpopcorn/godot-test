@@ -5,6 +5,8 @@
 [sub_resource type="GDScript" id=1]
 script/source = "extends \"res://scripts/base_scene.gd\"
 
+var event_processor
+
 func _ready():
 	# Center window on screen
 	var screen_size = OS.get_screen_size()
@@ -13,33 +15,341 @@ func _ready():
 	
 	# Set sequence
 	self.event_processor = $EventProcessor
+	self.event_processor.message_box.message_speed = 0.02
 	self.event_processor.set_sequence([
-		{ 'command': 'showMessageBox' },
-		\"From pitch black domes the background, just like that.\",
+		1.0,
 		{ 'command': 'sprite', 'options': {
 			'action': 'show',
 			'key': 'bg',
-			'src': 'res://images/bg/nsicroom_day.png',
-			'position': 'background',
+			'src': 'res://images/bg/izumito.png',
+			'position': Vector2(0, 0),
 		} },
-		\"Again!\",
-		\"Show it again!\",
+		0.5,
+		{ 'command': 'show_message_box' },
+		{ 'command': 'audio', 'options': {
+			'action': 'sfx',
+			'key': 'bike',
+			'src': \"res://audio/voice/bike_00.wav\",
+		} },
+		1.0,
 		{ 'command': 'sprite', 'options': {
 			'action': 'show',
-			'key': 'bg',
-			'src': 'res://images/bg/nsicroom_day.png',
-			'position': 'background',
+			'key': 'yoshiko',
+			'src': 'res://images/dialog_sprite/yoshiko_n2.png',
+			'position': Vector2(-265, 790),
+			'duration': 0.1,
+			'z_index': 2,
+		} },
+		{ 'command': 'sprite', 'options': {
+			'action': 'move',
+			'key': 'yoshiko',
+			'position': Vector2(1201, 790),
+			'duration': 0.5,
+		} },
+		{ 'command': 'sprite', 'options': {
+			'action': 'move',
+			'key': 'yoshiko',
+			'position': Vector2(1250, 790),
+			'duration': 10,
 			'wait': false,
 		} },
-		\"And it can go poof just like that.\",
+		{ 'command': 'audio', 'options': {
+			'action': 'voice',
+			'src': \"res://audio/voice/yoshiko_00.wav\",
+		} },
+		\"Yoshiko|Yo.\",
+		{ 'command': 'sprite', 'options': {
+			'action': 'change',
+			'key': 'yoshiko',
+			'src': 'res://images/dialog_sprite/yoshiko_a2.png',
+		} },
+		{ 'command': 'audio', 'options': {
+			'action': 'voice',
+			'src': \"res://audio/voice/yoshiko_01.wav\",
+		} },
+		\"Yoshiko|Let's get this party goin', YOROSHIKU!!\",
+		{ 'command': 'sprite', 'options': {
+			'action': 'dim',
+			'key': 'yoshiko',
+		} },
+		{ 'command': 'sprite', 'options': {
+			'action': 'show',
+			'key': 'dia',
+			'src': 'res://images/dialog_sprite/dia_a2.png',
+			'position': Vector2(2211, 790),
+			'duration': 0.1,
+			'z_index': 1,
+		} },
+		{ 'command': 'sprite', 'options': {
+			'action': 'move',
+			'key': 'dia',
+			'position': Vector2(510, 790),
+			'duration': 0.5,
+		} },
+		{ 'command': 'sprite', 'options': {
+			'action': 'move',
+			'key': 'dia',
+			'position': Vector2(480, 790),
+			'duration': 10,
+			'wait': false,
+		} },
+		{ 'command': 'audio', 'options': {
+			'action': 'voice',
+			'src': \"res://audio/voice/dia_00.wav\",
+		} },
+		\"Dia|YOROSHIKU.\",
+		{ 'command': 'sprite', 'options': {
+			'action': 'light',
+			'key': 'yoshiko',
+			'wait': false,
+		} },
+		{ 'command': 'sprite', 'options': {
+			'action': 'dim',
+			'key': 'dia',
+		} },
+		{ 'command': 'sprite', 'options': {
+			'action': 'clear',
+			'key': 'yoshiko',
+		} },
+		{ 'command': 'sprite', 'options': {
+			'action': 'clear',
+			'key': 'dia',
+		} },
+		{ 'command': 'container', 'options': {
+			'target': 'sprites',
+			'action': 'move',
+			'scale': Vector2(1.1, 1.1),
+			'rotation': 5,
+			'position': Vector2(-50, 50),
+			'duration': 0.5,
+			'wait': false,
+		} },
+		{ 'command': 'container', 'options': {
+			'target': 'background',
+			'action': 'move',
+			'scale': Vector2(1.3, 1.3),
+			'rotation': 10,
+			'duration': 0.5,
+			'wait': false,
+		} },
+		{ 'command': 'sprite', 'options': {
+			'action': 'move',
+			'key': 'yoshiko',
+			'scale': Vector2(1.2, 1.2),
+			'duration': 0.5,
+		} },
+		{ 'command': 'container', 'options': {
+			'target': 'background',
+			'action': 'move',
+			'position': Vector2(30, 0),
+			'duration': 10,
+			'wait': false,
+		} },
+		{ 'command': 'sprite', 'options': {
+			'action': 'move',
+			'key': 'yoshiko',
+			'position': Vector2(1280, 790),
+			'duration': 10,
+			'wait': false,
+		} },
+		{ 'command': 'audio', 'options': {
+			'action': 'voice',
+			'src': \"res://audio/voice/yoshiko_02.wav\",
+		} },
+		\"Yoshiko|Wuzzat? Your decoration game WEAK. You dare callin' this christmas decor, huh?!\",
+		{ 'command': 'container', 'options': {
+			'target': 'background',
+			'action': 'clear',
+		} },
+		{ 'command': 'sprite', 'options': {
+			'action': 'clear',
+			'key': 'yoshiko',
+		} },
+		{ 'command': 'sprite', 'options': {
+			'action': 'dim',
+			'key': 'yoshiko',
+			'wait': false,
+		} },
+		{ 'command': 'sprite', 'options': {
+			'action': 'light',
+			'key': 'dia',
+			'wait': false,
+		} },
+		{ 'command': 'container', 'options': {
+			'target': 'sprites',
+			'action': 'move',
+			'scale': Vector2(1.1, 1.1),
+			'rotation': -5,
+			'position': Vector2(50, 50),
+			'duration': 0.5,
+			'wait': false,
+		} },
+		{ 'command': 'container', 'options': {
+			'target': 'background',
+			'action': 'move',
+			'scale': Vector2(1.3, 1.3),
+			'rotation': -10,
+			'duration': 0.5,
+			'wait': false,
+		} },
+		{ 'command': 'sprite', 'options': {
+			'action': 'move',
+			'key': 'yoshiko',
+			'scale': Vector2(1.0, 1.0),
+			'duration': 0.5,
+			'wait': false,
+		} },
+		{ 'command': 'sprite', 'options': {
+			'action': 'move',
+			'key': 'dia',
+			'scale': Vector2(1.2, 1.2),
+			'position': Vector2(480, 900),
+			'duration': 0.5,
+		} },
+		0.5,
+		{ 'command': 'container', 'options': {
+			'target': 'background',
+			'action': 'move',
+			'position': Vector2(-30, 0),
+			'duration': 10,
+			'wait': false,
+		} },
+		{ 'command': 'sprite', 'options': {
+			'action': 'move',
+			'key': 'dia',
+			'position': Vector2(510, 900),
+			'duration': 10,
+			'wait': false,
+		} },
+		{ 'command': 'audio', 'options': {
+			'action': 'voice',
+			'src': \"res://audio/voice/dia_01.wav\",
+		} },
+		\"Dia|What, you got a problem with one of my creations?!\",
+		{ 'command': 'container', 'options': {
+			'target': 'background',
+			'action': 'clear',
+		} },
+		{ 'command': 'sprite', 'options': {
+			'action': 'clear',
+			'key': 'yoshiko',
+		} },
+		{ 'command': 'sprite', 'options': {
+			'action': 'clear',
+			'key': 'dia',
+		} },
+		{ 'command': 'sprite', 'options': {
+			'action': 'light',
+			'key': 'yoshiko',
+			'wait': false,
+		} },
+		{ 'command': 'sprite', 'options': {
+			'action': 'dim',
+			'key': 'dia',
+		} },
+		{ 'command': 'container', 'options': {
+			'target': 'sprites',
+			'action': 'move',
+			'scale': Vector2(1.1, 1.1),
+			'rotation': 5,
+			'position': Vector2(-50, 50),
+			'duration': 0.5,
+			'wait': false,
+		} },
+		{ 'command': 'container', 'options': {
+			'target': 'background',
+			'action': 'move',
+			'scale': Vector2(1.3, 1.3),
+			'rotation': 10,
+			'duration': 0.5,
+			'wait': false,
+		} },
+		{ 'command': 'sprite', 'options': {
+			'action': 'move',
+			'key': 'yoshiko',
+			'scale': Vector2(1.2, 1.2),
+			'duration': 0.5,
+		} },
+		{ 'command': 'container', 'options': {
+			'target': 'background',
+			'action': 'move',
+			'position': Vector2(0, 0),
+			'duration': 10,
+			'wait': false,
+		} },
+		{ 'command': 'sprite', 'options': {
+			'action': 'move',
+			'key': 'dia',
+			'position': Vector2(550, 900),
+			'duration': 10,
+			'wait': false,
+		} },
+		{ 'command': 'sprite', 'options': {
+			'action': 'move',
+			'key': 'yoshiko',
+			'position': Vector2(1200, 790),
+			'duration': 10,
+			'wait': false,
+		} },
+		{ 'command': 'audio', 'options': {
+			'action': 'voice',
+			'src': \"res://audio/voice/yoshiko_03.wav\",
+		} },
+		\"Yoshiko|I got problems with ALL your creations!\",
+		{ 'command': 'container', 'options': { 'target': 'background', 'action': 'clear' } },
+		{ 'command': 'container', 'options': { 'target': 'sprites', 'action': 'clear' } },
+		{ 'command': 'container', 'options': {
+			'target': 'background',
+			'action': 'move',
+			'position': Vector2(0, 50),
+			'scale': Vector2(1.4, 1.4),
+			'duration': 0.5,
+			'wait': false,
+		} },
+		{ 'command': 'container', 'options': {
+			'target': 'sprites',
+			'action': 'move',
+			'position': Vector2(-100, 415),
+			'scale': Vector2(1.3, 1.3),
+			'duration': 0.5,
+			'wait': false,
+		} },
+		{ 'command': 'sprite', 'options': {
+			'action': 'move',
+			'key': 'yoshiko',
+			'scale': Vector2(1.4, 1.4),
+			'duration': 0.5,
+			'wait': false,
+		} },
+		{ 'command': 'audio', 'options': {
+			'action': 'voice',
+			'src': \"res://audio/voice/yoshiko_04.wav\",
+		} },
+		\"Yoshiko|Don't be disrespectin' Christmas, skank!\",
 		{ 'command': 'sprite', 'options': {
 			'action': 'hide',
 			'key': 'bg',
 		} },
-		\"So long, suckers.\",
-		{ 'command': 'hideMessageBox' },
+		{ 'command': 'sprite', 'options': {
+			'action': 'hide',
+			'key': 'yoshiko',
+			'wait': false,
+			'duration': 0.5,
+		} },
+		{ 'command': 'sprite', 'options': {
+			'action': 'hide',
+			'key': 'dia',
+			'wait': false,
+			'duration': 0.5,
+		} },
+		{ 'command': 'hide_message_box' },
+		1.0,
 	])
 	self.event_processor.start()
+
+func _on_sequence_finished():
+	get_tree().quit()
+
 "
 
 [node name="Scene1" instance=ExtResource( 1 )]
