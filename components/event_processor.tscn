@@ -7,7 +7,7 @@ script/source = "extends Control
 
 var message_box
 var sequence
-var current_index = 0
+var current_index = -1
 var running = false
 
 var sprites = {}
@@ -23,10 +23,20 @@ func _ready():
 func set_sequence(sequence: Array):
 	self.sequence = sequence
 
-func run():
+func start():
+	self.reset()
+	self.resume()
+
+func resume():
 	self.running = true
-	self.current_index = -1
 	self._advance_sequence()
+
+func stop():
+	self.running = false
+
+func reset():
+	self.running = false
+	self.current_index = -1
 
 func _advance_sequence():
 	self.current_index += 1

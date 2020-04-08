@@ -1,0 +1,92 @@
+[gd_scene load_steps=5 format=2]
+
+[ext_resource path="res://components/event_processor.tscn" type="PackedScene" id=1]
+[ext_resource path="res://images/ui/paused.png" type="Texture" id=2]
+
+[sub_resource type="GDScript" id=1]
+script/source = "extends \"res://scripts/base_scene.gd\"
+
+var event_processor
+
+func _ready():
+	# Center window on screen
+	.center_window()
+	
+	# Set sequence
+	self.event_processor = $EventProcessor
+	self.event_processor.set_sequence([
+		{ 'command': 'showMessageBox' },
+		\"From pitch black comes the background, just like that.\",
+		{ 'command': 'sprite', 'options': {
+			'action': 'show',
+			'key': 'bg',
+			'src': 'res://images/bg/nsicroom_day.png',
+			'position': 'background',
+		} },
+		\"Again!\",
+		\"Show it again!\",
+		{ 'command': 'sprite', 'options': {
+			'action': 'show',
+			'key': 'bg',
+			'src': 'res://images/bg/nsicroom_day.png',
+			'position': 'background',
+			'wait': false,
+		} },
+		\"And it can go poof just like that.\",
+		{ 'command': 'sprite', 'options': {
+			'action': 'hide',
+			'key': 'bg',
+		} },
+		\"So long, suckers.\",
+		{ 'command': 'hideMessageBox' },
+	])
+	self.event_processor.start()
+
+func _on_sequence_finished():
+	self.event_processor.start()
+"
+
+[sub_resource type="GDScript" id=2]
+script/source = "extends TextureRect
+
+func _input(event):
+	if (self.visible):
+		if event.is_action_pressed(\"ui_cancel\"):
+			$PauseTweener.remove_all()
+			$PauseTweener.interpolate_property(self, 'modulate:a', 1, 0, 0.1, Tween.TRANS_LINEAR, Tween.EASE_OUT_IN)
+			$PauseTweener.start()
+
+func _on_tween_all_completed():
+	self.visible = false
+
+func _on_visibility_changed():
+	if (self.visible):
+		# Make sure we're really visible
+		self.modulate.a = 1
+	else:
+		get_tree().paused = false
+"
+
+[node name="BaseScene" type="Node"]
+script = SubResource( 1 )
+
+[node name="EventProcessor" parent="." instance=ExtResource( 1 )]
+
+[node name="PausedIndicator" type="TextureRect" parent="."]
+pause_mode = 2
+visible = false
+margin_right = 1920.0
+margin_bottom = 1080.0
+mouse_filter = 0
+texture = ExtResource( 2 )
+expand = true
+stretch_mode = 7
+script = SubResource( 2 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="PauseTweener" type="Tween" parent="PausedIndicator"]
+[connection signal="sequence_finished" from="EventProcessor" to="." method="_on_sequence_finished"]
+[connection signal="visibility_changed" from="PausedIndicator" to="PausedIndicator" method="_on_visibility_changed"]
+[connection signal="tween_all_completed" from="PausedIndicator/PauseTweener" to="PausedIndicator" method="_on_tween_all_completed"]

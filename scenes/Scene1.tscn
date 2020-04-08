@@ -1,11 +1,9 @@
 [gd_scene load_steps=3 format=2]
 
-[ext_resource path="res://components/event_processor.tscn" type="PackedScene" id=1]
+[ext_resource path="res://scenes/base.tscn" type="PackedScene" id=1]
 
 [sub_resource type="GDScript" id=1]
-script/source = "extends Control
-
-var event_processor
+script/source = "extends \"res://scripts/base_scene.gd\"
 
 func _ready():
 	# Center window on screen
@@ -17,7 +15,7 @@ func _ready():
 	self.event_processor = $EventProcessor
 	self.event_processor.set_sequence([
 		{ 'command': 'showMessageBox' },
-		\"From pitch black comes the background, just like that.\",
+		\"From pitch black domes the background, just like that.\",
 		{ 'command': 'sprite', 'options': {
 			'action': 'show',
 			'key': 'bg',
@@ -41,18 +39,8 @@ func _ready():
 		\"So long, suckers.\",
 		{ 'command': 'hideMessageBox' },
 	])
-	self.event_processor.run()
-
-func _on_sequence_finished():
-	self.event_processor.run()
+	self.event_processor.start()
 "
 
-[node name="Scene" type="Control"]
-mouse_filter = 2
+[node name="Scene1" instance=ExtResource( 1 )]
 script = SubResource( 1 )
-__meta__ = {
-"_edit_use_anchors_": false
-}
-
-[node name="EventProcessor" parent="." instance=ExtResource( 1 )]
-[connection signal="sequence_finished" from="EventProcessor" to="." method="_on_sequence_finished"]
