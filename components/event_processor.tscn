@@ -48,6 +48,7 @@ func start():
 	self.resume()
 
 func resume():
+	emit_signal('hover_off', \"*\")
 	self.running = true
 	self._advance_sequence()
 

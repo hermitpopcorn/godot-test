@@ -1,9 +1,10 @@
-[gd_scene load_steps=11 format=2]
+[gd_scene load_steps=14 format=2]
 
 [ext_resource path="res://components/event_processor.tscn" type="PackedScene" id=1]
 [ext_resource path="res://images/ui/paused.png" type="Texture" id=2]
 [ext_resource path="res://images/ui/cursor/cursor_outside.png" type="Texture" id=3]
 [ext_resource path="res://images/ui/cursor/cursor_inside.png" type="Texture" id=4]
+[ext_resource path="res://fonts/montreal/Montreal.tres" type="DynamicFont" id=5]
 [ext_resource path="res://shaders/hue_shift.shader" type="Shader" id=6]
 
 [sub_resource type="GDScript" id=1]
@@ -77,8 +78,11 @@ func _on_visibility_changed():
 [sub_resource type="GDScript" id=3]
 script/source = "extends CanvasLayer
 
-var hovered_items = []
-var snapping = false
+var hovered_items: Array = []
+var snapping: bool = false
+
+signal show_info_text
+signal hide_info_text
 
 func _ready():
 	pass
@@ -126,14 +130,25 @@ func _process(_delta):
 		$CursorSprite/CursorSpriteOutside.get_material().set_shader_param('shift_amount', 0)
 		$CursorSprite/CursorSpriteInside.get_material().set_shader_param('shift_amount', 0)
 
-func _on_hover(emitter):
+func _on_hover(emitter, text=null):
+	if (self.get_parent().get_node(\"EventProcessor\").running):
+		if (emitter != \"MessageBox\"):
+			return false
 	if (!self.hovered_items.has(emitter)):
 		self.hovered_items.append(emitter)
+	if (text):
+		self.emit_signal(\"show_info_text\", text)
 
-func _off_hover(emitter):
-	var index = self.hovered_items.find(emitter)
-	if (index > -1):
-		self.hovered_items.remove(index)
+func _off_hover(emitter, text=null):
+	if (emitter == \"*\"):
+		self.hovered_items.clear()
+		self.emit_signal(\"hide_info_text\", \"*\")
+	else:
+		var index = self.hovered_items.find(emitter)
+		if (index > -1):
+			self.hovered_items.remove(index)
+		if (text):
+			self.emit_signal(\"hide_info_text\", text)
 "
 
 [sub_resource type="ShaderMaterial" id=4]
@@ -143,6 +158,134 @@ shader_param/shift_amount = null
 [sub_resource type="ShaderMaterial" id=5]
 shader = ExtResource( 6 )
 shader_param/shift_amount = null
+
+[sub_resource type="GDScript" id=6]
+script/source = "extends CanvasLayer
+
+var timer
+
+func _on_CursorLayer_show_info_text(text):
+	# Calculate rect size by simulating it on a dummy node
+	$DiamondStripe/TextRect/RectCalculator.text = \"\"
+	$DiamondStripe/TextRect/RectCalculator.rect_size = Vector2(0, $DiamondStripe/TextRect/RectCalculator.rect_size.y)
+	$DiamondStripe/TextRect/RectCalculator.text = text
+	$DiamondStripe/TextRect/RectCalculator.visible_characters = -1
+	$Microtimer.start(); yield($Microtimer, \"timeout\")
+	
+	var length: int = ceil(2 + ($DiamondStripe/TextRect/RectCalculator.rect_size.x / 35))
+	if (length % 2) == 1:
+		length += 1
+	$DiamondStripe.show_diamond_stripe(length, text)
+
+func _on_CursorLayer_hide_info_text(text):
+	$Microtimer.start(); yield($Microtimer, \"timeout\")
+	$DiamondStripe.hide_diamond_stripe()
+"
+
+[sub_resource type="GDScript" id=7]
+script/source = "extends Node2D
+
+export var size: float = 36.512 # Size of the diamonds
+export var fade_speed: float = 0.01 # Speed of diamond fade. Smaller = faster
+
+func show_diamond_stripe(length, text):
+	create_stripe(length)
+	show_stripe()
+	show_text(text)
+
+func hide_diamond_stripe():
+	hide_stripe()
+	hide_text()
+
+func create_stripe(length):
+	for child in $Diamonds.get_children():
+		child.queue_free()
+	
+	length = max(length, 3)
+	var current_column = 1
+	var column_x: float
+	var diamond_node: Sprite
+	
+	while current_column <= length:
+		column_x = (current_column - 1) * self.size
+		if ((current_column % 2) == 1):
+			diamond_node = create_diamond_node()
+			$Diamonds.add_child(diamond_node)
+			diamond_node.position.x = column_x
+			diamond_node.position.y = self.size * -1
+			
+			diamond_node = create_diamond_node()
+			$Diamonds.add_child(diamond_node)
+			diamond_node.position.x = column_x
+			diamond_node.position.y = self.size * 1
+		else:
+			diamond_node = create_diamond_node()
+			$Diamonds.add_child(diamond_node)
+			diamond_node.set_position(Vector2(column_x, 0))
+		current_column += 1
+
+func show_stripe(): time_stripe(true)
+func hide_stripe(): time_stripe(false)
+
+func time_stripe(show):
+	var timer: Timer
+	var number = 1
+	for child in $Diamonds.get_children():
+		if (!show):
+			if (child.get_node(\"Timer\")):
+				child.get_node(\"Timer\").stop()
+				child.get_node(\"Tweener\").stop_all()
+				child.queue_free()
+				continue
+		timer = Timer.new()
+		timer.one_shot = true
+		timer.wait_time = self.fade_speed * number
+		timer.connect(\"timeout\", self, \"_timer_timeout\", [timer, child, show])
+		timer.name = \"Timer\"
+		child.add_child(timer)
+	for child in $Diamonds.get_children():
+		child.get_node(\"Timer\").start(self.fade_speed * (number - 1))
+		number += 1
+
+func show_text(text: String):
+	$TextRect/Text.text = text
+	$TextRect/Text.modulate.a = 0
+	$TextRect/Text/Tweener.interpolate_property($TextRect/Text, \"modulate:a\", 0, 1, 0.2, Tween.TRANS_LINEAR, Tween.EASE_IN)
+	$TextRect/Text/Tweener.interpolate_property($TextRect/Text, \"visible_characters\", 0, text.length(), 0.2, Tween.TRANS_LINEAR, Tween.EASE_IN)
+	$TextRect/Text/Tweener.start()
+
+func hide_text():
+	$TextRect/Text/Tweener.stop_all()	
+	$TextRect/Text/Tweener.interpolate_property($TextRect/Text, \"modulate:a\", $TextRect/Text.modulate.a, 0, 0.2, Tween.TRANS_LINEAR, Tween.EASE_IN)
+	$TextRect/Text/Tweener.start()
+
+func create_diamond_node():
+	var node: Sprite = Sprite.new()
+	node.texture = load(\"res://images/ui/diamond.png\")
+	node.scale = Vector2(0.14, 0.14)
+	node.modulate.a = 0
+	
+	var tweener: Tween = Tween.new()
+	tweener.name = \"Tweener\"
+	node.add_child(tweener)
+	return node
+
+func _timer_timeout(timer: Timer, node: Sprite, show: bool):
+	if (!node): return false
+	var tweener: Tween = node.get_node(\"Tweener\")
+	
+	if (show):
+		tweener.interpolate_property(node, \"modulate:a\", 0, 1, 0.2, Tween.TRANS_LINEAR, Tween.EASE_IN)
+		tweener.start()
+	else:
+		tweener.interpolate_property(node, \"modulate:a\", node.modulate.a, 0, 0.15, Tween.TRANS_LINEAR, Tween.EASE_IN)
+		tweener.connect(\"tween_all_completed\", self, \"_hide_tween_finish\", [node])
+		tweener.start()
+	timer.queue_free()
+
+func _hide_tween_finish(node: Sprite):
+	node.queue_free()
+"
 
 [node name="BaseScene" type="Node"]
 script = SubResource( 1 )
@@ -179,6 +322,7 @@ __meta__ = {
 [node name="CursorLayer" type="CanvasLayer" parent="."]
 pause_mode = 2
 layer = 20
+follow_viewport_enable = true
 script = SubResource( 3 )
 
 [node name="CursorSprite" type="Node2D" parent="CursorLayer"]
@@ -196,8 +340,61 @@ texture = ExtResource( 3 )
 material = SubResource( 5 )
 scale = Vector2( 0.105, 0.105 )
 texture = ExtResource( 4 )
+
+[node name="InfoLayer" type="CanvasLayer" parent="."]
+follow_viewport_enable = true
+script = SubResource( 6 )
+
+[node name="Microtimer" type="Timer" parent="InfoLayer"]
+wait_time = 0.1
+one_shot = true
+
+[node name="DiamondStripe" type="Node2D" parent="InfoLayer"]
+position = Vector2( 0, 114.716 )
+script = SubResource( 7 )
+
+[node name="Diamonds" type="Node2D" parent="InfoLayer/DiamondStripe"]
+modulate = Color( 1, 1, 1, 0.878431 )
+
+[node name="TextRect" type="ReferenceRect" parent="InfoLayer/DiamondStripe"]
+margin_top = -36.3144
+margin_right = 616.0
+margin_bottom = 30.6856
+mouse_filter = 2
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="RectCalculator" type="Label" parent="InfoLayer/DiamondStripe/TextRect"]
+modulate = Color( 1, 1, 1, 0 )
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_left = 54.0
+margin_right = -562.0
+rect_min_size = Vector2( 0, 67 )
+custom_fonts/font = ExtResource( 5 )
+valign = 1
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Text" type="Label" parent="InfoLayer/DiamondStripe/TextRect"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_left = 54.0
+margin_right = -362.0
+rect_min_size = Vector2( 0, 67 )
+custom_fonts/font = ExtResource( 5 )
+valign = 1
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Tweener" type="Tween" parent="InfoLayer/DiamondStripe/TextRect/Text"]
 [connection signal="visibility_changed" from="PausedUILayer/PausedIndicator" to="PausedUILayer/PausedIndicator" method="_on_visibility_changed"]
 [connection signal="tween_all_completed" from="PausedUILayer/PausedIndicator/PauseTweener" to="PausedUILayer/PausedIndicator" method="_on_tween_all_completed"]
 [connection signal="hover_off" from="EventProcessor" to="CursorLayer" method="_off_hover"]
 [connection signal="hover_on" from="EventProcessor" to="CursorLayer" method="_on_hover"]
 [connection signal="sequence_finished" from="EventProcessor" to="." method="_on_sequence_finished"]
+[connection signal="hide_info_text" from="CursorLayer" to="InfoLayer" method="_on_CursorLayer_hide_info_text"]
+[connection signal="show_info_text" from="CursorLayer" to="InfoLayer" method="_on_CursorLayer_show_info_text"]

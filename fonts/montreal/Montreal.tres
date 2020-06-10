@@ -3,5 +3,9 @@
 [ext_resource path="res://fonts/montreal/Montreal-Regular.ttf" type="DynamicFontData" id=1]
 
 [resource]
-size = 43
+size = 45
+outline_size = 2
+outline_color = Color( 0.0862745, 0.101961, 0.356863, 1 )
+use_mipmaps = true
+use_filter = true
 font_data = ExtResource( 1 )

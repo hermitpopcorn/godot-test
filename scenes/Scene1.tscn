@@ -1,7 +1,8 @@
-[gd_scene load_steps=7 format=2]
+[gd_scene load_steps=8 format=2]
 
 [ext_resource path="res://scenes/base.tscn" type="PackedScene" id=1]
 [ext_resource path="res://images/dialog_sprite/dia_a2.png" type="Texture" id=2]
+[ext_resource path="res://images/dialog_sprite/yoshiko_a2.png" type="Texture" id=3]
 
 [sub_resource type="GDScript" id=1]
 script/source = "extends \"res://scripts/base_scene.gd\"
@@ -14,10 +15,7 @@ func _ready():
 	._cursor_setup()
 
 func run_event():
-	var event_processor
-	event_processor = $EventProcessor
-	
-	event_processor.set_sequence([
+	$EventProcessor.set_sequence([
 		1.0,
 		{ 'command': 'sprite', 'options': {
 			'action': 'show',
@@ -346,14 +344,23 @@ func run_event():
 		{ 'command': 'hide_message_box' },
 		1.0,
 	])
-	event_processor.start()
+	$EventProcessor.start()
 
 func _on_sequence_finished():
 	pass
 
-func _on_3dArea_click(camera, event, click_position, click_normal, shape_idx, extra_arg_0):
+func _on_3dArea_click(camera, event, click_position, click_normal, shape_idx, event_id):
 	if event is InputEventMouseButton:
-		run_event()
+		if ($EventProcessor.running): return false
+		match event_id:
+			\"dia1\": run_event()
+			\"yoshiko1\":
+				$EventProcessor.set_sequence([
+					{ 'command': 'show_message_box' },
+					\"Yoshiko|It's YOHANE!\",
+					{ 'command': 'hide_message_box' },
+				])
+				$EventProcessor.start()
 "
 
 [sub_resource type="BoxShape" id=2]
@@ -391,24 +398,37 @@ script = SubResource( 1 )
 
 [node name="3D" type="Node" parent="." index="4"]
 
-[node name="Sprite3D" type="Sprite3D" parent="3D" index="0"]
-transform = Transform( 0.545636, 0, 0, 0, 0.545636, 0, 0, 0, -0.646726, 0, 3.97849, 0 )
+[node name="Dia3D" type="Sprite3D" parent="3D" index="0"]
+transform = Transform( 0.545636, 0, 0, 0, 0.545636, 0, 0, 0, -0.646726, 0.473508, 3.97849, 0 )
 texture = ExtResource( 2 )
 
-[node name="Area" type="Area" parent="3D/Sprite3D" index="0"]
+[node name="Area" type="Area" parent="3D/Dia3D" index="0"]
 
-[node name="CollisionShape" type="CollisionShape" parent="3D/Sprite3D/Area" index="0"]
+[node name="CollisionShape" type="CollisionShape" parent="3D/Dia3D/Area" index="0"]
 transform = Transform( 2.91563, 0, 0, 0, 8.1571, 0, 0, 0, 0.416939, 0, 0, 0 )
 shape = SubResource( 2 )
 
-[node name="3DCamera" type="Camera" parent="3D" index="1"]
+[node name="Yoshiko3D" type="Sprite3D" parent="3D" index="1"]
+transform = Transform( 0.545636, 0, 0, 0, 0.545636, 0, 0, 0, -0.646726, -2.88204, 3.97849, 0 )
+texture = ExtResource( 3 )
+
+[node name="Area" type="Area" parent="3D/Yoshiko3D" index="0"]
+
+[node name="CollisionShape" type="CollisionShape" parent="3D/Yoshiko3D/Area" index="0"]
+transform = Transform( 2.91563, 0, 0, 0, 8.1571, 0, 0, 0, 0.416939, 0, 0, 0 )
+shape = SubResource( 2 )
+
+[node name="3DCamera" type="Camera" parent="3D" index="2"]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -8.10717, 4.0679, 11.565 )
 script = SubResource( 3 )
 
-[node name="MeshInstance" type="MeshInstance" parent="3D" index="2"]
+[node name="MeshInstance" type="MeshInstance" parent="3D" index="3"]
 transform = Transform( 22.9006, 0, 0, 0, 1, 0, 0, 0, 22.9518, 0, 0, 0 )
 mesh = SubResource( 4 )
 material/0 = null
-[connection signal="input_event" from="3D/Sprite3D/Area" to="." method="_on_3dArea_click" binds= [ "dia1" ]]
-[connection signal="mouse_entered" from="3D/Sprite3D/Area" to="CursorLayer" method="_on_hover" binds= [ "dia1" ]]
-[connection signal="mouse_exited" from="3D/Sprite3D/Area" to="CursorLayer" method="_off_hover" binds= [ "dia1" ]]
+[connection signal="input_event" from="3D/Dia3D/Area" to="." method="_on_3dArea_click" binds= [ "dia1" ]]
+[connection signal="mouse_entered" from="3D/Dia3D/Area" to="CursorLayer" method="_on_hover" binds= [ "dia1", "Dia Kurosawa" ]]
+[connection signal="mouse_exited" from="3D/Dia3D/Area" to="CursorLayer" method="_off_hover" binds= [ "dia1", "Dia Kurosawa" ]]
+[connection signal="input_event" from="3D/Yoshiko3D/Area" to="." method="_on_3dArea_click" binds= [ "yoshiko1" ]]
+[connection signal="mouse_entered" from="3D/Yoshiko3D/Area" to="CursorLayer" method="_on_hover" binds= [ "yoshiko1", "Yoshiko Tsushima" ]]
+[connection signal="mouse_exited" from="3D/Yoshiko3D/Area" to="CursorLayer" method="_off_hover" binds= [ "yoshiko1", "Yoshiko Tsushima" ]]
