@@ -1,7 +1,10 @@
-[gd_scene load_steps=5 format=2]
+[gd_scene load_steps=11 format=2]
 
 [ext_resource path="res://components/event_processor.tscn" type="PackedScene" id=1]
 [ext_resource path="res://images/ui/paused.png" type="Texture" id=2]
+[ext_resource path="res://images/ui/cursor/cursor_outside.png" type="Texture" id=3]
+[ext_resource path="res://images/ui/cursor/cursor_inside.png" type="Texture" id=4]
+[ext_resource path="res://shaders/hue_shift.shader" type="Shader" id=6]
 
 [sub_resource type="GDScript" id=1]
 script/source = "extends \"res://scripts/base_scene.gd\"
@@ -10,7 +13,10 @@ var event_processor
 
 func _ready():
 	# Center window on screen
-	.center_window()
+	._center_window()
+	
+	# Set cursor
+	._cursor_setup()
 	
 	# Set sequence
 	self.event_processor = $EventProcessor
@@ -68,12 +74,83 @@ func _on_visibility_changed():
 		get_tree().paused = false
 "
 
+[sub_resource type="GDScript" id=3]
+script/source = "extends CanvasLayer
+
+var hovered_items = []
+var snapping = false
+
+func _ready():
+	pass
+
+func _process(_delta):
+	# Follow mouse
+	var mouse_pos = get_viewport().get_mouse_position()
+	if (mouse_pos.x != 0 && mouse_pos.y != 0):
+		$CursorSprite.position = get_viewport().get_mouse_position()
+	
+	if ($CursorSprite/CursorSpriteOutside.rotation_degrees >= 360):
+		$CursorSprite/CursorSpriteOutside.rotation_degrees -= 360
+	if ($CursorSprite/CursorSpriteInside.rotation_degrees <= -360):
+		$CursorSprite/CursorSpriteInside.rotation_degrees += 360
+	
+	if (self.hovered_items.empty()):
+		# Rotate a little
+		$CursorSprite/CursorSpriteOutside.rotation_degrees += 0.5
+		self.snapping = false
+	else:
+		# Set to snap to nearest angle
+		self.snapping = true
+	
+	if (self.snapping):
+		# Snap back to nearest angle (outside)
+		var over_times = floor(abs($CursorSprite/CursorSpriteOutside.rotation_degrees) / 90)
+		var degrees_remaining = abs($CursorSprite/CursorSpriteOutside.rotation_degrees) - (90 * over_times)
+		if (degrees_remaining >= 45):
+			$CursorSprite/CursorSpriteOutside.rotation_degrees += min(7, degrees_remaining)
+		else:
+			$CursorSprite/CursorSpriteOutside.rotation_degrees -= min(7, degrees_remaining)	
+		# Shrink
+		if ($CursorSprite.scale.x > 0.75):
+			$CursorSprite.scale.x -= 0.05
+			$CursorSprite.scale.y -= 0.05
+		# Hue shift
+		$CursorSprite/CursorSpriteOutside.get_material().set_shader_param('shift_amount', 0.1)
+		$CursorSprite/CursorSpriteInside.get_material().set_shader_param('shift_amount', 0.1)
+	else:
+		# Back to normal size
+		if ($CursorSprite.scale.x < 1):
+			$CursorSprite.scale.x += 0.05
+			$CursorSprite.scale.y += 0.05
+		# Shift back hue
+		$CursorSprite/CursorSpriteOutside.get_material().set_shader_param('shift_amount', 0)
+		$CursorSprite/CursorSpriteInside.get_material().set_shader_param('shift_amount', 0)
+
+func _on_hover(emitter):
+	if (!self.hovered_items.has(emitter)):
+		self.hovered_items.append(emitter)
+
+func _off_hover(emitter):
+	var index = self.hovered_items.find(emitter)
+	if (index > -1):
+		self.hovered_items.remove(index)
+"
+
+[sub_resource type="ShaderMaterial" id=4]
+shader = ExtResource( 6 )
+shader_param/shift_amount = null
+
+[sub_resource type="ShaderMaterial" id=5]
+shader = ExtResource( 6 )
+shader_param/shift_amount = null
+
 [node name="BaseScene" type="Node"]
 script = SubResource( 1 )
 
-[node name="CanvasLayer" type="CanvasLayer" parent="."]
+[node name="PausedUILayer" type="CanvasLayer" parent="."]
+layer = 10
 
-[node name="PausedIndicator" type="TextureRect" parent="CanvasLayer"]
+[node name="PausedIndicator" type="TextureRect" parent="PausedUILayer"]
 pause_mode = 2
 visible = false
 margin_right = 1920.0
@@ -87,7 +164,7 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="PauseTweener" type="Tween" parent="CanvasLayer/PausedIndicator"]
+[node name="PauseTweener" type="Tween" parent="PausedUILayer/PausedIndicator"]
 
 [node name="EventProcessor" parent="." instance=ExtResource( 1 )]
 
@@ -95,6 +172,32 @@ __meta__ = {
 position = Vector2( 960, 540 )
 rotating = true
 current = true
-[connection signal="visibility_changed" from="CanvasLayer/PausedIndicator" to="CanvasLayer/PausedIndicator" method="_on_visibility_changed"]
-[connection signal="tween_all_completed" from="CanvasLayer/PausedIndicator/PauseTweener" to="CanvasLayer/PausedIndicator" method="_on_tween_all_completed"]
+__meta__ = {
+"_edit_lock_": true
+}
+
+[node name="CursorLayer" type="CanvasLayer" parent="."]
+pause_mode = 2
+layer = 20
+script = SubResource( 3 )
+
+[node name="CursorSprite" type="Node2D" parent="CursorLayer"]
+modulate = Color( 1, 1, 1, 0.843137 )
+position = Vector2( -512, -512 )
+z_index = 200
+z_as_relative = false
+
+[node name="CursorSpriteOutside" type="Sprite" parent="CursorLayer/CursorSprite"]
+material = SubResource( 4 )
+scale = Vector2( 0.08, 0.08 )
+texture = ExtResource( 3 )
+
+[node name="CursorSpriteInside" type="Sprite" parent="CursorLayer/CursorSprite"]
+material = SubResource( 5 )
+scale = Vector2( 0.105, 0.105 )
+texture = ExtResource( 4 )
+[connection signal="visibility_changed" from="PausedUILayer/PausedIndicator" to="PausedUILayer/PausedIndicator" method="_on_visibility_changed"]
+[connection signal="tween_all_completed" from="PausedUILayer/PausedIndicator/PauseTweener" to="PausedUILayer/PausedIndicator" method="_on_tween_all_completed"]
+[connection signal="hover_off" from="EventProcessor" to="CursorLayer" method="_off_hover"]
+[connection signal="hover_on" from="EventProcessor" to="CursorLayer" method="_on_hover"]
 [connection signal="sequence_finished" from="EventProcessor" to="." method="_on_sequence_finished"]

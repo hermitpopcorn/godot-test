@@ -7,12 +7,13 @@
 [ext_resource path="res://audio/sfx/shutter.wav" type="AudioStream" id=5]
 [ext_resource path="res://images/ui/nameplate.png" type="Texture" id=6]
 [ext_resource path="res://fonts/droid-sans/DroidSans.ttf" type="DynamicFontData" id=7]
+[ext_resource path="res://shaders/hue_shift.shader" type="Shader" id=8]
 
 [sub_resource type="GDScript" id=1]
 script/source = "extends Control
 
 var message_display
-export var message_speed = 0.05
+export var message_speed = 0.02
 
 var timer
 var typing_finsihed = true
@@ -27,6 +28,8 @@ signal finished_typing
 signal finished_tweening
 signal clicked
 signal next
+signal hover_on
+signal hover_off
 
 func _ready():
 	self.timer = $Timer
@@ -86,6 +89,7 @@ func show(animate: bool = true):
 
 func toggle_visibility(show: bool, animate: bool = true):
 	$ClickableArea/NextCaret.visible = false
+	if show: self.visible = true
 	if (animate):
 		self.tween.interpolate_property(self, \"modulate:a\", (0 if show else 1), (1 if show else 0), 1, Tween.TRANS_LINEAR, Tween.EASE_IN)
 		self.tweening_finished = false
@@ -102,6 +106,7 @@ func _end_tween():
 	self.tween.remove_all()
 	self.tweening_finished = true
 	if self.modulate.a == 1: self.state = 'standby'; else: self.state = 'disabled'
+	if self.modulate.a == 0: self.visible = false
 	emit_signal('finished_tweening')
 
 func _advance():
@@ -124,6 +129,8 @@ func _play_click_sfx():
 func get_nameplate_hue(name):
 	var hue = 0
 	match (name):
+		\"Yoshiko\": hue = 0.9
+		\"Dia\": hue = 0.3
 		_: hue = 0
 	return hue
 
@@ -150,152 +157,113 @@ func _on_tween_started(object, key):
 func _on_tween_completed(object, key):
 	if (object == self && key == ':modulate:a'):
 		self.visibility = true if (self.modulate.a == 1) else false
+
+
+func _on_ClickableArea_mouse_entered(): emit_signal('hover_on')
+func _on_ClickableArea_mouse_exited(): emit_signal('hover_off')
 "
 
-[sub_resource type="Shader" id=21]
-code = "shader_type canvas_item;
-
-uniform float shift_amount : hint_range(0, 1);
-
-vec3 rgb2hsb(vec3 c) {
-    vec4 K = vec4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);
-    vec4 p = mix(vec4(c.bg, K.wz),
-                vec4(c.gb, K.xy),
-                step(c.b, c.g));
-    vec4 q = mix(vec4(p.xyw, c.r),
-                vec4(c.r, p.yzx),
-                step(p.x, c.r));
-    float d = q.x - min(q.w, q.y);
-    float e = 1.0e-10;
-    return vec3(abs(q.z + (q.w - q.y) / (6.0 * d + e)),
-                d / (q.x + e),
-                q.x);
-}
-
-vec3 hsb2rgb(vec3 c) {
-    vec3 rgb = clamp(abs(mod(c.x*6.0+vec3(0.0,4.0,2.0),
-                    6.0)-3.0)-1.0,
-                    0.0,
-                    1.0 );
-    rgb = rgb*rgb*(3.0-2.0*rgb);
-    return c.z * mix(vec3(1.0), rgb, c.y);
-}
-
-void fragment() {
-	// Get color from the sprite texture at the current pixel we are rendering
-    vec4 original_color = texture(TEXTURE, UV);
-    vec3 col = original_color.rgb;
-    // If not greyscale
-    if(col[0] != col[1] || col[1] != col[2]) {
-        vec3 hsb = rgb2hsb(col);
-        // Shift the color by shift_amount, but rolling over the value goes over 1
-        hsb.x = mod(hsb.x + shift_amount, 1.0);
-        col = hsb2rgb(hsb);
-    }
-    COLOR = vec4(col.rgb, original_color.a);
-}"
-
-[sub_resource type="ShaderMaterial" id=22]
-shader = SubResource( 21 )
+[sub_resource type="ShaderMaterial" id=2]
+shader = ExtResource( 8 )
 shader_param/shift_amount = 0.0
 
-[sub_resource type="DynamicFont" id=2]
+[sub_resource type="DynamicFont" id=3]
 size = 36
 use_mipmaps = true
 use_filter = true
 font_data = ExtResource( 3 )
 
-[sub_resource type="DynamicFont" id=3]
+[sub_resource type="DynamicFont" id=4]
 size = 36
 use_mipmaps = true
 use_filter = true
 font_data = ExtResource( 2 )
 fallback/0 = ExtResource( 7 )
 
-[sub_resource type="AtlasTexture" id=4]
+[sub_resource type="AtlasTexture" id=5]
 flags = 4
 atlas = ExtResource( 4 )
 region = Rect2( 0, 0, 256, 256 )
 
-[sub_resource type="AtlasTexture" id=5]
+[sub_resource type="AtlasTexture" id=6]
 flags = 4
 atlas = ExtResource( 4 )
 region = Rect2( 0, 256, 256, 256 )
 
-[sub_resource type="AtlasTexture" id=6]
+[sub_resource type="AtlasTexture" id=7]
 flags = 4
 atlas = ExtResource( 4 )
 region = Rect2( 0, 512, 256, 256 )
 
-[sub_resource type="AtlasTexture" id=7]
+[sub_resource type="AtlasTexture" id=8]
 flags = 4
 atlas = ExtResource( 4 )
 region = Rect2( 0, 768, 256, 256 )
 
-[sub_resource type="AtlasTexture" id=8]
+[sub_resource type="AtlasTexture" id=9]
 flags = 4
 atlas = ExtResource( 4 )
 region = Rect2( 0, 1024, 256, 256 )
 
-[sub_resource type="AtlasTexture" id=9]
+[sub_resource type="AtlasTexture" id=10]
 flags = 4
 atlas = ExtResource( 4 )
 region = Rect2( 256, 0, 256, 256 )
 
-[sub_resource type="AtlasTexture" id=10]
+[sub_resource type="AtlasTexture" id=11]
 flags = 4
 atlas = ExtResource( 4 )
 region = Rect2( 256, 256, 256, 256 )
 
-[sub_resource type="AtlasTexture" id=11]
+[sub_resource type="AtlasTexture" id=12]
 flags = 4
 atlas = ExtResource( 4 )
 region = Rect2( 256, 512, 256, 256 )
 
-[sub_resource type="AtlasTexture" id=12]
+[sub_resource type="AtlasTexture" id=13]
 flags = 4
 atlas = ExtResource( 4 )
 region = Rect2( 256, 768, 256, 256 )
 
-[sub_resource type="AtlasTexture" id=13]
+[sub_resource type="AtlasTexture" id=14]
 flags = 4
 atlas = ExtResource( 4 )
 region = Rect2( 256, 1024, 256, 256 )
 
-[sub_resource type="AtlasTexture" id=14]
+[sub_resource type="AtlasTexture" id=15]
 flags = 4
 atlas = ExtResource( 4 )
 region = Rect2( 512, 0, 256, 256 )
 
-[sub_resource type="AtlasTexture" id=15]
+[sub_resource type="AtlasTexture" id=16]
 flags = 4
 atlas = ExtResource( 4 )
 region = Rect2( 512, 256, 256, 256 )
 
-[sub_resource type="AtlasTexture" id=16]
+[sub_resource type="AtlasTexture" id=17]
 flags = 4
 atlas = ExtResource( 4 )
 region = Rect2( 512, 512, 256, 256 )
 
-[sub_resource type="AtlasTexture" id=17]
+[sub_resource type="AtlasTexture" id=18]
 flags = 4
 atlas = ExtResource( 4 )
 region = Rect2( 512, 768, 256, 256 )
 
-[sub_resource type="AtlasTexture" id=18]
+[sub_resource type="AtlasTexture" id=19]
 flags = 4
 atlas = ExtResource( 4 )
 region = Rect2( 512, 1024, 256, 256 )
 
-[sub_resource type="SpriteFrames" id=19]
+[sub_resource type="SpriteFrames" id=20]
 animations = [ {
-"frames": [ SubResource( 4 ), SubResource( 5 ), SubResource( 6 ), SubResource( 7 ), SubResource( 8 ), SubResource( 9 ), SubResource( 10 ), SubResource( 11 ), SubResource( 12 ), SubResource( 13 ), SubResource( 14 ), SubResource( 15 ), SubResource( 16 ), SubResource( 17 ), SubResource( 18 ) ],
+"frames": [ SubResource( 5 ), SubResource( 6 ), SubResource( 7 ), SubResource( 8 ), SubResource( 9 ), SubResource( 10 ), SubResource( 11 ), SubResource( 12 ), SubResource( 13 ), SubResource( 14 ), SubResource( 15 ), SubResource( 16 ), SubResource( 17 ), SubResource( 18 ), SubResource( 19 ) ],
 "loop": true,
 "name": "default",
 "speed": 10.0
 } ]
 
-[sub_resource type="RectangleShape2D" id=20]
+[sub_resource type="RectangleShape2D" id=21]
 extents = Vector2( 960, 147 )
 
 [node name="MessageBox" type="Control"]
@@ -317,7 +285,7 @@ __meta__ = {
 
 [node name="Nameplate" type="Sprite" parent="ClickableArea"]
 visible = false
-material = SubResource( 22 )
+material = SubResource( 2 )
 position = Vector2( -485.87, -116.327 )
 texture = ExtResource( 6 )
 __meta__ = {
@@ -330,8 +298,8 @@ margin_top = -23.0
 margin_right = 249.0
 margin_bottom = 29.0
 mouse_filter = 2
-custom_fonts/bold_font = SubResource( 2 )
-custom_fonts/normal_font = SubResource( 3 )
+custom_fonts/bold_font = SubResource( 3 )
+custom_fonts/normal_font = SubResource( 4 )
 custom_colors/default_color = Color( 0, 0, 0, 1 )
 custom_colors/font_color_shadow = Color( 0.141176, 0.141176, 0.141176, 0.32549 )
 custom_constants/shadow_offset_x = 3
@@ -349,8 +317,8 @@ margin_top = -74.0
 margin_right = 704.0
 margin_bottom = 108.0
 mouse_filter = 2
-custom_fonts/bold_font = SubResource( 2 )
-custom_fonts/normal_font = SubResource( 3 )
+custom_fonts/bold_font = SubResource( 3 )
+custom_fonts/normal_font = SubResource( 4 )
 custom_colors/default_color = Color( 0, 0, 0, 1 )
 custom_colors/font_color_shadow = Color( 0.141176, 0.141176, 0.141176, 0.32549 )
 custom_constants/shadow_offset_x = 3
@@ -365,8 +333,7 @@ __meta__ = {
 [node name="NextCaret" type="AnimatedSprite" parent="ClickableArea"]
 position = Vector2( 728.382, 68.6981 )
 scale = Vector2( 0.186289, 0.186289 )
-frames = SubResource( 19 )
-frame = 12
+frames = SubResource( 20 )
 playing = true
 __meta__ = {
 "_edit_lock_": true
@@ -374,7 +341,7 @@ __meta__ = {
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="ClickableArea"]
 visible = false
-shape = SubResource( 20 )
+shape = SubResource( 21 )
 one_way_collision = true
 __meta__ = {
 "_edit_lock_": true
@@ -386,8 +353,9 @@ __meta__ = {
 
 [node name="ClickSound" type="AudioStreamPlayer" parent="."]
 stream = ExtResource( 5 )
-bus = "UI SFX"
 [connection signal="input_event" from="ClickableArea" to="." method="_on_click"]
+[connection signal="mouse_entered" from="ClickableArea" to="." method="_on_ClickableArea_mouse_entered"]
+[connection signal="mouse_exited" from="ClickableArea" to="." method="_on_ClickableArea_mouse_exited"]
 [connection signal="tween_all_completed" from="Tween" to="." method="_on_tween_all_completed"]
 [connection signal="tween_completed" from="Tween" to="." method="_on_tween_completed"]
 [connection signal="tween_started" from="Tween" to="." method="_on_tween_started"]

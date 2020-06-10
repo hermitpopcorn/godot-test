@@ -3,7 +3,7 @@
 [ext_resource path="res://components/dialog.tscn" type="PackedScene" id=1]
 
 [sub_resource type="GDScript" id=1]
-script/source = "extends Control
+script/source = "extends Node
 
 var message_box
 var sequence
@@ -16,19 +16,32 @@ var audio = {}
 var wait_queue = []
 
 var camera
-var canvas_layer
+var wait_timer
+var display_container
+var background_container
+var sprites_container
+var audio_container
 
 signal sequence_finished
+signal hover_on
+signal hover_off
 
 func _ready():
-	self.message_box = $CanvasLayer/MessageBox
+	self.message_box = $MessageBoxUILayer/MessageBox
 	self.message_box.hide(false)
 
-func set_camera(camera):
-	self.camera = camera
+	self.display_container = $DisplayContainer
+	self.background_container = $DisplayContainer/BackgroundContainer
+	self.sprites_container = $DisplayContainer/SpriteContainer
+	self.audio_container = $AudioContainer
 
-func set_sequence(sequence: Array):
-	self.sequence = sequence
+	self.wait_timer = $WaitTimer
+
+func set_camera(new_camera):
+	self.camera = new_camera
+
+func set_sequence(new_sequence: Array):
+	self.sequence = new_sequence
 
 func start():
 	self.reset()
@@ -47,7 +60,7 @@ func reset():
 
 func _advance_sequence():
 	# clear wait
-	$WaitTimer.stop()
+	self.wait_timer.stop()
 	
 	self.current_index += 1
 	if (self.current_index < self.sequence.size()):
@@ -79,8 +92,8 @@ func _execute_sequence(index: int):
 		self.wait(entry)
 
 func wait(length: float):
-	$WaitTimer.wait_time = length
-	$WaitTimer.start()
+	self.wait_timer.wait_time = length
+	self.wait_timer.start()
 
 func show_text(text: String):
 	var options = {}
@@ -97,7 +110,7 @@ func show_text(text: String):
 	self.message_box.show_text(text, options)
 
 func play_audio(options: Dictionary):
-	var audio
+	var new_audio
 	var key = 'voice'
 	if (options.has('key')): key = options.key
 	
@@ -105,34 +118,34 @@ func play_audio(options: Dictionary):
 		# Remove existing voice (with same key) beforehand
 		if (self.audio.has(key)):
 			self.audio[key].queue_free()
-			$AudioContainer.remove_child(self.audio[key])
+			self.audio_container.remove_child(self.audio[key])
 			self.audio.erase(key)
 		# Create new AudioStreamPlayer
-		audio = AudioStreamPlayer.new()
-		audio.stream = load(options.src)
-		audio.bus = \"Voice\"
-		self.audio[key] = audio
-		$AudioContainer.add_child(audio)
-		audio.connect(\"finished\", self, \"_on_audio_finish\", ['voice', key])
-		audio.play()
+		new_audio = AudioStreamPlayer.new()
+		new_audio.stream = load(options.src)
+		new_audio.bus = \"Voice\"
+		self.audio[key] = new_audio
+		self.audio_container.add_child(new_audio)
+		new_audio.connect(\"finished\", self, \"_on_audio_finish\", ['voice', key])
+		new_audio.play()
 		print (\"next by audio play\")
 		self._advance_sequence()
 	elif (options.action == \"sfx\"):
 		# Create new AudioStreamPlayer
-		audio = AudioStreamPlayer.new()
-		audio.stream = load(options.src)
-		audio.bus = \"SFX\"
-		self.audio[key] = audio
-		$AudioContainer.add_child(audio)
-		audio.connect(\"finished\", self, \"_on_audio_finish\", ['sfx', key])
-		audio.play()
+		new_audio = AudioStreamPlayer.new()
+		new_audio.stream = load(options.src)
+		new_audio.bus = \"SFX\"
+		self.audio[key] = new_audio
+		self.audio_container.add_child(new_audio)
+		new_audio.connect(\"finished\", self, \"_on_audio_finish\", ['sfx', key])
+		new_audio.play()
 		print (\"next by audio play\")
 		self._advance_sequence()
 
 func _on_audio_finish(type: String, key: String):
 	if (type == 'voice' || type == 'sfx'):
 		self.audio[key].queue_free()
-		$AudioContainer.remove_child(self.audio[key])
+		self.audio_container.remove_child(self.audio[key])
 		self.audio.erase(key)
 
 func show_container(options: Dictionary):
@@ -143,9 +156,9 @@ func show_container(options: Dictionary):
 	var container
 	match (options.target):
 		\"sprites\":
-			container = $SpriteContainer
+			container = self.sprites_container
 		\"background\":
-			container = $BackgroundContainer
+			container = self.background_container
 	
 	if (options.action == \"move\"):
 		if (options.has('scale')):
@@ -174,8 +187,8 @@ func show_sprite(options: Dictionary):
 		# Remove existing image beforehand
 		if (self.sprites.has(options.key)):
 			self.sprites[options.key].queue_free()
-			$BackgroundContainer.remove_child(self.sprites[options.key])
-			$SpriteContainer.remove_child(self.sprites[options.key])
+			self.background_container.remove_child(self.sprites[options.key])
+			self.sprites_container.remove_child(self.sprites[options.key])
 			self.sprites.erase(options.key)
 		if (options.key.substr(0, 2) == 'bg'):
 			# Create new TextureRect
@@ -194,9 +207,9 @@ func show_sprite(options: Dictionary):
 		sprite.set_position(options.position)
 		sprite.modulate.a = 0
 		if (options.key.substr(0, 2) == 'bg'):
-			$BackgroundContainer.add_child(sprite)
+			self.background_container.add_child(sprite)
 		else:
-			$SpriteContainer.add_child(sprite)
+			self.sprites_container.add_child(sprite)
 		self.sprites[options.key] = sprite
 		$SpriteTween.interpolate_property(sprite, 'modulate:a', 0, 1, duration, Tween.TRANS_LINEAR, Tween.EASE_OUT_IN, delay)
 		if (wait_for_animation): self.wait_queue.push_back(sprite)
@@ -259,6 +272,9 @@ func _on_sprite_tween_all_completed():
 func _on_WaitTimer_timeout():
 	print (\"next by wait timeout\")
 	self._advance_sequence()
+
+func _on_hover(emitter): emit_signal('hover_on', emitter)
+func _off_hover(emitter): emit_signal('hover_off', emitter)
 "
 
 [sub_resource type="ImageTexture" id=2]
@@ -267,18 +283,22 @@ size = Vector2( 1920, 1080 )
 [sub_resource type="ImageTexture" id=3]
 size = Vector2( 1900, 1080 )
 
-[node name="EventProcessor" type="Control"]
+[node name="EventProcessor" type="Node"]
 script = SubResource( 1 )
-__meta__ = {
-"_edit_use_anchors_": false
-}
 
-[node name="BackgroundContainer" type="TextureRect" parent="."]
+[node name="DisplayContainer" type="Sprite" parent="."]
+z_index = 100
+
+[node name="BackgroundContainer" type="TextureRect" parent="DisplayContainer"]
 self_modulate = Color( 1, 1, 1, 0 )
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
+margin_left = -0.5
+margin_top = -0.5
+margin_right = 1919.5
+margin_bottom = 1079.5
 rect_pivot_offset = Vector2( 960, 540 )
 mouse_filter = 2
 texture = SubResource( 2 )
@@ -286,7 +306,7 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="SpriteContainer" type="TextureRect" parent="."]
+[node name="SpriteContainer" type="TextureRect" parent="DisplayContainer"]
 self_modulate = Color( 1, 1, 1, 0 )
 margin_right = 1920.0
 margin_bottom = 1080.0
@@ -303,9 +323,10 @@ __meta__ = {
 
 [node name="VoiceStreamPlayer" type="AudioStreamPlayer" parent="AudioContainer"]
 
-[node name="CanvasLayer" type="CanvasLayer" parent="."]
+[node name="MessageBoxUILayer" type="CanvasLayer" parent="."]
 
-[node name="MessageBox" parent="CanvasLayer" instance=ExtResource( 1 )]
+[node name="MessageBox" parent="MessageBoxUILayer" instance=ExtResource( 1 )]
+visible = false
 
 [node name="WaitTimer" type="Timer" parent="."]
 one_shot = true
@@ -314,6 +335,8 @@ __meta__ = {
 }
 [connection signal="tween_all_completed" from="SpriteTween" to="." method="_on_sprite_tween_all_completed"]
 [connection signal="tween_completed" from="SpriteTween" to="." method="_on_sprite_tween_completed"]
-[connection signal="finished_tweening" from="CanvasLayer/MessageBox" to="." method="_on_MessageBox_finished_tweening"]
-[connection signal="next" from="CanvasLayer/MessageBox" to="." method="_on_next"]
+[connection signal="finished_tweening" from="MessageBoxUILayer/MessageBox" to="." method="_on_MessageBox_finished_tweening"]
+[connection signal="hover_off" from="MessageBoxUILayer/MessageBox" to="." method="_off_hover" binds= [ "MessageBox" ]]
+[connection signal="hover_on" from="MessageBoxUILayer/MessageBox" to="." method="_on_hover" binds= [ "MessageBox" ]]
+[connection signal="next" from="MessageBoxUILayer/MessageBox" to="." method="_on_next"]
 [connection signal="timeout" from="WaitTimer" to="." method="_on_WaitTimer_timeout"]
