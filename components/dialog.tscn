@@ -91,7 +91,7 @@ func toggle_visibility(show: bool, animate: bool = true):
 	$ClickableArea/NextCaret.visible = false
 	if show: self.visible = true
 	if (animate):
-		self.tween.interpolate_property(self, \"modulate:a\", (0 if show else 1), (1 if show else 0), 1, Tween.TRANS_LINEAR, Tween.EASE_IN)
+		self.tween.interpolate_property(self, \"modulate:a\", (0 if show else 1), (1 if show else 0), 0.5, Tween.TRANS_LINEAR, Tween.EASE_IN)
 		self.tweening_finished = false
 		self.tween.start()
 	else:
@@ -334,7 +334,7 @@ __meta__ = {
 position = Vector2( 728.382, 68.6981 )
 scale = Vector2( 0.186289, 0.186289 )
 frames = SubResource( 20 )
-frame = 9
+frame = 4
 playing = true
 __meta__ = {
 "_edit_lock_": true

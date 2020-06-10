@@ -48,7 +48,6 @@ func start():
 	self.resume()
 
 func resume():
-	emit_signal('hover_off', \"*\")
 	self.running = true
 	self._advance_sequence()
 
@@ -72,6 +71,8 @@ func _advance_sequence():
 
 func _execute_sequence(index: int):
 	var entry = self.sequence[index]
+	if (entry is Array):
+		entry = self.translate_shortcode(entry)
 	if (entry is Dictionary):
 		match entry.command:
 			'hide_message_box':
@@ -155,23 +156,29 @@ func show_container(options: Dictionary):
 	var wait_for_animation = true; if (options.has('wait')): wait_for_animation = options.wait
 	
 	var container
+	if (!options.has('target') && options.has('key')): options.target = options.key
 	match (options.target):
 		\"sprites\":
 			container = self.sprites_container
 		\"background\":
 			container = self.background_container
 	
-	if (options.action == \"move\"):
-		if (options.has('scale')):
-			$SpriteTween.interpolate_property(container, 'rect_scale', null, options.scale, duration, Tween.TRANS_LINEAR, Tween.EASE_OUT_IN, delay)
-		if (options.has('rotation')):
-			$SpriteTween.interpolate_property(container, 'rect_rotation', null, options.rotation, duration, Tween.TRANS_LINEAR, Tween.EASE_OUT_IN, delay)
-		if (options.has('position')):
-			$SpriteTween.interpolate_property(container, 'rect_position', null, options.position, duration, Tween.TRANS_LINEAR, Tween.EASE_OUT_IN, delay)
-		if (wait_for_animation): self.wait_queue.push_back(container)
-		$SpriteTween.start()
-	elif (options.action == \"clear\"):
-		$SpriteTween.remove(container)
+	match options.action:
+		\"move\":
+			if (options.has('scale')):
+				$SpriteTween.interpolate_property(container, 'rect_scale', null, options.scale, duration, Tween.TRANS_LINEAR, Tween.EASE_OUT_IN, delay)
+			if (options.has('rotation')):
+				$SpriteTween.interpolate_property(container, 'rect_rotation', null, options.rotation, duration, Tween.TRANS_LINEAR, Tween.EASE_OUT_IN, delay)
+			if (options.has('position')):
+				$SpriteTween.interpolate_property(container, 'rect_position', null, options.position, duration, Tween.TRANS_LINEAR, Tween.EASE_OUT_IN, delay)
+			if (wait_for_animation): self.wait_queue.push_back(container)
+			$SpriteTween.start()
+		\"clear\":
+			$SpriteTween.remove(container)
+		\"reset\":
+			container.rect_scale = Vector2(1, 1)
+			container.rect_rotation = 0
+			container.rect_position = Vector2(0, 0)
 	
 	# Immediately advance if queue is empty
 	if (self.wait_queue.size() == 0):
@@ -188,8 +195,10 @@ func show_sprite(options: Dictionary):
 		# Remove existing image beforehand
 		if (self.sprites.has(options.key)):
 			self.sprites[options.key].queue_free()
-			self.background_container.remove_child(self.sprites[options.key])
-			self.sprites_container.remove_child(self.sprites[options.key])
+			if (options.key.substr(0, 2) == 'bg'):
+				self.background_container.remove_child(self.sprites[options.key])
+			else:
+				self.sprites_container.remove_child(self.sprites[options.key])
 			self.sprites.erase(options.key)
 		if (options.key.substr(0, 2) == 'bg'):
 			# Create new TextureRect
@@ -246,6 +255,37 @@ func show_sprite(options: Dictionary):
 	if (self.wait_queue.size() == 0):
 		print(\"next by zero wait queue show sprite\")
 		self._advance_sequence()
+
+func translate_shortcode(shortcode: Array):
+	print(shortcode)
+	var command: String = shortcode[0]
+	var options: Dictionary
+	var translated: Dictionary
+	
+	if (!command.begins_with(\">\")): push_error(\"Shortcode string didn't start with '>'.\")
+	if (shortcode.size() == 2):
+		options = shortcode[1]
+	
+	# Main command
+	var split_command: Array = command.split(\"|\")
+	translated = { 'command': split_command[0].trim_prefix(\">\") }
+	
+	# Options (action & key)
+	if (split_command.size() > 1):
+		options.action = split_command[1]
+		translated.options = options
+		match translated.command:
+			\"container\": translated.options.target = split_command[2]
+			\"audio\": if (translated.options.action == \"voice\"): translated.options.src = \"res://audio/voice/\" + split_command[2]
+			_: translated.options.key = split_command[2]
+	# Additional options (skip wait)
+	if (split_command.size() > 3):
+		if (translated.command != \"voice\"):
+			if (split_command[3] == \"nowait\"):
+				translated.options.wait = false
+	
+	print(translated)
+	return translated
 
 func _on_next():
 	if (self.running):

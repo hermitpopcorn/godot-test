@@ -98,7 +98,7 @@ func _process(_delta):
 	if ($CursorSprite/CursorSpriteInside.rotation_degrees <= -360):
 		$CursorSprite/CursorSpriteInside.rotation_degrees += 360
 	
-	if (self.hovered_items.empty()):
+	if (!self.check_hovering()):
 		# Rotate a little
 		$CursorSprite/CursorSpriteOutside.rotation_degrees += 0.5
 		self.snapping = false
@@ -130,10 +130,15 @@ func _process(_delta):
 		$CursorSprite/CursorSpriteOutside.get_material().set_shader_param('shift_amount', 0)
 		$CursorSprite/CursorSpriteInside.get_material().set_shader_param('shift_amount', 0)
 
+func check_hovering() -> bool:
+	if (self.hovered_items.size() == 0): return false
+	
+	if (self.get_parent().get_node('EventProcessor').running):
+		if (!self.hovered_items.has('MessageBox')): return false
+	
+	return true
+
 func _on_hover(emitter, text=null):
-	if (self.get_parent().get_node(\"EventProcessor\").running):
-		if (emitter != \"MessageBox\"):
-			return false
 	if (!self.hovered_items.has(emitter)):
 		self.hovered_items.append(emitter)
 	if (text):
@@ -162,7 +167,22 @@ shader_param/shift_amount = null
 [sub_resource type="GDScript" id=6]
 script/source = "extends CanvasLayer
 
-var timer
+var active_text: String
+var diamond_stripe_active: bool = false
+
+func _process(_delta):
+	if (self.get_parent().get_node('EventProcessor').running && self.diamond_stripe_active && self.active_text):
+		self.temp_hide_diamond_stripe()
+	elif (!self.get_parent().get_node('EventProcessor').running && !self.diamond_stripe_active && self.active_text):
+		self.reshow_diamond_stripe()
+
+func temp_hide_diamond_stripe():
+	self.diamond_stripe_active = false
+	$DiamondStripe.hide_diamond_stripe()
+
+func reshow_diamond_stripe():
+	self.diamond_stripe_active = true
+	self._on_CursorLayer_show_info_text(self.active_text)
 
 func _on_CursorLayer_show_info_text(text):
 	# Calculate rect size by simulating it on a dummy node
@@ -172,14 +192,18 @@ func _on_CursorLayer_show_info_text(text):
 	$DiamondStripe/TextRect/RectCalculator.visible_characters = -1
 	$Microtimer.start(); yield($Microtimer, \"timeout\")
 	
-	var length: int = ceil(2 + ($DiamondStripe/TextRect/RectCalculator.rect_size.x / 35))
+	self.active_text = text
+	var length: int = int(ceil(2 + ($DiamondStripe/TextRect/RectCalculator.rect_size.x / 35)))
 	if (length % 2) == 1:
 		length += 1
 	$DiamondStripe.show_diamond_stripe(length, text)
+	self.diamond_stripe_active = true
 
 func _on_CursorLayer_hide_info_text(text):
 	$Microtimer.start(); yield($Microtimer, \"timeout\")
+	self.active_text = \"\"
 	$DiamondStripe.hide_diamond_stripe()
+	self.diamond_stripe_active = false
 "
 
 [sub_resource type="GDScript" id=7]
@@ -199,6 +223,8 @@ func hide_diamond_stripe():
 
 func create_stripe(length):
 	for child in $Diamonds.get_children():
+		for childschild in child.get_children():
+			childschild.queue_free()
 		child.queue_free()
 	
 	length = max(length, 3)
@@ -232,9 +258,12 @@ func time_stripe(show):
 	var number = 1
 	for child in $Diamonds.get_children():
 		if (!show):
-			if (child.get_node(\"Timer\")):
+			if (child.has_node(\"Timer\")):
 				child.get_node(\"Timer\").stop()
-				child.get_node(\"Tweener\").stop_all()
+				if (child.has_node(\"Tweener\")):
+					child.get_node(\"Tweener\").stop_all()
+				for childschild in child.get_children():
+					childschild.queue_free()
 				child.queue_free()
 				continue
 		timer = Timer.new()
@@ -284,6 +313,8 @@ func _timer_timeout(timer: Timer, node: Sprite, show: bool):
 	timer.queue_free()
 
 func _hide_tween_finish(node: Sprite):
+	for child in node.get_children():
+		child.queue_free()
 	node.queue_free()
 "
 

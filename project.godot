@@ -32,7 +32,9 @@ config/icon="res://icon.png"
 
 [debug]
 
+gdscript/completion/autocomplete_setters_and_getters=true
 gdscript/warnings/unused_argument=false
+gdscript/warnings/return_value_discarded=false
 
 [display]
 
