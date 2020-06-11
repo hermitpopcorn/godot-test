@@ -17,9 +17,9 @@ script/source = "extends TextureRect
 func _input(event):
 	if (self.visible):
 		if event.is_action_pressed(\"ui_cancel\"):
-			$PauseTweener.remove_all()
-			$PauseTweener.interpolate_property(self, 'modulate:a', 1, 0, 0.1, Tween.TRANS_LINEAR, Tween.EASE_OUT_IN)
-			$PauseTweener.start()
+			$PauseTween.remove_all()
+			$PauseTween.interpolate_property(self, 'modulate:a', 1, 0, 0.1, Tween.TRANS_LINEAR, Tween.EASE_OUT_IN)
+			$PauseTween.start()
 
 func _on_tween_all_completed():
 	self.visible = false
@@ -179,10 +179,15 @@ func hide_diamond_stripe():
 	hide_stripe()
 	hide_text()
 
+func create_diamond_node():
+	var node: Sprite = Sprite.new()
+	node.texture = load(\"res://images/ui/diamond.png\")
+	node.scale = Vector2(0.14, 0.14)
+	node.modulate.a = 0
+	return node
+
 func create_stripe(length):
 	for child in $Diamonds.get_children():
-		for childschild in child.get_children():
-			childschild.queue_free()
 		child.queue_free()
 	
 	length = max(length, 3)
@@ -208,72 +213,38 @@ func create_stripe(length):
 			diamond_node.set_position(Vector2(column_x, 0))
 		current_column += 1
 
-func show_stripe(): time_stripe(true)
-func hide_stripe(): time_stripe(false)
+func show_stripe(): animate_stripe(true)
+func hide_stripe(): animate_stripe(false)
 
-func time_stripe(show):
-	var timer: Timer
-	var number = 1
+func animate_stripe(show):
+	$Tween.stop_all()
+	$Tween.remove_all()
+	var c = 0
 	for child in $Diamonds.get_children():
-		if (!show):
-			if (child.has_node(\"Timer\")):
-				child.get_node(\"Timer\").stop()
-				if (child.has_node(\"Tweener\")):
-					child.get_node(\"Tweener\").stop_all()
-				for childschild in child.get_children():
-					childschild.queue_free()
-				child.queue_free()
-				continue
-		timer = Timer.new()
-		timer.one_shot = true
-		timer.wait_time = self.fade_speed * number
-		timer.connect(\"timeout\", self, \"_timer_timeout\", [timer, child, show])
-		timer.name = \"Timer\"
-		child.add_child(timer)
-	for child in $Diamonds.get_children():
-		child.get_node(\"Timer\").start(self.fade_speed * (number - 1))
-		number += 1
+		if (show):
+			$Tween.interpolate_property(child, \"modulate:a\", 0, 1, 0.2, Tween.TRANS_LINEAR, Tween.EASE_IN, self.fade_speed * c)
+		else:
+			$Tween.interpolate_property(child, \"modulate:a\", child.modulate.a, 0, 0.15, Tween.TRANS_LINEAR, Tween.EASE_IN, self.fade_speed * c)
+		c += 1
+	$Tween.start()
 
 func show_text(text: String):
+	if ($TextRect/Text/Tween.is_active()):
+		$TextRect/Text/Tween.stop_all()
 	$TextRect/Text.text = text
 	$TextRect/Text.modulate.a = 0
-	$TextRect/Text/Tweener.interpolate_property($TextRect/Text, \"modulate:a\", 0, 1, 0.2, Tween.TRANS_LINEAR, Tween.EASE_IN)
-	$TextRect/Text/Tweener.interpolate_property($TextRect/Text, \"visible_characters\", 0, text.length(), 0.2, Tween.TRANS_LINEAR, Tween.EASE_IN)
-	$TextRect/Text/Tweener.start()
+	$TextRect/Text/Tween.interpolate_property($TextRect/Text, \"modulate:a\", 0, 1, 0.2, Tween.TRANS_LINEAR, Tween.EASE_IN, 0.2)
+	$TextRect/Text/Tween.interpolate_property($TextRect/Text, \"visible_characters\", 0, text.length(), 0.2, Tween.TRANS_LINEAR, Tween.EASE_IN, 0.2)
+	$TextRect/Text/Tween.start()
 
 func hide_text():
-	$TextRect/Text/Tweener.stop_all()	
-	$TextRect/Text/Tweener.interpolate_property($TextRect/Text, \"modulate:a\", $TextRect/Text.modulate.a, 0, 0.2, Tween.TRANS_LINEAR, Tween.EASE_IN)
-	$TextRect/Text/Tweener.start()
+	$TextRect/Text/Tween.stop_all()
+	$TextRect/Text/Tween.interpolate_property($TextRect/Text, \"modulate:a\", $TextRect/Text.modulate.a, 0, 0.2, Tween.TRANS_LINEAR, Tween.EASE_IN)
+	$TextRect/Text/Tween.start()
 
-func create_diamond_node():
-	var node: Sprite = Sprite.new()
-	node.texture = load(\"res://images/ui/diamond.png\")
-	node.scale = Vector2(0.14, 0.14)
-	node.modulate.a = 0
-	
-	var tweener: Tween = Tween.new()
-	tweener.name = \"Tweener\"
-	node.add_child(tweener)
-	return node
-
-func _timer_timeout(timer: Timer, node: Sprite, show: bool):
-	if (!node): return false
-	var tweener: Tween = node.get_node(\"Tweener\")
-	
-	if (show):
-		tweener.interpolate_property(node, \"modulate:a\", 0, 1, 0.2, Tween.TRANS_LINEAR, Tween.EASE_IN)
-		tweener.start()
-	else:
-		tweener.interpolate_property(node, \"modulate:a\", node.modulate.a, 0, 0.15, Tween.TRANS_LINEAR, Tween.EASE_IN)
-		tweener.connect(\"tween_all_completed\", self, \"_hide_tween_finish\", [node])
-		tweener.start()
-	timer.queue_free()
-
-func _hide_tween_finish(node: Sprite):
-	for child in node.get_children():
-		child.queue_free()
-	node.queue_free()
+func _tween_finished():
+	for child in $Diamonds.get_children():
+		if (child.modulate.a == 0): child.queue_free()
 "
 
 [node name="BaseScene" type="Node"]
@@ -296,7 +267,7 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="PauseTweener" type="Tween" parent="PausedUILayer/PausedIndicator"]
+[node name="PauseTween" type="Tween" parent="PausedUILayer/PausedIndicator"]
 
 [node name="EventProcessor" parent="." instance=ExtResource( 1 )]
 
@@ -342,6 +313,8 @@ one_shot = true
 position = Vector2( 0, 114.716 )
 script = SubResource( 7 )
 
+[node name="Tween" type="Tween" parent="InfoLayer/DiamondStripe"]
+
 [node name="Diamonds" type="Node2D" parent="InfoLayer/DiamondStripe"]
 modulate = Color( 1, 1, 1, 0.878431 )
 
@@ -379,11 +352,12 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="Tweener" type="Tween" parent="InfoLayer/DiamondStripe/TextRect/Text"]
+[node name="Tween" type="Tween" parent="InfoLayer/DiamondStripe/TextRect/Text"]
 [connection signal="visibility_changed" from="PausedUILayer/PausedIndicator" to="PausedUILayer/PausedIndicator" method="_on_visibility_changed"]
-[connection signal="tween_all_completed" from="PausedUILayer/PausedIndicator/PauseTweener" to="PausedUILayer/PausedIndicator" method="_on_tween_all_completed"]
+[connection signal="tween_all_completed" from="PausedUILayer/PausedIndicator/PauseTween" to="PausedUILayer/PausedIndicator" method="_on_tween_all_completed"]
 [connection signal="hover_off" from="EventProcessor" to="CursorLayer" method="_off_hover"]
 [connection signal="hover_on" from="EventProcessor" to="CursorLayer" method="_on_hover"]
 [connection signal="sequence_finished" from="EventProcessor" to="." method="_on_sequence_finished"]
 [connection signal="hide_info_text" from="CursorLayer" to="InfoLayer" method="_on_CursorLayer_hide_info_text"]
 [connection signal="show_info_text" from="CursorLayer" to="InfoLayer" method="_on_CursorLayer_show_info_text"]
+[connection signal="tween_all_completed" from="InfoLayer/DiamondStripe/Tween" to="InfoLayer/DiamondStripe" method="_tween_finished"]

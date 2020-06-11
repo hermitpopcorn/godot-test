@@ -181,6 +181,7 @@ static func dia1():
 static func yoshiko1():
 	return [
 		{ 'command': 'show_message_box' },
+		"Test2",
 		{ 'command': 'sprite', 'options': {
 			'action': 'show',
 			'key': 'yoshiko',
