@@ -61,7 +61,7 @@ func reset():
 func _advance_sequence():
 	# clear wait
 	self.wait_timer.stop()
-	
+
 	self.current_index += 1
 	if (self.current_index < self.sequence.size()):
 		self._execute_sequence(self.current_index)
@@ -99,7 +99,7 @@ func wait(length: float):
 
 func show_text(text: String):
 	var options = {}
-	
+
 	var separator_position = text.find(\"|\")
 	if (separator_position > 0):
 		var split_text = text.split('|')
@@ -108,14 +108,14 @@ func show_text(text: String):
 			'hue': self.message_box.get_nameplate_hue(split_text[0]),
 		}
 		text = split_text[1]
-		
+
 	self.message_box.show_text(text, options)
 
 func play_audio(options: Dictionary):
 	var new_audio
 	var key = 'voice'
 	if (options.has('key')): key = options.key
-	
+
 	if (options.action == \"voice\"):
 		# Remove existing voice (with same key) beforehand
 		if (self.audio.has(key)):
@@ -154,7 +154,7 @@ func show_container(options: Dictionary):
 	var duration = 1; if options.has('duration'): duration = options.duration
 	var delay = 0; if options.has('delay'): delay = options.delay
 	var wait_for_animation = true; if (options.has('wait')): wait_for_animation = options.wait
-	
+
 	var container
 	if (!options.has('target') && options.has('key')): options.target = options.key
 	match (options.target):
@@ -162,7 +162,7 @@ func show_container(options: Dictionary):
 			container = self.sprites_container
 		\"background\":
 			container = self.background_container
-	
+
 	match options.action:
 		\"move\":
 			if (options.has('scale')):
@@ -179,7 +179,7 @@ func show_container(options: Dictionary):
 			container.rect_scale = Vector2(1, 1)
 			container.rect_rotation = 0
 			container.rect_position = Vector2(0, 0)
-	
+
 	# Immediately advance if queue is empty
 	if (self.wait_queue.size() == 0):
 		print(\"next by zero wait queue show container\")
@@ -190,7 +190,7 @@ func show_sprite(options: Dictionary):
 	var duration = 1; if options.has('duration'): duration = options.duration
 	var delay = 0; if options.has('delay'): delay = options.delay
 	var wait_for_animation = true; if (options.has('wait')): wait_for_animation = options.wait
-	
+
 	if (options.action == \"show\"):
 		# Remove existing image beforehand
 		if (self.sprites.has(options.key)):
@@ -250,26 +250,25 @@ func show_sprite(options: Dictionary):
 		$SpriteTween.start()
 	elif (options.action == \"clear\"):
 		$SpriteTween.remove(self.sprites[options.key])
-	
+
 	# Immediately advance if queue is empty
 	if (self.wait_queue.size() == 0):
 		print(\"next by zero wait queue show sprite\")
 		self._advance_sequence()
 
 func translate_shortcode(shortcode: Array):
-	print(shortcode)
 	var command: String = shortcode[0]
 	var options: Dictionary
 	var translated: Dictionary
-	
+
 	if (!command.begins_with(\">\")): push_error(\"Shortcode string didn't start with '>'.\")
 	if (shortcode.size() == 2):
 		options = shortcode[1]
-	
+
 	# Main command
 	var split_command: Array = command.split(\"|\")
 	translated = { 'command': split_command[0].trim_prefix(\">\") }
-	
+
 	# Options (action & key)
 	if (split_command.size() > 1):
 		options.action = split_command[1]
@@ -284,14 +283,13 @@ func translate_shortcode(shortcode: Array):
 			if (split_command[3] == \"nowait\"):
 				translated.options.wait = false
 	
-	print(translated)
 	return translated
 
 func _on_next():
 	if (self.running):
 		# Cancel if queue is not empty
 		if (self.wait_queue.size() > 0): return false
-		
+
 		print (\"next by next\")
 		self._advance_sequence()
 

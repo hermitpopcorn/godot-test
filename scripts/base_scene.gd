@@ -20,3 +20,6 @@ func _center_window():
 
 func _cursor_setup():
 	Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
+
+func check_event_processor_running():
+	return self.get_node('EventProcessor').running

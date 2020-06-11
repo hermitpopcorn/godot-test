@@ -1,198 +1,23 @@
 [gd_scene load_steps=8 format=2]
 
-[ext_resource path="res://scenes/base.tscn" type="PackedScene" id=1]
+[ext_resource path="res://scenes/Base.tscn" type="PackedScene" id=1]
 [ext_resource path="res://images/dialog_sprite/dia_a2.png" type="Texture" id=2]
 [ext_resource path="res://images/dialog_sprite/yoshiko_a2.png" type="Texture" id=3]
 
 [sub_resource type="GDScript" id=1]
 script/source = "extends \"res://scripts/base_scene.gd\"
 
+const evmgr = preload(\"res://scripts/events/event1.gd\")
+
 func _ready():
 	# Center window on screen
 	._center_window()
-	
+
 	# Set cursor
 	._cursor_setup()
 
 func run_event():
-	$EventProcessor.set_sequence([
-		1.0,
-		['>sprite|show|bg', {
-			'src': 'res://images/bg/izumito.png',
-			'position': Vector2(0, 0),
-		} ],
-		0.5,
-		['>show_message_box'],
-		['>audio|sfx|bike', {
-			'src': \"res://audio/voice/bike_00.wav\",
-		} ],
-		1.0,
-		['>sprite|show|yoshiko', {
-			'src': 'res://images/dialog_sprite/yoshiko_n2.png',
-			'position': Vector2(-265, 790),
-			'duration': 0.1,
-			'z_index': 2,
-		} ],
-		['>sprite|move|yoshiko', {
-			'position': Vector2(1201, 790),
-			'duration': 0.5,
-		} ],
-		['>sprite|move|yoshiko|nowait', {
-			'position': Vector2(1250, 790),
-			'duration': 10,
-		} ],
-		['>audio|voice|yoshiko_00.wav'],
-		\"Yoshiko|Yo.\",
-		['>sprite|change|yoshiko', {
-			'src': 'res://images/dialog_sprite/yoshiko_a2.png',
-		} ],
-		['>audio|voice|yoshiko_01.wav'],
-		\"Yoshiko|Let's get this party goin', YOROSHIKU!!\",
-		['>sprite|dim|yoshiko'],
-		['>sprite|show|dia', {
-			'src': 'res://images/dialog_sprite/dia_a2.png',
-			'position': Vector2(2211, 790),
-			'duration': 0.1,
-			'z_index': 1,
-		} ],
-		['>sprite|move|dia', {
-			'position': Vector2(510, 790),
-			'duration': 0.5,
-		} ],
-		['>sprite|move|dia|nowait', {
-			'position': Vector2(480, 790),
-			'duration': 10,
-		} ],
-		['>audio|voice|dia_00.wav'],
-		\"Dia|YOROSHIKU.\",
-		['>sprite|light|yoshiko|nowait'],
-		['>sprite|dim|dia'],
-		['>sprite|clear|yoshiko'],
-		['>sprite|clear|dia'],
-		['>container|move|sprites|nowait', {
-			'scale': Vector2(1.1, 1.1),
-			'rotation': 5,
-			'position': Vector2(-50, 50),
-			'duration': 0.5,
-		} ],
-		['>container|move|background|nowait', {
-			'scale': Vector2(1.3, 1.3),
-			'rotation': 10,
-			'duration': 0.5,
-		} ],
-		['>sprite|move|yoshiko', {
-			'scale': Vector2(1.2, 1.2),
-			'duration': 0.5,
-		} ],
-		['>container|move|background|nowait', {
-			'position': Vector2(30, 0),
-			'duration': 10,
-		} ],
-		['>sprite|move|yoshiko|nowait', {
-			'position': Vector2(1280, 790),
-			'duration': 10,
-		} ],
-		['>audio|voice|yoshiko_02.wav'],
-		\"Yoshiko|Wuzzat? Your decoration game WEAK. You dare callin' this christmas decor, huh?!\",
-		['>container|clear|background'],
-		['>sprite|clear|yoshiko'],
-		['>sprite|dim|yoshiko|nowait'],
-		['>sprite|light|dia|nowait'],
-		['>container|move|sprites|nowait', {
-			'scale': Vector2(1.1, 1.1),
-			'rotation': -5,
-			'position': Vector2(50, 50),
-			'duration': 0.5,
-		} ],
-		['>container|move|background|nowait', {
-			'scale': Vector2(1.3, 1.3),
-			'rotation': -10,
-			'duration': 0.5,
-		} ],
-		['>sprite|move|yoshiko|nowait', {
-			'scale': Vector2(1.0, 1.0),
-			'duration': 0.5,
-		} ],
-		['>sprite|move|dia', {
-			'scale': Vector2(1.2, 1.2),
-			'position': Vector2(480, 900),
-			'duration': 0.5,
-		} ],
-		0.5,
-		['>container|move|background|nowait', {
-			'position': Vector2(-30, 0),
-			'duration': 10,
-		} ],
-		['>sprite|move|dia|nowait', {
-			'position': Vector2(510, 900),
-			'duration': 10,
-		} ],
-		['>audio|voice|dia_01.wav'],
-		\"Dia|What, you got a problem with one of my creations?!\",
-		['>container|clear|background'],
-		['>sprite|clear|yoshiko'],
-		['>sprite|clear|dia'],
-		['>sprite|light|yoshiko|nowait'],
-		['>sprite|dim|dia'],
-		['>container|move|sprites|nowait', {
-			'scale': Vector2(1.1, 1.1),
-			'rotation': 5,
-			'position': Vector2(-50, 50),
-			'duration': 0.5,
-		} ],
-		['>container|move|background|nowait', {
-			'scale': Vector2(1.3, 1.3),
-			'rotation': 10,
-			'duration': 0.5,
-		} ],
-		['>sprite|move|yoshiko', {
-			'scale': Vector2(1.2, 1.2),
-			'duration': 0.5,
-		} ],
-		['>container|move|background|nowait', {
-			'position': Vector2(0, 0),
-			'duration': 10,
-		} ],
-		['>sprite|move|dia|nowait', {
-			'position': Vector2(550, 900),
-			'duration': 10,
-		} ],
-		['>sprite|move|yoshiko|nowait', {
-			'position': Vector2(1200, 790),
-			'duration': 10,
-		} ],
-		['>audio|voice|yoshiko_03.wav'],
-		\"Yoshiko|I got problems with ALL your creations!\",
-		['>container|clear|background'],
-		['>container|clear|sprites'],
-		['>container|move|background|nowait', {
-			'position': Vector2(0, 50),
-			'scale': Vector2(1.4, 1.4),
-			'duration': 0.5,
-		} ],
-		['>container|move|sprites|nowait', {
-			'position': Vector2(-100, 415),
-			'scale': Vector2(1.3, 1.3),
-			'duration': 0.5,
-		} ],
-		['>sprite|move|yoshiko|nowait', {
-			'scale': Vector2(1.4, 1.4),
-			'duration': 0.5,
-		} ],
-		['>audio|voice|yoshiko_04.wav'],
-		\"Yoshiko|Don't be disrespectin' Christmas, skank!\",
-		['>sprite|hide|bg'],
-		['>sprite|hide|yoshiko|nowait', {
-			'duration': 0.5,
-		} ],
-		['>sprite|hide|dia|nowait', {
-			'duration': 0.5,
-		} ],
-		['>hide_message_box'],
-		1.0,
-		['>container|reset|background'],
-		['>container|reset|sprites'],
-	])
+	$EventProcessor.set_sequence(evmgr.dia1())
 	$EventProcessor.start()
 
 func _on_sequence_finished():
@@ -204,24 +29,7 @@ func _on_3dArea_click(camera, event, click_position, click_normal, shape_idx, ev
 		match event_id:
 			\"dia1\": run_event()
 			\"yoshiko1\":
-				$EventProcessor.set_sequence([
-					{ 'command': 'show_message_box' },
-					{ 'command': 'sprite', 'options': {
-						'action': 'show',
-						'key': 'yoshiko',
-						'src': 'res://images/dialog_sprite/yoshiko_a2.png',
-						'position': Vector2(800, 790),
-						'duration': 0.5,
-						'z_index': 2,
-					} },
-					\"Yoshiko|It's YOHANE!\",
-					{ 'command': 'sprite', 'options': {
-						'action': 'hide',
-						'key': 'yoshiko',
-						'duration': 0.5,
-					} },
-					{ 'command': 'hide_message_box' },
-				])
+				$EventProcessor.set_sequence(evmgr.yoshiko1())
 				$EventProcessor.start()
 "
 
@@ -236,7 +44,7 @@ func _ready():
 func _physics_process(_delta):
 	var translate_speed = Vector3()
 	var rotate_speed = Vector3()
-	
+
 	if (Input.is_action_pressed(\"move_down\") or Input.is_action_pressed(\"ui_down\")):
 		translate_speed += Vector3.BACK
 	if (Input.is_action_pressed(\"move_left\") or Input.is_action_pressed(\"ui_left\")):
@@ -248,7 +56,7 @@ func _physics_process(_delta):
 
 	translate_speed *= 1
 	self.translate(translate_speed)
-	
+
 	if (rotate_speed):
 		self.rotate(rotate_speed, 0.1)
 "
@@ -262,6 +70,7 @@ script = SubResource( 1 )
 
 [node name="Dia3D" type="Sprite3D" parent="3D" index="0"]
 transform = Transform( 0.545636, 0, 0, 0, 0.545636, 0, 0, 0, -0.646726, 0.473508, 3.97849, 0 )
+billboard = 2
 texture = ExtResource( 2 )
 
 [node name="Area" type="Area" parent="3D/Dia3D" index="0"]
@@ -271,7 +80,8 @@ transform = Transform( 2.91563, 0, 0, 0, 8.1571, 0, 0, 0, 0.416939, 0, 0, 0 )
 shape = SubResource( 2 )
 
 [node name="Yoshiko3D" type="Sprite3D" parent="3D" index="1"]
-transform = Transform( 0.545636, 0, 0, 0, 0.545636, 0, 0, 0, -0.646726, -2.88204, 3.97849, 0 )
+transform = Transform( 0.309515, 0, -0.532606, 0, 0.545636, 0, -0.449354, 0, -0.366858, -6.17715, 3.97849, -11.4272 )
+billboard = 2
 texture = ExtResource( 3 )
 
 [node name="Area" type="Area" parent="3D/Yoshiko3D" index="0"]

@@ -9,49 +9,6 @@
 
 [sub_resource type="GDScript" id=1]
 script/source = "extends \"res://scripts/base_scene.gd\"
-
-var event_processor
-
-func _ready():
-	# Center window on screen
-	._center_window()
-	
-	# Set cursor
-	._cursor_setup()
-	
-	# Set sequence
-	self.event_processor = $EventProcessor
-	self.event_processor.set_camera($MainCamera)
-	self.event_processor.set_sequence([
-		{ 'command': 'showMessageBox' },
-		\"From pitch black comes the background, just like that.\",
-		{ 'command': 'sprite', 'options': {
-			'action': 'show',
-			'key': 'bg',
-			'src': 'res://images/bg/nsicroom_day.png',
-			'position': 'background',
-		} },
-		\"Again!\",
-		\"Show it again!\",
-		{ 'command': 'sprite', 'options': {
-			'action': 'show',
-			'key': 'bg',
-			'src': 'res://images/bg/nsicroom_day.png',
-			'position': 'background',
-			'wait': false,
-		} },
-		\"And it can go poof just like that.\",
-		{ 'command': 'sprite', 'options': {
-			'action': 'hide',
-			'key': 'bg',
-		} },
-		\"So long, suckers.\",
-		{ 'command': 'hideMessageBox' },
-	])
-	self.event_processor.start()
-
-func _on_sequence_finished():
-	self.event_processor.start()
 "
 
 [sub_resource type="GDScript" id=2]
@@ -133,7 +90,7 @@ func _process(_delta):
 func check_hovering() -> bool:
 	if (self.hovered_items.size() == 0): return false
 	
-	if (self.get_parent().get_node('EventProcessor').running):
+	if (self.get_parent().check_event_processor_running()):
 		if (!self.hovered_items.has('MessageBox')): return false
 	
 	return true
@@ -171,9 +128,9 @@ var active_text: String
 var diamond_stripe_active: bool = false
 
 func _process(_delta):
-	if (self.get_parent().get_node('EventProcessor').running && self.diamond_stripe_active && self.active_text):
+	if (self.get_parent().check_event_processor_running() && self.diamond_stripe_active && self.active_text):
 		self.temp_hide_diamond_stripe()
-	elif (!self.get_parent().get_node('EventProcessor').running && !self.diamond_stripe_active && self.active_text):
+	elif (!self.get_parent().check_event_processor_running() && !self.diamond_stripe_active && self.active_text):
 		self.reshow_diamond_stripe()
 
 func temp_hide_diamond_stripe():
@@ -186,14 +143,15 @@ func reshow_diamond_stripe():
 
 func _on_CursorLayer_show_info_text(text):
 	# Calculate rect size by simulating it on a dummy node
-	$DiamondStripe/TextRect/RectCalculator.text = \"\"
-	$DiamondStripe/TextRect/RectCalculator.rect_size = Vector2(0, $DiamondStripe/TextRect/RectCalculator.rect_size.y)
-	$DiamondStripe/TextRect/RectCalculator.text = text
-	$DiamondStripe/TextRect/RectCalculator.visible_characters = -1
+	var rect_calculator = $DiamondStripe/TextRect/RectCalculator
+	rect_calculator.text = \"\"
+	rect_calculator.rect_size = Vector2(0, rect_calculator.rect_size.y)
+	rect_calculator.text = text
+	rect_calculator.visible_characters = -1
 	$Microtimer.start(); yield($Microtimer, \"timeout\")
 	
 	self.active_text = text
-	var length: int = int(ceil(2 + ($DiamondStripe/TextRect/RectCalculator.rect_size.x / 35)))
+	var length: int = int(ceil(2 + (rect_calculator.rect_size.x / 35)))
 	if (length % 2) == 1:
 		length += 1
 	$DiamondStripe.show_diamond_stripe(length, text)
