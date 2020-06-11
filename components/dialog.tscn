@@ -1,9 +1,11 @@
-[gd_scene load_steps=28 format=2]
+[gd_scene load_steps=30 format=2]
 
+[ext_resource path="res://images/ui/textbox.png" type="Texture" id=1]
 [ext_resource path="res://fonts/montreal/Montreal-Regular.ttf" type="DynamicFontData" id=2]
 [ext_resource path="res://fonts/montreal/Montreal-Bold.ttf" type="DynamicFontData" id=3]
 [ext_resource path="res://images/ui/arrow.png" type="Texture" id=4]
 [ext_resource path="res://audio/sfx/shutter.wav" type="AudioStream" id=5]
+[ext_resource path="res://images/ui/nameplate.png" type="Texture" id=6]
 [ext_resource path="res://fonts/droid-sans/DroidSans.ttf" type="DynamicFontData" id=7]
 [ext_resource path="res://shaders/hue_shift.shader" type="Shader" id=8]
 
@@ -32,79 +34,14 @@ signal hover_off
 func _ready():
 	self.timer = $Timer
 	self.tween = $Tween
-	
+
 	self.message_display = $ClickableArea/Message
 	self.message_display.text = \"\"
-	
-	self.create_background()
-	self.create_nameplate()
-	
+
+	$ClickableArea/Nameplate/NameText.bbcode_enabled = true
+
 	self.visibility = true if (self.modulate.a == 1) else false
 	self.state = 'standby'
-
-func create_background():
-	var column = 0; var i = 0
-	var diamond_sprite
-	var size = 81.921 # 0.16 scale
-	var starting_x = size / 4
-	var x; var y
-	while column < 47:
-		while i < 4:
-			diamond_sprite = Sprite.new()
-			diamond_sprite.texture = load(\"res://images/ui/diamond.png\")
-			diamond_sprite.scale = Vector2(0.16, 0.16)
-			diamond_sprite.centered = true
-			
-			x = (column * (size / 2)) + starting_x
-			if (column % 2 == 0):
-				y = i * size
-			else:
-				y = i * size + (size / 2 * -1)
-			diamond_sprite.position = Vector2(x, y)
-			diamond_sprite.modulate.a = 0
-			
-			$ClickableArea/Background/Diamonds.add_child(diamond_sprite)
-			i += 1
-		column += 1
-		i = 0
-
-func create_nameplate():
-	var column = 0
-	var diamond_sprite
-	var size = 81.921 # 0.16 scale
-	var starting_x = size / 4
-	var x; var y
-	while column < 5:
-		diamond_sprite = Sprite.new()
-		if (column % 2 == 0):
-			diamond_sprite.texture = load(\"res://images/ui/diamond.png\")
-			y = 0
-		else:
-			diamond_sprite.texture = load(\"res://images/ui/diamond-bhalf.png\")
-			y = 0 - (size / 2)
-		diamond_sprite.scale = Vector2(0.16, 0.16)
-		diamond_sprite.centered = true
-		
-		x = (column * (size / 2)) + 0
-		diamond_sprite.position = Vector2(x, y)
-		diamond_sprite.modulate.a = 1
-		
-		$ClickableArea/Nameplate/Diamonds.add_child(diamond_sprite)
-		column += 1
-
-func toggle_diamonds_visibility(show, animate):
-	if (animate):
-		var counter = 0
-		for diamond in $ClickableArea/Background/Diamonds.get_children():
-			$ClickableArea/Background/Tween.interpolate_property(diamond, \"modulate:a\", 0 if show else 1, 1 if show else 0, 0.1, Tween.TRANS_LINEAR, Tween.EASE_IN, counter * 0.005)
-			counter += 1
-		$ClickableArea/Background/Tween.start()
-	else:
-		for diamond in $ClickableArea/Background/Diamonds.get_children():
-			diamond.modulate.a = 0
-
-func _on_diamond_tween_completed():
-	pass
 
 func show_text(text, options: Dictionary = {}):
 	self.state = 'typing'
@@ -127,7 +64,7 @@ func _type_text_character():
 		self._end_typing()
 
 func _show_nameplate(name, hue: float = 0):
-	$ClickableArea/Nameplate/NameText.text = name
+	$ClickableArea/Nameplate/NameText.bbcode_text = \"[center]\" + name + \"[/center]\"
 	$ClickableArea/Nameplate.get_material().set_shader_param('shift_amount', hue)
 	$ClickableArea/Nameplate.visible = true
 
@@ -156,14 +93,15 @@ func toggle_visibility(show: bool, animate: bool = true):
 	self._hide_nameplate()
 	$ClickableArea/NextCaret.visible = false
 	if show: self.visible = true
+	else: $ClickableArea/Message.text = \"\"
 	if (animate):
-		self.tween.interpolate_property(self, \"modulate:a\", (0 if show else 1), (1 if show else 0), 1, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT)
-		self.toggle_diamonds_visibility(show, animate)
+		self.tween.interpolate_property(self, \"modulate:a\", (0 if show else 1), (1 if show else 0), 0.5, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT)
+		self.tween.interpolate_property($ClickableArea/Background, \"position:y\", (670 if show else 410), (410 if show else 670), 0.5, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT)
 		self.tweening_finished = false
 		self.tween.start()
 	else:
 		self.modulate.a = (1 if show else 0)
-		self.toggle_diamonds_visibility(show, animate)
+		$ClickableArea/Background.position.y = (410 if show else 670)
 		self._end_tween()
 
 func _skip_tween():
@@ -332,7 +270,7 @@ animations = [ {
 } ]
 
 [sub_resource type="RectangleShape2D" id=21]
-extents = Vector2( 960, 147 )
+extents = Vector2( 960.183, 130 )
 
 [node name="MessageBox" type="Control"]
 mouse_filter = 2
@@ -342,34 +280,29 @@ __meta__ = {
 }
 
 [node name="ClickableArea" type="Area2D" parent="."]
-position = Vector2( 960, 932 )
+position = Vector2( 960, 540 )
 gravity_vec = Vector2( 0, 0 )
+__meta__ = {
+"_edit_lock_": true
+}
 
 [node name="Background" type="Sprite" parent="ClickableArea"]
-
-[node name="Polygon2D" type="Polygon2D" parent="ClickableArea/Background"]
-color = Color( 0.14902, 0.435294, 0.686275, 0.494118 )
-polygon = PoolVector2Array( 900, -130, -900, -130, -960, -80, -960, 200, 960, 200, 960, -80 )
-
-[node name="Diamonds" type="Node2D" parent="ClickableArea/Background"]
-modulate = Color( 1, 1, 1, 0.784314 )
-position = Vector2( -960, -74 )
-
-[node name="Tween" type="Tween" parent="ClickableArea/Background"]
+self_modulate = Color( 1, 1, 1, 0.784314 )
+position = Vector2( 0, 670 )
+texture = ExtResource( 1 )
 
 [node name="Nameplate" type="Sprite" parent="ClickableArea"]
+self_modulate = Color( 1, 1, 1, 0.784314 )
 material = SubResource( 2 )
-position = Vector2( -485.87, -116.327 )
-
-[node name="Diamonds" type="Node2D" parent="ClickableArea/Nameplate"]
-modulate = Color( 1, 1, 1, 0.784314 )
-position = Vector2( -208, -42.5267 )
+position = Vector2( -960, 219.388 )
+texture = ExtResource( 6 )
+centered = false
 
 [node name="NameText" type="RichTextLabel" parent="ClickableArea/Nameplate"]
-margin_left = -197.014
-margin_top = -69.7109
-margin_right = 258.986
-margin_bottom = -17.7109
+margin_left = 235.025
+margin_top = 5.0
+margin_right = 426.025
+margin_bottom = 57.0
 mouse_filter = 2
 custom_fonts/bold_font = SubResource( 3 )
 custom_fonts/normal_font = SubResource( 4 )
@@ -386,9 +319,9 @@ __meta__ = {
 
 [node name="Message" type="RichTextLabel" parent="ClickableArea"]
 margin_left = -705.0
-margin_top = -74.0
+margin_top = 318.0
 margin_right = 704.0
-margin_bottom = 108.0
+margin_bottom = 500.0
 mouse_filter = 2
 custom_fonts/bold_font = SubResource( 3 )
 custom_fonts/normal_font = SubResource( 4 )
@@ -400,12 +333,11 @@ bbcode_enabled = true
 meta_underlined = false
 scroll_active = false
 __meta__ = {
-"_edit_lock_": true,
 "_edit_use_anchors_": false
 }
 
 [node name="NextCaret" type="AnimatedSprite" parent="ClickableArea"]
-position = Vector2( 728.382, 68.6981 )
+position = Vector2( 728.382, 460 )
 scale = Vector2( 0.186289, 0.186289 )
 frames = SubResource( 20 )
 frame = 5
@@ -415,12 +347,11 @@ __meta__ = {
 }
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="ClickableArea"]
-visible = false
+position = Vector2( 0, 410 )
 shape = SubResource( 21 )
 one_way_collision = true
-__meta__ = {
-"_edit_lock_": true
-}
+
+[node name="Node2D" type="Node2D" parent="ClickableArea"]
 
 [node name="Tween" type="Tween" parent="."]
 
@@ -431,7 +362,6 @@ stream = ExtResource( 5 )
 [connection signal="input_event" from="ClickableArea" to="." method="_on_click"]
 [connection signal="mouse_entered" from="ClickableArea" to="." method="_on_ClickableArea_mouse_entered"]
 [connection signal="mouse_exited" from="ClickableArea" to="." method="_on_ClickableArea_mouse_exited"]
-[connection signal="tween_all_completed" from="ClickableArea/Background/Tween" to="." method="_on_diamond_tween_completed"]
 [connection signal="tween_all_completed" from="Tween" to="." method="_on_tween_all_completed"]
 [connection signal="tween_completed" from="Tween" to="." method="_on_tween_completed"]
 [connection signal="tween_started" from="Tween" to="." method="_on_tween_started"]

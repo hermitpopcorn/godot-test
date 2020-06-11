@@ -135,6 +135,7 @@ func _process(_delta):
 
 func temp_hide_diamond_stripe():
 	self.diamond_stripe_active = false
+	$Microtimer.start(); yield($Microtimer, \"timeout\")
 	$DiamondStripe.hide_diamond_stripe()
 
 func reshow_diamond_stripe():
@@ -222,7 +223,7 @@ func animate_stripe(show):
 	var c = 0
 	for child in $Diamonds.get_children():
 		if (show):
-			$Tween.interpolate_property(child, \"modulate:a\", 0, 1, 0.2, Tween.TRANS_LINEAR, Tween.EASE_IN, self.fade_speed * c)
+			$Tween.interpolate_property(child, \"modulate:a\", child.modulate.a, 1, 0.2, Tween.TRANS_LINEAR, Tween.EASE_IN, self.fade_speed * c)
 		else:
 			$Tween.interpolate_property(child, \"modulate:a\", child.modulate.a, 0, 0.15, Tween.TRANS_LINEAR, Tween.EASE_IN, self.fade_speed * c)
 		c += 1
