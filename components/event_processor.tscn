@@ -9,6 +9,7 @@ var message_box
 var sequence
 var current_index = -1
 var running = false
+var nextable = true
 
 var sprites = {}
 var audio = {}
@@ -23,6 +24,7 @@ var sprites_container
 var audio_container
 
 signal sequence_finished
+signal sequence_paused
 signal hover_on
 signal hover_off
 
@@ -53,6 +55,8 @@ func resume():
 
 func stop():
 	self.running = false
+	print(\"[EVPR] sequence paused\")
+	emit_signal(\"sequence_paused\")
 
 func reset():
 	self.running = false
@@ -85,6 +89,8 @@ func _execute_sequence(index: int):
 				self.show_container(entry.options)
 			'audio':
 				self.play_audio(entry.options)
+			'pause_sequence':
+				self.stop()
 			_:
 				push_error(\"invalid event command\")
 				self._advance_sequence()
@@ -130,7 +136,7 @@ func play_audio(options: Dictionary):
 		self.audio_container.add_child(new_audio)
 		new_audio.connect(\"finished\", self, \"_on_audio_finish\", ['voice', key])
 		new_audio.play()
-		print (\"next by audio play\")
+		print (\"[EVPR] next by audio play\")
 		self._advance_sequence()
 	elif (options.action == \"sfx\"):
 		# Create new AudioStreamPlayer
@@ -141,7 +147,7 @@ func play_audio(options: Dictionary):
 		self.audio_container.add_child(new_audio)
 		new_audio.connect(\"finished\", self, \"_on_audio_finish\", ['sfx', key])
 		new_audio.play()
-		print (\"next by audio play\")
+		print (\"[EVPR] next by audio play\")
 		self._advance_sequence()
 
 func _on_audio_finish(type: String, key: String):
@@ -182,7 +188,7 @@ func show_container(options: Dictionary):
 
 	# Immediately advance if queue is empty
 	if (self.wait_queue.size() == 0):
-		print(\"next by zero wait queue show container\")
+		print(\"[EVPR] next by zero wait queue show container\")
 		self._advance_sequence()
 
 func show_sprite(options: Dictionary):
@@ -253,7 +259,7 @@ func show_sprite(options: Dictionary):
 
 	# Immediately advance if queue is empty
 	if (self.wait_queue.size() == 0):
-		print(\"next by zero wait queue show sprite\")
+		print(\"[EVPR] next by zero wait queue show sprite\")
 		self._advance_sequence()
 
 func translate_shortcode(shortcode: Array):
@@ -285,31 +291,31 @@ func translate_shortcode(shortcode: Array):
 	
 	return translated
 
-func _on_next():
-	if (self.running):
+func _on_next(sender = null):
+	if (self.running && self.nextable):
 		# Cancel if queue is not empty
 		if (self.wait_queue.size() > 0): return false
 
-		print (\"next by next\")
+		print (\"[EVPR] next by next\")
 		self._advance_sequence()
 
 func _on_MessageBox_finished_tweening():
 	if (self.wait_queue.size() == 0 && self.running):
-		print (\"next by mbox finished tweening\")
+		print (\"[EVPR] next by mbox finished tweening\")
 		self._advance_sequence()
 
 func _on_sprite_tween_completed(object, key):
 	if (self.wait_queue.has(object)):
 		self.wait_queue.erase(object)
 		if (self.wait_queue.size() == 0 && self.running):
-			print (\"next by sprite tween completed\")
+			print (\"[EVPR] next by sprite tween completed\")
 			self._advance_sequence()
 
 func _on_sprite_tween_all_completed():
 	pass
 
 func _on_WaitTimer_timeout():
-	print (\"next by wait timeout\")
+	print (\"[EVPR] next by wait timeout\")
 	self._advance_sequence()
 
 func _on_hover(emitter): emit_signal('hover_on', emitter)
@@ -377,5 +383,5 @@ __meta__ = {
 [connection signal="finished_tweening" from="MessageBoxUILayer/MessageBox" to="." method="_on_MessageBox_finished_tweening"]
 [connection signal="hover_off" from="MessageBoxUILayer/MessageBox" to="." method="_off_hover" binds= [ "MessageBox" ]]
 [connection signal="hover_on" from="MessageBoxUILayer/MessageBox" to="." method="_on_hover" binds= [ "MessageBox" ]]
-[connection signal="next" from="MessageBoxUILayer/MessageBox" to="." method="_on_next"]
+[connection signal="next" from="MessageBoxUILayer/MessageBox" to="." method="_on_next" binds= [ "message_box" ]]
 [connection signal="timeout" from="WaitTimer" to="." method="_on_WaitTimer_timeout"]

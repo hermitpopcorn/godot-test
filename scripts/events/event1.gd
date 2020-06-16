@@ -199,3 +199,18 @@ static func yoshiko1():
 		{ 'command': 'hide_message_box' },
 	]
 
+static func door1():
+	return [
+		['>show_message_box'],
+		"There's still something I need to do here.",
+		['>hide_message_box'],
+	]
+
+static func notice1():
+	return [
+		['>show_message_box'],
+		"There's a written notice stuck on the whiteboard.",
+		['>pause_sequence'],
+		"Yoshiko|Tell all your friends to watch my streams.",
+		['>hide_message_box'],
+	]

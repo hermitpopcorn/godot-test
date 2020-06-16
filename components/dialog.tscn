@@ -340,7 +340,7 @@ __meta__ = {
 position = Vector2( 728.382, 460 )
 scale = Vector2( 0.186289, 0.186289 )
 frames = SubResource( 20 )
-frame = 5
+frame = 13
 playing = true
 __meta__ = {
 "_edit_lock_": true

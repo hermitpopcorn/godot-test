@@ -2,29 +2,27 @@
 
 importer="texture"
 type="StreamTexture"
-path.s3tc="res://.import/dia_a2.png-06857d48a12038edbc9d87e9c155768e.s3tc.stex"
-path.etc="res://.import/dia_a2.png-06857d48a12038edbc9d87e9c155768e.etc.stex"
+path="res://.import/dia_a2.png-06857d48a12038edbc9d87e9c155768e.stex"
 metadata={
-"imported_formats": [ "s3tc", "etc" ],
-"vram_texture": true
+"vram_texture": false
 }
 
 [deps]
 
 source_file="res://images/dialog_sprite/dia_a2.png"
-dest_files=[ "res://.import/dia_a2.png-06857d48a12038edbc9d87e9c155768e.s3tc.stex", "res://.import/dia_a2.png-06857d48a12038edbc9d87e9c155768e.etc.stex" ]
+dest_files=[ "res://.import/dia_a2.png-06857d48a12038edbc9d87e9c155768e.stex" ]
 
 [params]
 
-compress/mode=2
+compress/mode=0
 compress/lossy_quality=0.7
 compress/hdr_mode=0
 compress/bptc_ldr=0
 compress/normal_map=0
-flags/repeat=true
+flags/repeat=0
 flags/filter=true
 flags/mipmaps=true
-flags/anisotropic=false
+flags/anisotropic=true
 flags/srgb=2
 process/fix_alpha_border=true
 process/premult_alpha=false

@@ -8,6 +8,7 @@ script/source = "extends Node
 var current_splash
 
 func _ready():
+	._center_window()
 	preload('res://scenes/Scene1.tscn')
 	yield(get_tree().create_timer(1), 'timeout')
 	splash_gsah()
