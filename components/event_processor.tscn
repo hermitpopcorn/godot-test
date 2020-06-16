@@ -9,6 +9,7 @@ var message_box
 var sequence
 var current_index = -1
 var running = false
+var active = false
 var nextable = true
 
 var sprites = {}
@@ -32,9 +33,9 @@ func _ready():
 	self.message_box = $MessageBoxUILayer/MessageBox
 	self.message_box.hide(false)
 
-	self.display_container = $DisplayContainer
-	self.background_container = $DisplayContainer/BackgroundContainer
-	self.sprites_container = $DisplayContainer/SpriteContainer
+	self.display_container = $EventDisplayLayer/DisplayContainer
+	self.background_container = $EventDisplayLayer/DisplayContainer/BackgroundContainer
+	self.sprites_container = $EventDisplayLayer/DisplayContainer/SpriteContainer
 	self.audio_container = $AudioContainer
 
 	self.wait_timer = $WaitTimer
@@ -51,9 +52,10 @@ func start():
 
 func resume():
 	self.running = true
+	self.active = true
 	self._advance_sequence()
 
-func stop():
+func pause():
 	self.running = false
 	print(\"[EVPR] sequence paused\")
 	emit_signal(\"sequence_paused\")
@@ -61,6 +63,7 @@ func stop():
 func reset():
 	self.running = false
 	self.current_index = -1
+	self.active = false
 
 func _advance_sequence():
 	# clear wait
@@ -71,6 +74,7 @@ func _advance_sequence():
 		self._execute_sequence(self.current_index)
 	else:
 		self.running = false
+		self.active = false
 		emit_signal('sequence_finished')
 
 func _execute_sequence(index: int):
@@ -90,7 +94,7 @@ func _execute_sequence(index: int):
 			'audio':
 				self.play_audio(entry.options)
 			'pause_sequence':
-				self.stop()
+				self.pause()
 			_:
 				push_error(\"invalid event command\")
 				self._advance_sequence()
@@ -331,10 +335,12 @@ size = Vector2( 1900, 1080 )
 [node name="EventProcessor" type="Node"]
 script = SubResource( 1 )
 
-[node name="DisplayContainer" type="Sprite" parent="."]
+[node name="EventDisplayLayer" type="CanvasLayer" parent="."]
+
+[node name="DisplayContainer" type="Sprite" parent="EventDisplayLayer"]
 z_index = 100
 
-[node name="BackgroundContainer" type="TextureRect" parent="DisplayContainer"]
+[node name="BackgroundContainer" type="TextureRect" parent="EventDisplayLayer/DisplayContainer"]
 self_modulate = Color( 1, 1, 1, 0 )
 anchor_left = 0.5
 anchor_top = 0.5
@@ -351,7 +357,7 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="SpriteContainer" type="TextureRect" parent="DisplayContainer"]
+[node name="SpriteContainer" type="TextureRect" parent="EventDisplayLayer/DisplayContainer"]
 self_modulate = Color( 1, 1, 1, 0 )
 margin_right = 1920.0
 margin_bottom = 1080.0

@@ -19,7 +19,7 @@ func run_event():
 
 func _on_3dArea_click(camera, event, click_position, click_normal, shape_idx, event_id):
 	if event is InputEventMouseButton:
-		if ($EventProcessor.running): return false
+		if (self.check_event_processor_active()): return false
 		match event_id:
 			\"dia1\": run_event()
 			\"yoshiko1\":

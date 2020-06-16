@@ -212,5 +212,16 @@ static func notice1():
 		"There's a written notice stuck on the whiteboard.",
 		['>pause_sequence'],
 		"Yoshiko|Tell all your friends to watch my streams.",
+		"What a waste of space...",
+		['>pause_sequence'],
+		['>hide_message_box'],
+	]
+
+static func photos1():
+	return [
+		['>show_message_box'],
+		"There are posters of Aqours and µ's on the wall.",
+		"Some of the members also stuck some of their own photos there.",
+		"...I remember this one. It's from when Aqours participated in the bicycle decorating thingy on Christmas last year.",
 		['>hide_message_box'],
 	]

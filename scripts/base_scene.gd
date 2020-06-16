@@ -6,7 +6,7 @@ func _input(event):
 	# Toggle Fullscreen
 	if event.is_action_pressed("toggle_fullscreen"):
 		OS.window_fullscreen = !OS.window_fullscreen
-	
+
 	# Pause
 	if (!$PausedUILayer/PausedIndicator.visible):
 		if event.is_action_pressed("ui_cancel"):
@@ -21,5 +21,5 @@ func _center_window():
 func _cursor_setup():
 	Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
 
-func check_event_processor_running():
-	return self.get_node('EventProcessor').running
+func check_event_processor_active():
+	return self.get_node('EventProcessor').active

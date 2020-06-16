@@ -1,0 +1,193 @@
+[gd_scene load_steps=14 format=2]
+
+[ext_resource path="res://scenes/Base.tscn" type="PackedScene" id=1]
+[ext_resource path="res://images/bg/nsicroom_day.png" type="Texture" id=2]
+[ext_resource path="res://images/dialog_sprite/yoshiko_n2.png" type="Texture" id=3]
+[ext_resource path="res://scripts/expandable_diamond_polygon.gd" type="Script" id=4]
+[ext_resource path="res://scripts/expendable_diamond_line.gd" type="Script" id=5]
+[ext_resource path="res://audio/sfx/confirmation_001.ogg" type="AudioStream" id=6]
+[ext_resource path="res://scripts/2dcamera.gd" type="Script" id=7]
+[ext_resource path="res://scripts/clickable_area.gd" type="Script" id=8]
+
+[sub_resource type="GDScript" id=1]
+script/source = "extends \"res://scripts/base_scene.gd\"
+
+const evmgr = preload(\"res://scripts/events/event1.gd\")
+
+func _ready():
+	self._cursor_setup()
+
+func _on_area_click(viewport, event, shape_idx, event_id):
+	if event is InputEventMouseButton:
+		if (self.check_event_processor_active()): return false
+		match event_id:
+			\"door\":
+				$Audio/Confirm.play()
+				$EventProcessor.set_sequence(evmgr.door1())
+				$EventProcessor.start()
+			\"notice\":
+				$Audio/Confirm.play()
+				$EventProcessor.set_sequence(evmgr.notice1())
+				$EventProcessor.connect(\"sequence_paused\", self, \"_sf_notice1a\", [], CONNECT_ONESHOT)
+				$EventProcessor.start()
+			\"photos\":
+				$EventProcessor.set_sequence(evmgr.photos1())
+				$EventProcessor.connect(\"sequence_finished\", self, \"_sf_photos1a\", [], CONNECT_ONESHOT)
+				$EventProcessor.start()
+
+func _sf_notice1a():
+	$\"2D/Yoshiko\".connect(\"animation_completed\", self, \"_sf_notice1b\", [], CONNECT_ONESHOT)
+	$\"2D/Yoshiko\".expand()
+func _sf_notice1b():
+	$EventProcessor.connect(\"sequence_paused\", self, \"_sf_notice1c\", [], CONNECT_ONESHOT)
+	$EventProcessor.resume()
+func _sf_notice1c():
+	$\"2D/Yoshiko\".connect(\"animation_completed\", self, \"_sf_notice1d\", [], CONNECT_ONESHOT)
+	$\"2D/Yoshiko\".shrink()
+func _sf_notice1d():
+	$EventProcessor.resume()
+
+func _sf_photos1a():
+	$EventProcessor.set_sequence(evmgr.dia1())
+	$EventProcessor.start()
+"
+
+[sub_resource type="RectangleShape2D" id=2]
+extents = Vector2( 134.207, 190.483 )
+
+[sub_resource type="RectangleShape2D" id=5]
+extents = Vector2( 226.242, 113.479 )
+
+[sub_resource type="RectangleShape2D" id=3]
+extents = Vector2( 26.1856, 35.2155 )
+
+[sub_resource type="GDScript" id=4]
+script/source = "extends \"res://scripts/expandable_diamond_polygon.gd\"
+
+signal animation_completed
+
+func _ready():
+	self.shrink()
+
+func shrink():
+	for i in len(self.polygon):
+		$Tween.interpolate_method(self, \"resize_polygon\" + str(i), self.polygon[i], Vector2(0, 0), 0.7, Tween.TRANS_LINEAR, Tween.EASE_OUT)
+		$Tween.interpolate_method($Portrait, \"resize_polygon\" + str(i), $Portrait.polygon[i], Vector2(0, 0), 0.7, Tween.TRANS_LINEAR, Tween.EASE_OUT)
+		$Tween.interpolate_method($Border, \"resize_polygon\" + str(i), $Border.points[i], Vector2(0, 0), 0.7, Tween.TRANS_LINEAR, Tween.EASE_OUT)
+		if i == 0:
+			$Tween.interpolate_method($Border, \"resize_polygon4\", $Border.points[4], Vector2(0, 0), 0.7, Tween.TRANS_LINEAR, Tween.EASE_OUT)
+	$Tween.connect(\"tween_all_completed\", self, \"_hide_after_tween\", [], CONNECT_ONESHOT)
+	$Tween.start()
+
+func expand():
+	self.visible = true
+	for i in len(self.polygon):
+		$Tween.interpolate_method(self, \"resize_polygon\" + str(i), self.polygon[i], self.initial_vectors[i], 0.7, Tween.TRANS_LINEAR, Tween.EASE_OUT)
+		$Tween.interpolate_method($Portrait, \"resize_polygon\" + str(i), $Portrait.polygon[i], $Portrait.initial_vectors[i], 0.7, Tween.TRANS_LINEAR, Tween.EASE_OUT)
+		$Tween.interpolate_method($Border, \"resize_polygon\" + str(i), $Border.points[i], $Border.initial_vectors[i], 0.7, Tween.TRANS_LINEAR, Tween.EASE_OUT)
+		if i == 0:
+			$Tween.interpolate_method($Border, \"resize_polygon4\", $Border.points[4], $Border.initial_vectors[4], 0.7, Tween.TRANS_LINEAR, Tween.EASE_OUT)
+	$Tween.start()
+
+func _hide_after_tween():
+	self.visible = false
+
+func _on_tween_all_completed():
+	emit_signal(\"animation_completed\")
+"
+
+[node name="Scene2" instance=ExtResource( 1 )]
+script = SubResource( 1 )
+
+[node name="BaseCamera" parent="." index="4"]
+current = false
+
+[node name="2D" type="Node" parent="." index="5"]
+
+[node name="Clubroom" type="Sprite" parent="2D" index="0"]
+position = Vector2( 960, 540 )
+scale = Vector2( 1.0773, 1.0773 )
+texture = ExtResource( 2 )
+__meta__ = {
+"_edit_lock_": true
+}
+
+[node name="Door" type="Area2D" parent="2D/Clubroom" index="0"]
+position = Vector2( -194.598, -20.9378 )
+script = ExtResource( 8 )
+event_id = "door"
+area_name = "Go outside"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="2D/Clubroom/Door" index="0"]
+shape = SubResource( 2 )
+one_way_collision = true
+
+[node name="Photos" type="Area2D" parent="2D/Clubroom" index="1"]
+position = Vector2( 371.721, -154.047 )
+script = ExtResource( 8 )
+event_id = "photos"
+area_name = "Pictures on the wall"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="2D/Clubroom/Photos" index="0"]
+shape = SubResource( 5 )
+one_way_collision = true
+
+[node name="Notice" type="Area2D" parent="2D/Clubroom" index="2"]
+position = Vector2( -729.082, -20.9378 )
+script = ExtResource( 8 )
+event_id = "notice"
+area_name = "Notice"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="2D/Clubroom/Notice" index="0"]
+shape = SubResource( 3 )
+
+[node name="Camera2D" type="Camera2D" parent="2D" index="1"]
+position = Vector2( 960, 540 )
+rotating = true
+current = true
+limit_left = -200
+limit_top = -20
+limit_right = 2120
+limit_bottom = 1100
+smoothing_enabled = true
+script = ExtResource( 7 )
+
+[node name="Yoshiko" type="Polygon2D" parent="2D" index="2"]
+visible = false
+position = Vector2( 324.641, 340 )
+color = Color( 0.231373, 0.486275, 0.694118, 0.784314 )
+antialiased = true
+polygon = PoolVector2Array( 0, -200, 200, 0, 0, 200, -200, 0 )
+script = SubResource( 4 )
+__meta__ = {
+"_edit_group_": true
+}
+
+[node name="Tween" type="Tween" parent="2D/Yoshiko" index="0"]
+
+[node name="Portrait" type="Polygon2D" parent="2D/Yoshiko" index="1"]
+scale = Vector2( 0.5, 0.5 )
+antialiased = true
+texture = ExtResource( 3 )
+texture_offset = Vector2( 300, 421 )
+polygon = PoolVector2Array( 0, -400, 400, 0, 0, 400, -400, 0 )
+script = ExtResource( 4 )
+
+[node name="Border" type="Line2D" parent="2D/Yoshiko" index="2"]
+points = PoolVector2Array( 0, -200, 200, 0, 0, 200, -200, 0, 0, -200 )
+width = 5.0
+default_color = Color( 0.839216, 0.866667, 1, 1 )
+joint_mode = 2
+begin_cap_mode = 2
+end_cap_mode = 2
+antialiased = true
+script = ExtResource( 5 )
+
+[node name="StickyLayer" type="CanvasLayer" parent="2D" index="3"]
+
+[node name="Audio" type="Node" parent="." index="6"]
+
+[node name="Confirm" type="AudioStreamPlayer" parent="Audio" index="0"]
+stream = ExtResource( 6 )
+bus = "UI"
+[connection signal="tween_all_completed" from="2D/Yoshiko/Tween" to="2D/Yoshiko" method="_on_tween_all_completed"]
