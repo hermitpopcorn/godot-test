@@ -303,6 +303,10 @@ func _on_next(sender = null):
 		print (\"[EVPR] next by next\")
 		self._advance_sequence()
 
+func _on_MessageBox_finished_typing(tags = null):
+	if (\"no_confirmation\" in tags):
+		self._advance_sequence()
+
 func _on_MessageBox_finished_tweening():
 	if (self.wait_queue.size() == 0 && self.running):
 		print (\"[EVPR] next by mbox finished tweening\")
@@ -387,6 +391,7 @@ __meta__ = {
 [connection signal="tween_all_completed" from="SpriteTween" to="." method="_on_sprite_tween_all_completed"]
 [connection signal="tween_completed" from="SpriteTween" to="." method="_on_sprite_tween_completed"]
 [connection signal="finished_tweening" from="MessageBoxUILayer/MessageBox" to="." method="_on_MessageBox_finished_tweening"]
+[connection signal="finished_typing" from="MessageBoxUILayer/MessageBox" to="." method="_on_MessageBox_finished_typing"]
 [connection signal="hover_off" from="MessageBoxUILayer/MessageBox" to="." method="_off_hover" binds= [ "MessageBox" ]]
 [connection signal="hover_on" from="MessageBoxUILayer/MessageBox" to="." method="_on_hover" binds= [ "MessageBox" ]]
 [connection signal="next" from="MessageBoxUILayer/MessageBox" to="." method="_on_next" binds= [ "message_box" ]]

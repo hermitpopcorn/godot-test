@@ -12,15 +12,18 @@
 [sub_resource type="GDScript" id=1]
 script/source = "extends Control
 
-var message_display
 export var message_speed = 0.02
+var temporary_message_speed = null
 
+var message_length
 var timer
 var typing_finsihed = true
 var tween
 var tweening_finished = true
 var visibility
 var state = 'disabled' # 'disabled', 'typing', 'waiting_input', 'standby'
+var tags = []
+var instructions = {}
 
 export var click_sound = true
 
@@ -32,21 +35,73 @@ signal hover_on
 signal hover_off
 
 func _ready():
-	self.timer = $Timer
-	self.tween = $Tween
-
-	self.message_display = $ClickableArea/Message
-	self.message_display.text = \"\"
-
-	$ClickableArea/Nameplate/NameText.bbcode_enabled = true
+	$ClickableArea/Message.bbcode_text = \"\"
 
 	self.visibility = true if (self.modulate.a == 1) else false
 	self.state = 'standby'
 
 func show_text(text, options: Dictionary = {}):
 	self.state = 'typing'
-	self.message_display.text = text
-	self.message_display.visible_characters = 0
+	
+	# check for message tags
+	self.tags = []
+	var tag_scan = true
+	while (tag_scan):
+		# continue text or fresh text
+		if (text.begins_with('_')):
+			text = text.substr(1)
+			self.tags.push_back(\"continue\")
+		elif (text.ends_with('>>')):
+			text = text.substr(0, text.length() - 2)
+			self.tags.push_back(\"no_confirmation\")
+		else:
+			tag_scan = false
+	
+	# check for message instructions
+	self.instructions = {}
+	var instruction_scan = true
+	var push_by = 0
+	if (\"continue\" in self.tags):
+		push_by = (self.get_bbcodeless_text($ClickableArea/Message.bbcode_text)).length()
+	while (instruction_scan):
+		var opening_bracket_position = text.find('{')
+		if (opening_bracket_position != -1):
+			
+			# count all preceeding bbcodes
+			var scan_index = 0
+			var bbcodes = [];
+			while (scan_index <= opening_bracket_position):
+				var s_pos = text.find('[', scan_index)
+				if (s_pos == -1 || s_pos > opening_bracket_position):
+					break
+				else:
+					var e_pos = text.find(']', scan_index + 1)
+					if (e_pos == -1):
+						break
+					else:
+						bbcodes.push_back([s_pos, e_pos])
+						scan_index = e_pos
+			
+			var closing_bracket_position = text.find('}')
+			if (closing_bracket_position != -1):
+				var instruction = text.substr(opening_bracket_position, closing_bracket_position - opening_bracket_position + 1)
+				var instruction_index = opening_bracket_position;
+				for i in bbcodes:
+					instruction_index -= ((i[1] - i[0]) + 1)
+				self.instructions[push_by + instruction_index] = instruction.substr(1, instruction.length() - 2)
+				text = text.replace(instruction, \"\")
+			else:
+				instruction_scan = false
+		else:
+			instruction_scan = false
+		
+	if (\"continue\" in self.tags):
+		$ClickableArea/Message.visible_characters = (self.get_bbcodeless_text($ClickableArea/Message.bbcode_text)).length()
+		$ClickableArea/Message.bbcode_text = $ClickableArea/Message.bbcode_text + text
+	else:
+		$ClickableArea/Message.bbcode_text = text
+		$ClickableArea/Message.visible_characters = 0
+	self.message_length = (self.get_bbcodeless_text($ClickableArea/Message.bbcode_text)).length()
 	self.typing_finsihed = false
 	$ClickableArea/NextCaret.visible = false
 	if (options.has('nameplate')):
@@ -56,12 +111,54 @@ func show_text(text, options: Dictionary = {}):
 		self._show_nameplate(options['nameplate']['name'], hue)
 	else:
 		self._hide_nameplate()
-	timer.start(self.message_speed)
+	
+	self.go_over_instructions()
+	if (self.temporary_message_speed):
+		$Timer.start(self.temporary_message_speed)
+		self.temporary_message_speed = null
+	else:
+		$Timer.start(self.message_speed)
+
+func get_bbcodeless_text(text):
+	if !(text):
+		return text
+	var do = true
+	while (do):
+		var s_pos = text.find('[')
+		if (s_pos == -1):
+			do = false
+		else:
+			var e_pos = text.find(']')
+			text.erase(s_pos, (e_pos - s_pos) + 1)
+	return text
+
+func go_over_instructions():
+	if ($ClickableArea/Message.visible_characters in self.instructions):
+		var instruction = self.instructions[$ClickableArea/Message.visible_characters]
+		if (instruction.begins_with(\"w\")):
+			$Timer.stop()
+			var wait_timer = Timer.new()
+			wait_timer.one_shot = true
+			wait_timer.wait_time = float(instruction.substr(1))
+			wait_timer.connect(\"timeout\", self, \"_intext_timer_timeout\", [wait_timer])
+			$Timer.add_child(wait_timer)
+			wait_timer.start()
+		elif (instruction.begins_with(\"s\")):
+			if ($ClickableArea/Message.visible_characters > 0):
+				$Timer.wait_time = float(instruction.substr(1))
+			else:
+				self.temporary_message_speed = float(instruction.substr(1))
 
 func _type_text_character():
-	self.message_display.visible_characters += 1
-	if (self.message_display.visible_characters >= self.message_display.text.length()):
+	$ClickableArea/Message.visible_characters += 1
+	if ($ClickableArea/Message.visible_characters >= self.message_length):
 		self._end_typing()
+	else:
+		self.go_over_instructions()
+
+func _intext_timer_timeout(itself):
+	$Timer.remove_child(itself)
+	$Timer.start()
 
 func _show_nameplate(name, hue: float = 0):
 	$ClickableArea/Nameplate/NameText.bbcode_text = \"[center]\" + name + \"[/center]\"
@@ -72,16 +169,19 @@ func _hide_nameplate():
 	$ClickableArea/Nameplate.visible = false
 
 func _skip_typing():
-	self.timer.stop()
-	self.message_display.visible_characters = self.message_display.text.length()
+	$Timer.stop()
+	$ClickableArea/Message.visible_characters = $ClickableArea/Message.bbcode_text.length()
 	self._end_typing()
 
 func _end_typing():
-	self.timer.stop()
+	$Timer.stop()
+	for i in $Timer.get_children():
+		$Timer.remove_child(i)
 	self.typing_finsihed = true
 	self.state = 'waiting_input'
-	$ClickableArea/NextCaret.visible = true
-	emit_signal('finished_typing')
+	if !(\"no_confirmation\" in self.tags):
+		$ClickableArea/NextCaret.visible = true
+	emit_signal('finished_typing', self.tags)
 
 func hide(animate: bool = true):
 	self.toggle_visibility(false, animate)
@@ -95,21 +195,21 @@ func toggle_visibility(show: bool, animate: bool = true):
 	if show: self.visible = true
 	else: $ClickableArea/Message.text = \"\"
 	if (animate):
-		self.tween.interpolate_property(self, \"modulate:a\", (0 if show else 1), (1 if show else 0), 0.5, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT)
-		self.tween.interpolate_property($ClickableArea/Background, \"position:y\", (670 if show else 410), (410 if show else 670), 0.5, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT)
+		$Tween.interpolate_property(self, \"modulate:a\", (0 if show else 1), (1 if show else 0), 0.5, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT)
+		$Tween.interpolate_property($ClickableArea/Background, \"position:y\", (670 if show else 410), (410 if show else 670), 0.5, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT)
 		self.tweening_finished = false
-		self.tween.start()
+		$Tween.start()
 	else:
 		self.modulate.a = (1 if show else 0)
 		$ClickableArea/Background.position.y = (410 if show else 670)
 		self._end_tween()
 
 func _skip_tween():
-	self.tween.playback_speed = 10.0
+	$Tween.playback_speed = 10.0
 
 func _end_tween():
-	self.tween.playback_speed = 1.0
-	self.tween.remove_all()
+	$Tween.playback_speed = 1.0
+	$Tween.remove_all()
 	self.tweening_finished = true
 	if self.modulate.a == 1: self.state = 'standby'; else: self.state = 'disabled'
 	if self.modulate.a == 0: self.visible = false
@@ -157,8 +257,8 @@ func _on_tween_all_completed():
 func _on_tween_started(object, key):
 	if (object == self && key == ':modulate:a'):
 		if (self.visibility == false):
-			self.message_display.text = \"\"
-			self.message_display.visible_characters = 0
+			$ClickableArea/Message.bbcode_text = \"\"
+			$ClickableArea/Message.visible_characters = 0
 
 func _on_tween_completed(object, key):
 	if (object == self && key == ':modulate:a'):
@@ -278,6 +378,7 @@ script = SubResource( 1 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
+message_speed = 0.04
 
 [node name="ClickableArea" type="Area2D" parent="."]
 position = Vector2( 960, 540 )
@@ -340,7 +441,6 @@ __meta__ = {
 position = Vector2( 728.382, 460 )
 scale = Vector2( 0.186289, 0.186289 )
 frames = SubResource( 20 )
-frame = 13
 playing = true
 __meta__ = {
 "_edit_lock_": true

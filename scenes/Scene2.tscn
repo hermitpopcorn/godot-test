@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=2]
+[gd_scene load_steps=17 format=2]
 
 [ext_resource path="res://scenes/Base.tscn" type="PackedScene" id=1]
 [ext_resource path="res://images/bg/nsicroom_day.png" type="Texture" id=2]
@@ -8,6 +8,8 @@
 [ext_resource path="res://audio/sfx/confirmation_001.ogg" type="AudioStream" id=6]
 [ext_resource path="res://scripts/2dcamera.gd" type="Script" id=7]
 [ext_resource path="res://scripts/clickable_area.gd" type="Script" id=8]
+[ext_resource path="res://images/bg/bus_dusk.png" type="Texture" id=9]
+[ext_resource path="res://images/dialog_sprite/icha_u_niko.png" type="Texture" id=10]
 
 [sub_resource type="GDScript" id=1]
 script/source = "extends \"res://scripts/base_scene.gd\"
@@ -34,6 +36,9 @@ func _on_area_click(viewport, event, shape_idx, event_id):
 				$EventProcessor.set_sequence(evmgr.photos1())
 				$EventProcessor.connect(\"sequence_finished\", self, \"_sf_photos1a\", [], CONNECT_ONESHOT)
 				$EventProcessor.start()
+			\"mirror\":
+				$EventProcessor.set_sequence(evmgr.mirror1())
+				$EventProcessor.start()
 
 func _sf_notice1a():
 	$\"2D/Yoshiko\".connect(\"animation_completed\", self, \"_sf_notice1b\", [], CONNECT_ONESHOT)
@@ -55,13 +60,16 @@ func _sf_photos1a():
 [sub_resource type="RectangleShape2D" id=2]
 extents = Vector2( 134.207, 190.483 )
 
-[sub_resource type="RectangleShape2D" id=5]
+[sub_resource type="RectangleShape2D" id=3]
 extents = Vector2( 226.242, 113.479 )
 
-[sub_resource type="RectangleShape2D" id=3]
+[sub_resource type="RectangleShape2D" id=4]
 extents = Vector2( 26.1856, 35.2155 )
 
-[sub_resource type="GDScript" id=4]
+[sub_resource type="RectangleShape2D" id=6]
+extents = Vector2( 19.9055, 42.2089 )
+
+[sub_resource type="GDScript" id=5]
 script/source = "extends \"res://scripts/expandable_diamond_polygon.gd\"
 
 signal animation_completed
@@ -104,7 +112,16 @@ current = false
 
 [node name="2D" type="Node" parent="." index="5"]
 
-[node name="Clubroom" type="Sprite" parent="2D" index="0"]
+[node name="Bus" type="Sprite" parent="2D" index="0"]
+position = Vector2( 960, 540 )
+scale = Vector2( 1.5, 1.5 )
+texture = ExtResource( 9 )
+
+[node name="Icha" type="Sprite" parent="2D/Bus" index="0"]
+position = Vector2( 97.5332, 3.33334 )
+texture = ExtResource( 10 )
+
+[node name="Clubroom" type="Sprite" parent="2D" index="1"]
 position = Vector2( 960, 540 )
 scale = Vector2( 1.0773, 1.0773 )
 texture = ExtResource( 2 )
@@ -129,7 +146,7 @@ event_id = "photos"
 area_name = "Pictures on the wall"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="2D/Clubroom/Photos" index="0"]
-shape = SubResource( 5 )
+shape = SubResource( 3 )
 one_way_collision = true
 
 [node name="Notice" type="Area2D" parent="2D/Clubroom" index="2"]
@@ -139,9 +156,19 @@ event_id = "notice"
 area_name = "Notice"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="2D/Clubroom/Notice" index="0"]
-shape = SubResource( 3 )
+shape = SubResource( 4 )
 
-[node name="Camera2D" type="Camera2D" parent="2D" index="1"]
+[node name="Mirror" type="Area2D" parent="2D/Clubroom" index="3"]
+position = Vector2( -729.082, -20.9378 )
+script = ExtResource( 8 )
+event_id = "mirror"
+area_name = "Mirror"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="2D/Clubroom/Mirror" index="0"]
+position = Vector2( 245.946, 206.266 )
+shape = SubResource( 6 )
+
+[node name="Camera2D" type="Camera2D" parent="2D" index="2"]
 position = Vector2( 960, 540 )
 rotating = true
 current = true
@@ -152,13 +179,13 @@ limit_bottom = 1100
 smoothing_enabled = true
 script = ExtResource( 7 )
 
-[node name="Yoshiko" type="Polygon2D" parent="2D" index="2"]
+[node name="Yoshiko" type="Polygon2D" parent="2D" index="3"]
 visible = false
 position = Vector2( 324.641, 340 )
 color = Color( 0.231373, 0.486275, 0.694118, 0.784314 )
 antialiased = true
 polygon = PoolVector2Array( 0, -200, 200, 0, 0, 200, -200, 0 )
-script = SubResource( 4 )
+script = SubResource( 5 )
 __meta__ = {
 "_edit_group_": true
 }
@@ -183,7 +210,7 @@ end_cap_mode = 2
 antialiased = true
 script = ExtResource( 5 )
 
-[node name="StickyLayer" type="CanvasLayer" parent="2D" index="3"]
+[node name="StickyLayer" type="CanvasLayer" parent="2D" index="4"]
 
 [node name="Audio" type="Node" parent="." index="6"]
 
