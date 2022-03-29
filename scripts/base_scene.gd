@@ -3,15 +3,16 @@ extends Node
 class_name BaseScene
 
 func _input(event):
-	# Toggle Fullscreen
+	# toggle Fullscreen
 	if event.is_action_pressed("toggle_fullscreen"):
 		OS.window_fullscreen = !OS.window_fullscreen
 
-	# Pause
-	if (!$PausedUILayer/PausedIndicator.visible):
-		if event.is_action_pressed("ui_cancel"):
-			get_tree().paused = true
-			$PausedUILayer/PausedIndicator.visible = true
+	# pause
+	if (get_node_or_null('PausedUILayer') != null):
+		if (!$PausedUILayer/PausedIndicator.visible):
+			if event.is_action_pressed("ui_cancel"):
+				get_tree().paused = true
+				$PausedUILayer/PausedIndicator.visible = true
 
 func _center_window():
 	var screen_size = OS.get_screen_size()

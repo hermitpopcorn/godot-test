@@ -7,14 +7,14 @@
 [sub_resource type="GDScript" id=1]
 script/source = "extends \"res://scripts/base_scene.gd\"
 
-const evmgr = preload(\"res://scripts/events/event1.gd\")
+const events = preload(\"res://scripts/events/test_clubroom.gd\")
+onready var events_instance = events.new()
 
 func _ready():
-	# Set cursor
 	._cursor_setup()
 
 func run_event():
-	$EventProcessor.set_sequence(evmgr.dia1())
+	$EventProcessor.set_sequence(events_instance.dia1())
 	$EventProcessor.start()
 
 func _on_3dArea_click(camera, event, click_position, click_normal, shape_idx, event_id):
@@ -23,7 +23,7 @@ func _on_3dArea_click(camera, event, click_position, click_normal, shape_idx, ev
 		match event_id:
 			\"dia1\": run_event()
 			\"yoshiko1\":
-				$EventProcessor.set_sequence(evmgr.yoshiko1())
+				$EventProcessor.set_sequence(events_instance.yoshiko1())
 				$EventProcessor.start()
 "
 
@@ -92,6 +92,7 @@ script = SubResource( 3 )
 transform = Transform( 22.9006, 0, 0, 0, 1, 0, 0, 0, 22.9518, 0, 0, 0 )
 mesh = SubResource( 4 )
 material/0 = null
+
 [connection signal="input_event" from="3D/Dia3D/Area" to="." method="_on_3dArea_click" binds= [ "dia1" ]]
 [connection signal="mouse_entered" from="3D/Dia3D/Area" to="CursorLayer" method="_on_hover" binds= [ "dia1", "Dia Kurosawa" ]]
 [connection signal="mouse_exited" from="3D/Dia3D/Area" to="CursorLayer" method="_off_hover" binds= [ "dia1", "Dia Kurosawa" ]]

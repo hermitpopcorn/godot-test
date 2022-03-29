@@ -3,13 +3,13 @@
 [ext_resource path="res://images/splash/splash1.png" type="Texture" id=1]
 
 [sub_resource type="GDScript" id=1]
-script/source = "extends Node
+script/source = "extends \"res://scripts/base_scene.gd\"
 
 var current_splash
+var process_input: bool = true
 
 func _ready():
 	._center_window()
-	preload('res://scenes/Scene1.tscn')
 	yield(get_tree().create_timer(1), 'timeout')
 	splash_gsah()
 	
@@ -37,13 +37,18 @@ func _gsah_3():
 	$Gsah.visible = false
 	$Tween.remove_all()
 	yield(get_tree().create_timer(2), 'timeout')
-	get_tree().change_scene('res://scenes/Scene1.tscn')
+	self.change_scene()
+
+func change_scene():
+	get_tree().change_scene('res://scenes/Test3DSpace.tscn')
 
 func _input(event):
+	if (!self.process_input): return
 	if event.is_action_pressed('ui_accept') or event.is_action_pressed('ui_cancel') or event is InputEventMouseButton:
 		$Tween.stop_all()
 		match self.current_splash:
 			\"gsah\":
+				self.process_input = false
 				_gsah_3()
 "
 

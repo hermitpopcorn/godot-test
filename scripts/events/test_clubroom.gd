@@ -1,4 +1,11 @@
-static func dia1():
+extends Node
+
+var objects = {}
+
+func _init(init_objects: Dictionary = {}):
+	self.objects = init_objects
+
+func dia1():
 	return [
 		1.0,
 		['>sprite|show|bg', {
@@ -48,7 +55,7 @@ static func dia1():
 			'duration': 10,
 		} ],
 		['>audio|voice', { 'src': preload('res://audio/voice/dia_00.wav') }],
-		"Dia|YOROSHIKU.",
+		"Dia#0.39|YOROSHIKU.",
 		['>sprite|light|yoshiko|nowait'],
 		['>sprite|dim|dia'],
 		['>sprite|clear|yoshiko'],
@@ -102,7 +109,6 @@ static func dia1():
 			'position': Vector2(480, 650),
 			'duration': 0.5,
 		} ],
-		0.5,
 		['>container|move|background|nowait', {
 			'position': Vector2(-30+960, 0+540),
 			'duration': 10,
@@ -112,7 +118,7 @@ static func dia1():
 			'duration': 10,
 		} ],
 		['>audio|voice', { 'src': preload('res://audio/voice/dia_01.wav') }],
-		"Dia|What, you got a problem with one of my creations?!",
+		"Dia#0.39|What, you got a problem with one of my creations?!",
 		['>container|clear|background'],
 		['>sprite|clear|yoshiko'],
 		['>sprite|clear|dia'],
@@ -180,7 +186,7 @@ static func dia1():
 		['>container|reset|sprites'],
 	]
 
-static func yoshiko1():
+func yoshiko1():
 	return [
 		{ 'command': 'show_message_box' },
 		"Test2",
@@ -201,25 +207,31 @@ static func yoshiko1():
 		{ 'command': 'hide_message_box' },
 	]
 
-static func door1():
+func door1():
 	return [
 		['>show_message_box'],
 		"There's still something I need to do here.",
 		['>hide_message_box'],
 	]
 
-static func notice1():
+func notice1_open_yoshiko(): self.objects.dci_yoshiko.expand(0.5)
+func notice1_close_yoshiko(): self.objects.dci_yoshiko.shrink(0.2)
+func notice1():
+	# requires "dci_yoshiko" in objects
+	if (!self.objects.has('dci_yoshiko')): push_error('required object: dci_yoshiko')
 	return [
 		['>show_message_box'],
 		"There's a written notice stuck on the whiteboard.",
-		['>pause_sequence'],
+		funcref(self, "notice1_open_yoshiko"),
+		0.5,
 		"Yoshiko|Tell all your friends to watch my streams.",
 		"What a waste of space...",
-		['>pause_sequence'],
+		funcref(self, "notice1_close_yoshiko"),
+		0.5,
 		['>hide_message_box'],
 	]
 
-static func photos1():
+func photos1():
 	return [
 		['>show_message_box'],
 		"There are posters of Aqours and µ's on the wall.",
@@ -228,7 +240,7 @@ static func photos1():
 		['>hide_message_box'],
 	]
 
-static func mirror1():
+func mirror1():
 	return [
 		['>show_message_box'],
 		"{s0.01}WHOA{w1.0} WHO IS THAT HIDEOUS->>",
