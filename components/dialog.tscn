@@ -1,13 +1,11 @@
-[gd_scene load_steps=30 format=2]
+[gd_scene load_steps=26 format=2]
 
 [ext_resource path="res://images/ui/textbox.png" type="Texture" id=1]
-[ext_resource path="res://fonts/montreal/Montreal-Regular.ttf" type="DynamicFontData" id=2]
-[ext_resource path="res://fonts/montreal/Montreal-Bold.ttf" type="DynamicFontData" id=3]
 [ext_resource path="res://images/ui/arrow.png" type="Texture" id=4]
 [ext_resource path="res://audio/sfx/shutter.wav" type="AudioStream" id=5]
 [ext_resource path="res://images/ui/nameplate.png" type="Texture" id=6]
-[ext_resource path="res://fonts/droid-sans/DroidSans.ttf" type="DynamicFontData" id=7]
 [ext_resource path="res://shaders/hue_shift.shader" type="Shader" id=8]
+[ext_resource path="res://components/text_theme.tres" type="Theme" id=9]
 
 [sub_resource type="GDScript" id=1]
 script/source = "extends Control
@@ -287,19 +285,6 @@ func _on_ClickableArea_mouse_exited(): emit_signal('hover_off')
 shader = ExtResource( 8 )
 shader_param/shift_amount = 0.0
 
-[sub_resource type="DynamicFont" id=3]
-size = 36
-use_mipmaps = true
-use_filter = true
-font_data = ExtResource( 3 )
-
-[sub_resource type="DynamicFont" id=4]
-size = 36
-use_mipmaps = true
-use_filter = true
-font_data = ExtResource( 2 )
-fallback/0 = ExtResource( 7 )
-
 [sub_resource type="AtlasTexture" id=5]
 flags = 4
 atlas = ExtResource( 4 )
@@ -389,9 +374,6 @@ extents = Vector2( 960.183, 130 )
 [node name="MessageBox" type="Control"]
 mouse_filter = 2
 script = SubResource( 1 )
-__meta__ = {
-"_edit_use_anchors_": false
-}
 
 [node name="ClickableArea" type="Area2D" parent="."]
 position = Vector2( 960, 540 )
@@ -418,18 +400,10 @@ margin_top = 5.0
 margin_right = 426.025
 margin_bottom = 57.0
 mouse_filter = 2
-custom_colors/default_color = Color( 1, 1, 1, 1 )
-custom_colors/font_color_shadow = Color( 0.101961, 0.0705882, 0.345098, 0.447059 )
-custom_constants/shadow_offset_x = 3
-custom_constants/shadow_offset_y = 3
-custom_fonts/bold_font = SubResource( 3 )
-custom_fonts/normal_font = SubResource( 4 )
+theme = ExtResource( 9 )
 bbcode_enabled = true
 meta_underlined = false
 scroll_active = false
-__meta__ = {
-"_edit_use_anchors_": false
-}
 
 [node name="Message" type="RichTextLabel" parent="ClickableArea"]
 margin_left = -705.0
@@ -437,24 +411,16 @@ margin_top = 318.0
 margin_right = 704.0
 margin_bottom = 500.0
 mouse_filter = 2
-custom_colors/default_color = Color( 1, 1, 1, 1 )
-custom_colors/font_color_shadow = Color( 0.101961, 0.0705882, 0.345098, 0.447059 )
-custom_constants/shadow_offset_x = 3
-custom_constants/shadow_offset_y = 3
-custom_fonts/bold_font = SubResource( 3 )
-custom_fonts/normal_font = SubResource( 4 )
+theme = ExtResource( 9 )
 bbcode_enabled = true
 meta_underlined = false
 scroll_active = false
-__meta__ = {
-"_edit_use_anchors_": false
-}
 
 [node name="NextCaret" type="AnimatedSprite" parent="ClickableArea"]
 position = Vector2( 728.382, 460 )
 scale = Vector2( 0.186289, 0.186289 )
 frames = SubResource( 20 )
-frame = 4
+frame = 13
 playing = true
 __meta__ = {
 "_edit_lock_": true

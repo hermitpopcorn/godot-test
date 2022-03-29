@@ -4,8 +4,10 @@
 [ext_resource path="res://images/ui/paused.png" type="Texture" id=2]
 [ext_resource path="res://images/ui/cursor/cursor_outside.png" type="Texture" id=3]
 [ext_resource path="res://images/ui/cursor/cursor_inside.png" type="Texture" id=4]
-[ext_resource path="res://fonts/montreal/Montreal.tres" type="DynamicFont" id=5]
+[ext_resource path="res://components/rect_stripe.tscn" type="PackedScene" id=5]
 [ext_resource path="res://shaders/hue_shift.shader" type="Shader" id=6]
+[ext_resource path="res://scripts/cursor_diamond.gd" type="Script" id=7]
+[ext_resource path="res://audio/sfx/confirmation_001.ogg" type="AudioStream" id=8]
 
 [sub_resource type="GDScript" id=1]
 script/source = "extends \"res://scripts/base_scene.gd\"
@@ -32,87 +34,6 @@ func _on_visibility_changed():
 		get_tree().paused = false
 "
 
-[sub_resource type="GDScript" id=3]
-script/source = "extends CanvasLayer
-
-var hovered_items: Array = []
-var snapping: bool = false
-
-signal show_info_text
-signal hide_info_text
-
-func _ready():
-	pass
-
-func _process(_delta):
-	# Follow mouse
-	var mouse_pos = get_viewport().get_mouse_position()
-	if (mouse_pos.x != 0 && mouse_pos.y != 0):
-		$CursorSprite.position = get_viewport().get_mouse_position()
-
-	if ($CursorSprite/CursorSpriteOutside.rotation_degrees >= 360):
-		$CursorSprite/CursorSpriteOutside.rotation_degrees -= 360
-	if ($CursorSprite/CursorSpriteInside.rotation_degrees <= -360):
-		$CursorSprite/CursorSpriteInside.rotation_degrees += 360
-
-	if (!self.check_hovering()):
-		# Rotate a little
-		$CursorSprite/CursorSpriteOutside.rotation_degrees += 0.5
-		self.snapping = false
-	else:
-		# Set to snap to nearest angle
-		self.snapping = true
-
-	if (self.snapping):
-		# Snap back to nearest angle (outside)
-		var over_times = floor(abs($CursorSprite/CursorSpriteOutside.rotation_degrees) / 90)
-		var degrees_remaining = abs($CursorSprite/CursorSpriteOutside.rotation_degrees) - (90 * over_times)
-		if (degrees_remaining >= 45):
-			$CursorSprite/CursorSpriteOutside.rotation_degrees += min(7, degrees_remaining)
-		else:
-			$CursorSprite/CursorSpriteOutside.rotation_degrees -= min(7, degrees_remaining)
-		# Shrink
-		if ($CursorSprite.scale.x > 0.75):
-			$CursorSprite.scale.x -= 0.05
-			$CursorSprite.scale.y -= 0.05
-		# Hue shift
-		$CursorSprite/CursorSpriteOutside.get_material().set_shader_param('shift_amount', 0.1)
-		$CursorSprite/CursorSpriteInside.get_material().set_shader_param('shift_amount', 0.1)
-	else:
-		# Back to normal size
-		if ($CursorSprite.scale.x < 1):
-			$CursorSprite.scale.x += 0.05
-			$CursorSprite.scale.y += 0.05
-		# Shift back hue
-		$CursorSprite/CursorSpriteOutside.get_material().set_shader_param('shift_amount', 0)
-		$CursorSprite/CursorSpriteInside.get_material().set_shader_param('shift_amount', 0)
-
-func check_hovering() -> bool:
-	if (self.hovered_items.size() == 0): return false
-
-	if (self.get_parent().check_event_processor_active()):
-		if (!self.hovered_items.has('MessageBox')): return false
-
-	return true
-
-func _on_hover(emitter, text=null):
-	if (!self.hovered_items.has(emitter)):
-		self.hovered_items.append(emitter)
-	if (text):
-		self.emit_signal(\"show_info_text\", text)
-
-func _off_hover(emitter, text=null):
-	if (emitter == \"*\"):
-		self.hovered_items.clear()
-		self.emit_signal(\"hide_info_text\", \"*\")
-	else:
-		var index = self.hovered_items.find(emitter)
-		if (index > -1):
-			self.hovered_items.remove(index)
-		if (text):
-			self.emit_signal(\"hide_info_text\", text)
-"
-
 [sub_resource type="ShaderMaterial" id=4]
 shader = ExtResource( 6 )
 shader_param/shift_amount = null
@@ -125,126 +46,49 @@ shader_param/shift_amount = null
 script/source = "extends CanvasLayer
 
 var active_text: String
-var diamond_stripe_active: bool = false
+var rect_stripe_active: bool = false
+onready var stripe = $RectStripe
+onready var microtimer = $Microtimer
+
+func _is_event_processor_active(): return self.get_parent().check_event_processor_active()
 
 func _process(_delta):
-	if (self.get_parent().check_event_processor_active() && self.diamond_stripe_active && self.active_text):
-		self.temp_hide_diamond_stripe()
-	elif (!self.get_parent().check_event_processor_active() && !self.diamond_stripe_active && self.active_text):
-		self.reshow_diamond_stripe()
+	if (self._is_event_processor_active() && self.rect_stripe_active && self.active_text):
+		self.temp_hide_rect_stripe()
+	elif (!self._is_event_processor_active() && !self.rect_stripe_active && self.active_text):
+		self.reshow_rect_stripe()
 
-func temp_hide_diamond_stripe():
-	self.diamond_stripe_active = false
-	$DiamondStripe.hide_diamond_stripe()
+func temp_hide_rect_stripe():
+	self.rect_stripe_active = false
+	self.stripe.hide_rect_stripe()
 
-func reshow_diamond_stripe():
-	self.diamond_stripe_active = true
+func reshow_rect_stripe():
+	self.rect_stripe_active = true
 	self._on_CursorLayer_show_info_text(self.active_text)
 
 func _on_CursorLayer_show_info_text(text):
-	# Calculate rect size by simulating it on a dummy node
-	var rect_calculator = $DiamondStripe/TextRect/RectCalculator
-	rect_calculator.text = \"\"
-	rect_calculator.rect_size = Vector2(0, rect_calculator.rect_size.y)
-	rect_calculator.text = text
-	rect_calculator.visible_characters = -1
-	$Microtimer.start(); yield($Microtimer, \"timeout\")
-
+	# calculate rect size by simulating it on a dummy node
+	if (text != self.stripe.rect_calculator.text):
+		self.stripe.rect_calculator.text = \"\"
+		self.stripe.rect_calculator.rect_size = Vector2(0, self.stripe.rect_calculator.rect_size.y)
+		self.stripe.rect_calculator.text = text
+		self.stripe.rect_calculator.visible_characters = -1
+		self.microtimer.start(); yield(self.microtimer, \"timeout\")
+	
 	self.active_text = text
-	var length: int = int(ceil(2 + (rect_calculator.rect_size.x / 35)))
-	if (length % 2) == 1:
-		length += 1
-	$DiamondStripe.show_diamond_stripe(length, text)
-	self.diamond_stripe_active = true
+	var length: int = 110 + int(self.stripe.rect_calculator.rect_size.x)
+	
+	# return if event processor is active
+	if self._is_event_processor_active(): return
+	# else, animate showing
+	self.stripe.show_rect_stripe(length, text)
+	self.rect_stripe_active = true
 
-func _on_CursorLayer_hide_info_text(text):
-	$Microtimer.start(); yield($Microtimer, \"timeout\")
+func _on_CursorLayer_hide_info_text(text = \"\"):
+	self.microtimer.start(); yield(self.microtimer, \"timeout\")
 	self.active_text = \"\"
-	$DiamondStripe.hide_diamond_stripe()
-	self.diamond_stripe_active = false
-"
-
-[sub_resource type="GDScript" id=7]
-script/source = "extends Node2D
-
-export var size: float = 36.512 # Size of the diamonds
-export var fade_speed: float = 0.01 # Speed of diamond fade. Smaller = faster
-
-func show_diamond_stripe(length, text):
-	create_stripe(length)
-	show_stripe()
-	show_text(text)
-
-func hide_diamond_stripe():
-	hide_stripe()
-	hide_text()
-
-func create_diamond_node():
-	var node: Sprite = Sprite.new()
-	node.texture = load(\"res://images/ui/diamond.png\")
-	node.scale = Vector2(0.14, 0.14)
-	node.modulate.a = 0
-	return node
-
-func create_stripe(length):
-	for child in $Diamonds.get_children():
-		child.queue_free()
-
-	length = max(length, 3)
-	var current_column = 1
-	var column_x: float
-	var diamond_node: Sprite
-
-	while current_column <= length:
-		column_x = (current_column - 1) * self.size
-		if ((current_column % 2) == 1):
-			diamond_node = create_diamond_node()
-			$Diamonds.add_child(diamond_node)
-			diamond_node.position.x = column_x
-			diamond_node.position.y = self.size * -1
-
-			diamond_node = create_diamond_node()
-			$Diamonds.add_child(diamond_node)
-			diamond_node.position.x = column_x
-			diamond_node.position.y = self.size * 1
-		else:
-			diamond_node = create_diamond_node()
-			$Diamonds.add_child(diamond_node)
-			diamond_node.set_position(Vector2(column_x, 0))
-		current_column += 1
-
-func show_stripe(): animate_stripe(true)
-func hide_stripe(): animate_stripe(false)
-
-func animate_stripe(show):
-	$Tween.stop_all()
-	$Tween.remove_all()
-	var c = 0
-	for child in $Diamonds.get_children():
-		if (show):
-			$Tween.interpolate_property(child, \"modulate:a\", child.modulate.a, 1, 0.2, Tween.TRANS_LINEAR, Tween.EASE_IN, self.fade_speed * c)
-		else:
-			$Tween.interpolate_property(child, \"modulate:a\", child.modulate.a, 0, 0.15, Tween.TRANS_LINEAR, Tween.EASE_IN, self.fade_speed * c)
-		c += 1
-	$Tween.start()
-
-func show_text(text: String):
-	if ($TextRect/Text/Tween.is_active()):
-		$TextRect/Text/Tween.stop_all()
-	$TextRect/Text.text = text
-	$TextRect/Text.modulate.a = 0
-	$TextRect/Text/Tween.interpolate_property($TextRect/Text, \"modulate:a\", 0, 1, 0.2, Tween.TRANS_LINEAR, Tween.EASE_IN, 0.2)
-	$TextRect/Text/Tween.interpolate_property($TextRect/Text, \"visible_characters\", 0, text.length(), 0.2, Tween.TRANS_LINEAR, Tween.EASE_IN, 0.2)
-	$TextRect/Text/Tween.start()
-
-func hide_text():
-	$TextRect/Text/Tween.stop_all()
-	$TextRect/Text/Tween.interpolate_property($TextRect/Text, \"modulate:a\", $TextRect/Text.modulate.a, 0, 0.2, Tween.TRANS_LINEAR, Tween.EASE_IN)
-	$TextRect/Text/Tween.start()
-
-func _tween_finished():
-	for child in $Diamonds.get_children():
-		if (child.modulate.a == 0): child.queue_free()
+	self.stripe.hide_rect_stripe()
+	self.rect_stripe_active = false
 "
 
 [node name="BaseScene" type="Node"]
@@ -274,7 +118,7 @@ __meta__ = {
 [node name="CursorLayer" type="CanvasLayer" parent="."]
 pause_mode = 2
 layer = 20
-script = SubResource( 3 )
+script = ExtResource( 7 )
 
 [node name="CursorSprite" type="Node2D" parent="CursorLayer"]
 modulate = Color( 1, 1, 1, 0.843137 )
@@ -302,59 +146,22 @@ script = SubResource( 6 )
 wait_time = 0.1
 one_shot = true
 
-[node name="DiamondStripe" type="Node2D" parent="InfoLayer"]
-position = Vector2( 0, 114.716 )
-script = SubResource( 7 )
-
-[node name="Tween" type="Tween" parent="InfoLayer/DiamondStripe"]
-
-[node name="Diamonds" type="Node2D" parent="InfoLayer/DiamondStripe"]
-modulate = Color( 1, 1, 1, 0.878431 )
-
-[node name="TextRect" type="ReferenceRect" parent="InfoLayer/DiamondStripe"]
-margin_top = -36.3144
-margin_right = 616.0
-margin_bottom = 30.6856
-mouse_filter = 2
-__meta__ = {
-"_edit_use_anchors_": false
-}
-
-[node name="RectCalculator" type="Label" parent="InfoLayer/DiamondStripe/TextRect"]
-modulate = Color( 1, 1, 1, 0 )
-anchor_right = 1.0
-anchor_bottom = 1.0
-margin_left = 54.0
-margin_right = -562.0
-rect_min_size = Vector2( 0, 67 )
-custom_fonts/font = ExtResource( 5 )
-valign = 1
-__meta__ = {
-"_edit_use_anchors_": false
-}
-
-[node name="Text" type="Label" parent="InfoLayer/DiamondStripe/TextRect"]
-anchor_right = 1.0
-anchor_bottom = 1.0
-margin_left = 54.0
-margin_right = -362.0
-rect_min_size = Vector2( 0, 67 )
-custom_fonts/font = ExtResource( 5 )
-valign = 1
-__meta__ = {
-"_edit_use_anchors_": false
-}
-
-[node name="Tween" type="Tween" parent="InfoLayer/DiamondStripe/TextRect/Text"]
+[node name="RectStripe" parent="InfoLayer" instance=ExtResource( 5 )]
 
 [node name="BaseCamera" type="Camera2D" parent="."]
 position = Vector2( 960, 540 )
 rotating = true
 current = true
+
+[node name="Audio" type="Node" parent="."]
+
+[node name="Confirm" type="AudioStreamPlayer" parent="Audio"]
+stream = ExtResource( 8 )
+bus = "UI"
+
 [connection signal="visibility_changed" from="PausedUILayer/PausedIndicator" to="PausedUILayer/PausedIndicator" method="_on_visibility_changed"]
 [connection signal="tween_all_completed" from="PausedUILayer/PausedIndicator/PauseTween" to="PausedUILayer/PausedIndicator" method="_on_tween_all_completed"]
 [connection signal="hover_off" from="EventProcessor" to="CursorLayer" method="_off_hover"]
 [connection signal="hover_on" from="EventProcessor" to="CursorLayer" method="_on_hover"]
 [connection signal="hide_info_text" from="CursorLayer" to="InfoLayer" method="_on_CursorLayer_hide_info_text"]
 [connection signal="show_info_text" from="CursorLayer" to="InfoLayer" method="_on_CursorLayer_show_info_text"]
-[connection signal="tween_all_completed" from="InfoLayer/DiamondStripe/Tween" to="InfoLayer/DiamondStripe" method="_tween_finished"]
