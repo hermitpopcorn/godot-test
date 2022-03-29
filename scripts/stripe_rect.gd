@@ -37,7 +37,6 @@ func _set_line_point(new_vector: Vector2):
 
 func animate_stripe(show):
 	self.tween.remove_all()
-	print(self.rect_line.get_point_position(1))
 	if (show):
 		self.tween.interpolate_method(self, "_set_line_point", Vector2(0, 0), Vector2(self.target_length, 0), 0.2, Tween.TRANS_LINEAR, Tween.EASE_IN, 0)
 		self.current_length = self.target_length

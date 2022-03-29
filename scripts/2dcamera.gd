@@ -1,18 +1,15 @@
 extends Camera2D
 
 export var move_speed = 400
-var initial_position
-var game_resolution
-
-func _ready():
-	self.initial_position = self.global_position
-	self.game_resolution = {
-		'width': ProjectSettings.get_setting("display/window/size/width"),
-		'height': ProjectSettings.get_setting("display/window/size/height")
-	}
+onready var root_scene = get_tree().root.get_child(0)
+onready var game_resolution = {
+	'width': ProjectSettings.get_setting("display/window/size/width"),
+	'height': ProjectSettings.get_setting("display/window/size/height")
+}
+onready var initial_position = self.global_position
 
 func _process(delta):
-	if !self.find_parent("Scene*").check_event_processor_active():
+	if (!self.root_scene.check_event_processor_active()):
 		if Input.is_action_pressed("move_left") or Input.is_action_pressed("ui_left"):
 			self.move(Vector2.LEFT, delta)
 		if Input.is_action_pressed("move_right") or Input.is_action_pressed("ui_right"):

@@ -14,14 +14,26 @@ _global_script_classes=[ {
 "language": "GDScript",
 "path": "res://scripts/base_scene.gd"
 }, {
+"base": "Node",
+"class": "EventProcessor",
+"language": "GDScript",
+"path": "res://scripts/event_processor.gd"
+}, {
 "base": "Polygon2D",
 "class": "ExpandableDiamond",
 "language": "GDScript",
 "path": "res://scripts/expandable_diamond.gd"
+}, {
+"base": "Control",
+"class": "MessageBox",
+"language": "GDScript",
+"path": "res://scripts/message_box.gd"
 } ]
 _global_script_class_icons={
 "BaseScene": "",
-"ExpandableDiamond": ""
+"EventProcessor": "",
+"ExpandableDiamond": "",
+"MessageBox": ""
 }
 
 [application]

@@ -243,11 +243,11 @@ func photos1():
 func mirror1():
 	return [
 		['>show_message_box'],
-		"{s0.01}WHOA{w1.0} WHO IS THAT HIDEOUS->>",
+		"{s1}WHOA{w1.0} WHO IS THAT HIDEOUS->>",
 		0.5,
 		"Oh, wait.{w1.0} It's [color=aqua]my own face[/color].",
 		"On the table sits a small mirror. ",
 		"_You can adjust the angle of it. ",
-		"_Which reminds me,{w0.5} you can move the [color=aqua]view camera[/color] by using the [b]WASD keys.{w1.0} {s0.2}Try it.[/b]",
+		"_Which reminds me,{w0.5} you can move the [color=aqua]view camera[/color] by using the [b]WASD keys.{w1.0} {s20}Try it.[/b]",
 		['>hide_message_box'],
 	]

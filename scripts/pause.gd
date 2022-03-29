@@ -22,7 +22,7 @@ func pause():
 
 func unpause():
 	self.pause_tween.remove_all()
-	self.pause_tween.interpolate_property(self, 'modulate:a', 1, 0, 0.1, Tween.TRANS_LINEAR, Tween.EASE_OUT_IN)
+	self.pause_tween.interpolate_property(self, "modulate:a", 1, 0, 0.1, Tween.TRANS_LINEAR, Tween.EASE_OUT_IN)
 	self.pause_tween.start()
 
 func _on_tween_all_completed():
