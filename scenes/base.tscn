@@ -8,30 +8,10 @@
 [ext_resource path="res://shaders/hue_shift.shader" type="Shader" id=6]
 [ext_resource path="res://scripts/cursor_diamond.gd" type="Script" id=7]
 [ext_resource path="res://audio/sfx/confirmation_001.ogg" type="AudioStream" id=8]
+[ext_resource path="res://scripts/pause.gd" type="Script" id=9]
 
 [sub_resource type="GDScript" id=1]
 script/source = "extends \"res://scripts/base_scene.gd\"
-"
-
-[sub_resource type="GDScript" id=2]
-script/source = "extends TextureRect
-
-func _input(event):
-	if (self.visible):
-		if event.is_action_pressed(\"ui_cancel\"):
-			$PauseTween.remove_all()
-			$PauseTween.interpolate_property(self, 'modulate:a', 1, 0, 0.1, Tween.TRANS_LINEAR, Tween.EASE_OUT_IN)
-			$PauseTween.start()
-
-func _on_tween_all_completed():
-	self.visible = false
-
-func _on_visibility_changed():
-	if (self.visible):
-		# make sure we're really visible
-		self.modulate.a = 1
-	else:
-		get_tree().paused = false
 "
 
 [sub_resource type="ShaderMaterial" id=4]
@@ -106,7 +86,7 @@ mouse_filter = 0
 texture = ExtResource( 2 )
 expand = true
 stretch_mode = 7
-script = SubResource( 2 )
+script = ExtResource( 9 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -159,7 +139,6 @@ current = true
 stream = ExtResource( 8 )
 bus = "UI"
 
-[connection signal="visibility_changed" from="PausedUILayer/PausedIndicator" to="PausedUILayer/PausedIndicator" method="_on_visibility_changed"]
 [connection signal="tween_all_completed" from="PausedUILayer/PausedIndicator/PauseTween" to="PausedUILayer/PausedIndicator" method="_on_tween_all_completed"]
 [connection signal="hover_off" from="EventProcessor" to="CursorLayer" method="_off_hover"]
 [connection signal="hover_on" from="EventProcessor" to="CursorLayer" method="_on_hover"]

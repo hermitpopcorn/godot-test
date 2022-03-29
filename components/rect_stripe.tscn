@@ -13,13 +13,15 @@ script = ExtResource( 3 )
 points = PoolVector2Array( 0, 0, 0, 0 )
 width = 80.0
 default_color = Color( 0.0392157, 0.152941, 0.254902, 0.721569 )
-antialiased = true
 
 [node name="TextRect" type="ReferenceRect" parent="."]
 margin_top = -36.3144
 margin_right = 616.0
 margin_bottom = 30.6856
 mouse_filter = 2
+__meta__ = {
+"_edit_use_anchors_": false
+}
 
 [node name="RectCalculator" type="Label" parent="TextRect"]
 modulate = Color( 1, 1, 1, 0 )

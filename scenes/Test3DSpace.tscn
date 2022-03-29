@@ -1,8 +1,9 @@
-[gd_scene load_steps=8 format=2]
+[gd_scene load_steps=10 format=2]
 
 [ext_resource path="res://scenes/Base.tscn" type="PackedScene" id=1]
 [ext_resource path="res://images/dialog_sprite/dia_a2.png" type="Texture" id=2]
 [ext_resource path="res://images/dialog_sprite/yoshiko_a2.png" type="Texture" id=3]
+[ext_resource path="res://components/fps.tscn" type="PackedScene" id=4]
 
 [sub_resource type="GDScript" id=1]
 script/source = "extends \"res://scripts/base_scene.gd\"
@@ -11,91 +12,87 @@ const events = preload(\"res://scripts/events/test_clubroom.gd\")
 onready var events_instance = events.new()
 
 func _ready():
-	._cursor_setup()
-
-func run_event():
-	$EventProcessor.set_sequence(events_instance.dia1())
-	$EventProcessor.start()
+	self.enable_cursor()
 
 func _on_3dArea_click(camera, event, click_position, click_normal, shape_idx, event_id):
+	if (!self.get_cursor_status()): return
+	
 	if event is InputEventMouseButton:
-		if (self.check_event_processor_active()): return false
-		match event_id:
-			\"dia1\": run_event()
-			\"yoshiko1\":
-				$EventProcessor.set_sequence(events_instance.yoshiko1())
-				$EventProcessor.start()
+		if (event.button_index == BUTTON_LEFT and event.pressed):
+			if (self.check_event_processor_active()): return false
+			match event_id:
+				\"dia1\":
+					$\"3D/FPS\".disallow_move()
+					$EventProcessor.connect(\"sequence_finished\", self, \"_release_movement_lock\", [], CONNECT_ONESHOT)
+					$EventProcessor.set_sequence(events_instance.dia1())
+					$EventProcessor.start()
+				\"yoshiko1\":
+					$\"3D/FPS\".disallow_move()
+					$EventProcessor.connect(\"sequence_finished\", self, \"_release_movement_lock\", [], CONNECT_ONESHOT)
+					$EventProcessor.set_sequence(events_instance.yoshiko1())
+					$EventProcessor.start()
+
+func _release_movement_lock():
+	$\"3D/FPS\".allow_move()
 "
 
-[sub_resource type="BoxShape" id=2]
+[sub_resource type="CylinderShape" id=6]
+radius = 0.5
 
-[sub_resource type="GDScript" id=3]
-script/source = "extends Camera
+[sub_resource type="CylinderShape" id=7]
+radius = 0.5
 
-func _ready():
-	pass
+[sub_resource type="CubeMesh" id=4]
+size = Vector3( 80, 2, 80 )
 
-func _physics_process(_delta):
-	var translate_speed = Vector3()
-	var rotate_speed = Vector3()
-
-	if (Input.is_action_pressed(\"move_down\") or Input.is_action_pressed(\"ui_down\")):
-		translate_speed += Vector3.BACK
-	if (Input.is_action_pressed(\"move_left\") or Input.is_action_pressed(\"ui_left\")):
-		rotate_speed += Vector3.UP
-	if (Input.is_action_pressed(\"move_right\") or Input.is_action_pressed(\"ui_right\")):
-		rotate_speed += Vector3.DOWN
-	if (Input.is_action_pressed(\"move_up\") or Input.is_action_pressed(\"ui_up\")):
-		translate_speed += Vector3.FORWARD
-
-	translate_speed *= 1
-	self.translate(translate_speed)
-
-	if (rotate_speed):
-		self.rotate(rotate_speed, 0.1)
-"
-
-[sub_resource type="PlaneMesh" id=4]
+[sub_resource type="BoxShape" id=5]
+extents = Vector3( 40, 1, 40 )
 
 [node name="Scene1" instance=ExtResource( 1 )]
 script = SubResource( 1 )
 
 [node name="3D" type="Node" parent="." index="5"]
 
-[node name="Dia3D" type="Sprite3D" parent="3D" index="0"]
-transform = Transform( 0.545636, 0, 0, 0, 0.545636, 0, 0, 0, -0.646726, 0.473508, 3.97849, 0 )
+[node name="FPS" parent="3D" index="0" instance=ExtResource( 4 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.52541, 4.15905 )
+
+[node name="Dia3D" type="Sprite3D" parent="3D" index="1"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.741363, 0 )
+pixel_size = 0.0015
 billboard = 2
 texture = ExtResource( 2 )
 
-[node name="Area" type="Area" parent="3D/Dia3D" index="0"]
+[node name="StaticBody" type="StaticBody" parent="3D/Dia3D" index="0"]
 
-[node name="CollisionShape" type="CollisionShape" parent="3D/Dia3D/Area" index="0"]
-transform = Transform( 2.91563, 0, 0, 0, 8.1571, 0, 0, 0, 0.416939, 0, 0, 0 )
-shape = SubResource( 2 )
+[node name="CollisionShape" type="CollisionShape" parent="3D/Dia3D/StaticBody" index="0"]
+transform = Transform( 1, 0, 0, 0, 1.2, 0, 0, 0, 1, 0, 0, 0 )
+shape = SubResource( 6 )
 
-[node name="Yoshiko3D" type="Sprite3D" parent="3D" index="1"]
-transform = Transform( 0.309515, 0, -0.532606, 0, 0.545636, 0, -0.449354, 0, -0.366858, -6.17715, 3.97849, -11.4272 )
+[node name="Yoshiko3D" type="Sprite3D" parent="3D" index="2"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 1.88397, 0.709594, 0 )
+pixel_size = 0.0015
 billboard = 2
 texture = ExtResource( 3 )
 
-[node name="Area" type="Area" parent="3D/Yoshiko3D" index="0"]
+[node name="StaticBody" type="StaticBody" parent="3D/Yoshiko3D" index="0"]
 
-[node name="CollisionShape" type="CollisionShape" parent="3D/Yoshiko3D/Area" index="0"]
-transform = Transform( 2.91563, 0, 0, 0, 8.1571, 0, 0, 0, 0.416939, 0, 0, 0 )
-shape = SubResource( 2 )
+[node name="CollisionShape" type="CollisionShape" parent="3D/Yoshiko3D/StaticBody" index="0"]
+shape = SubResource( 7 )
 
-[node name="3DCamera" type="Camera" parent="3D" index="2"]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -8.10717, 4.0679, 11.565 )
-script = SubResource( 3 )
+[node name="StaticBody" type="StaticBody" parent="3D" index="3"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.60552, 0 )
 
-[node name="MeshInstance" type="MeshInstance" parent="3D" index="3"]
-transform = Transform( 22.9006, 0, 0, 0, 1, 0, 0, 0, 22.9518, 0, 0, 0 )
+[node name="MeshInstance" type="MeshInstance" parent="3D/StaticBody" index="0"]
 mesh = SubResource( 4 )
+skeleton = NodePath("../..")
 material/0 = null
 
-[connection signal="input_event" from="3D/Dia3D/Area" to="." method="_on_3dArea_click" binds= [ "dia1" ]]
-[connection signal="mouse_entered" from="3D/Dia3D/Area" to="CursorLayer" method="_on_hover" binds= [ "dia1", "Dia Kurosawa" ]]
-[connection signal="mouse_exited" from="3D/Dia3D/Area" to="CursorLayer" method="_off_hover" binds= [ "dia1", "Dia Kurosawa" ]]
-[connection signal="input_event" from="3D/Yoshiko3D/Area" to="." method="_on_3dArea_click" binds= [ "yoshiko1" ]]
-[connection signal="mouse_entered" from="3D/Yoshiko3D/Area" to="CursorLayer" method="_on_hover" binds= [ "yoshiko1", "Yoshiko Tsushima" ]]
-[connection signal="mouse_exited" from="3D/Yoshiko3D/Area" to="CursorLayer" method="_off_hover" binds= [ "yoshiko1", "Yoshiko Tsushima" ]]
+[node name="CollisionShape" type="CollisionShape" parent="3D/StaticBody" index="1"]
+shape = SubResource( 5 )
+
+[connection signal="input_event" from="3D/Dia3D/StaticBody" to="." method="_on_3dArea_click" binds= [ "dia1" ]]
+[connection signal="mouse_entered" from="3D/Dia3D/StaticBody" to="CursorLayer" method="_on_hover" binds= [ "dia1", "Dia Kurosawa" ]]
+[connection signal="mouse_exited" from="3D/Dia3D/StaticBody" to="CursorLayer" method="_off_hover" binds= [ "dia1", "Dia Kurosawa" ]]
+[connection signal="input_event" from="3D/Yoshiko3D/StaticBody" to="." method="_on_3dArea_click" binds= [ "yoshiko1" ]]
+[connection signal="mouse_entered" from="3D/Yoshiko3D/StaticBody" to="CursorLayer" method="_on_hover" binds= [ "yoshiko1", "Yoshiko Tsushima" ]]
+[connection signal="mouse_exited" from="3D/Yoshiko3D/StaticBody" to="CursorLayer" method="_off_hover" binds= [ "yoshiko1", "Yoshiko Tsushima" ]]

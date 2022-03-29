@@ -1,25 +1,63 @@
 extends CanvasLayer
 
+var active = false
 var hovered_items: Array = []
+var hovered_items_text: Dictionary = {}
 var snapping: bool = false
 
-onready var cursor_sprite = $CursorSprite
+onready var cursor_sprite = false # set to false to disable sprite cursor
 onready var cursor_sprite_outside = $CursorSprite/CursorSpriteOutside
 onready var cursor_sprite_inside = $CursorSprite/CursorSpriteInside
+
+var enable_check_timer: Timer
 
 signal show_info_text
 signal hide_info_text
 
-func _process(_delta):
-	# follow mouse
-	var mouse_pos = get_viewport().get_mouse_position()
-	if (mouse_pos.x != 0 && mouse_pos.y != 0):
-		self.cursor_sprite.position = get_viewport().get_mouse_position()
+func _ready():
+	self.enable_check_timer = Timer.new()
+	self.enable_check_timer.wait_time = 0.2
+	self.enable_check_timer.one_shot = true
+	self.add_child(self.enable_check_timer)
+	self.enable_check_timer.connect("timeout", self, "_enable_info")
 
-	if (self.cursor_sprite_outside.rotation_degrees >= 360):
-		self.cursor_sprite_outside.rotation_degrees -= 360
-	if (self.cursor_sprite_inside.rotation_degrees <= -360):
-		self.cursor_sprite_inside.rotation_degrees += 360
+func enable():
+	if (self.cursor_sprite is Node):
+		Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
+	self.enable_check_timer.start()
+	self.active = true
+func _enable_info():
+	if (self.hovered_items.size() > 0):
+		print("show by enable")
+		self.emit_signal("show_info_text", self.hovered_items_text[self.hovered_items.back()])
+
+func disable():
+	if (self.cursor_sprite is Node):
+		Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+	self.active = false
+	print("hide by disable")
+	self.emit_signal("hide_info_text", "*")
+
+func _process(_delta):
+	if (!self.active): return
+	
+	if (!(self.cursor_sprite is Node)):
+		if (self.check_hovering()):
+			Input.set_default_cursor_shape(Input.CURSOR_POINTING_HAND)
+		else:
+			Input.set_default_cursor_shape(Input.CURSOR_ARROW)
+		return
+	
+	if (self.cursor_sprite != false):
+		# follow mouse
+		var mouse_pos = get_viewport().get_mouse_position()
+		if (mouse_pos.x != 0 && mouse_pos.y != 0):
+			self.cursor_sprite.position = get_viewport().get_mouse_position()
+
+		if (self.cursor_sprite_outside.rotation_degrees >= 360):
+			self.cursor_sprite_outside.rotation_degrees -= 360
+		if (self.cursor_sprite_inside.rotation_degrees <= -360):
+			self.cursor_sprite_inside.rotation_degrees += 360
 
 	if (!self.check_hovering()):
 		# rotate a little
@@ -54,26 +92,38 @@ func _process(_delta):
 		self.cursor_sprite_inside.get_material().set_shader_param('shift_amount', 0)
 
 func check_hovering() -> bool:
+	if (!self.active): return false
+	
 	if (self.hovered_items.size() == 0): return false
 
+	# if event processor is active, restrict hovering only to message box
 	if (self.get_parent().check_event_processor_active()):
 		if (!self.hovered_items.has('MessageBox')): return false
-
+	
 	return true
 
-func _on_hover(emitter, text=null):
+func _on_hover(emitter, text = null):
+	print(['on', emitter, text])
+	if (!self.active): return false
+	
 	if (!self.hovered_items.has(emitter)):
 		self.hovered_items.append(emitter)
 	if (text):
+		self.hovered_items_text[emitter] = text
+		print("show by natural")
 		self.emit_signal("show_info_text", text)
 
-func _off_hover(emitter, text=null):
+func _off_hover(emitter, text = null):
+	print(['of', emitter, text])
+	if (!self.active): return false
+	
 	if (emitter == "*"):
 		self.hovered_items.clear()
+		self.hovered_items_text.clear()
 		self.emit_signal("hide_info_text", "*")
 	else:
-		var index = self.hovered_items.find(emitter)
-		if (index > -1):
-			self.hovered_items.remove(index)
+		self.hovered_items.erase(emitter)
+		self.hovered_items_text.erase(emitter)
 		if (text):
+			print("hide by natural")
 			self.emit_signal("hide_info_text", text)

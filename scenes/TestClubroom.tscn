@@ -16,7 +16,7 @@ onready var events_instance = events.new({
 })
 
 func _ready():
-	self._cursor_setup()
+	self.enable_cursor()
 
 func _on_area_click(viewport, event, shape_idx, event_id):
 	if event is InputEventMouseButton:
