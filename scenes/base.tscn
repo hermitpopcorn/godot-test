@@ -28,7 +28,7 @@ func _on_tween_all_completed():
 
 func _on_visibility_changed():
 	if (self.visible):
-		# Make sure we're really visible
+		# make sure we're really visible
 		self.modulate.a = 1
 	else:
 		get_tree().paused = false

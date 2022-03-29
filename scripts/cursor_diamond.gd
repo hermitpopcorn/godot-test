@@ -11,7 +11,7 @@ signal show_info_text
 signal hide_info_text
 
 func _process(_delta):
-	# Follow mouse
+	# follow mouse
 	var mouse_pos = get_viewport().get_mouse_position()
 	if (mouse_pos.x != 0 && mouse_pos.y != 0):
 		self.cursor_sprite.position = get_viewport().get_mouse_position()
@@ -22,34 +22,34 @@ func _process(_delta):
 		self.cursor_sprite_inside.rotation_degrees += 360
 
 	if (!self.check_hovering()):
-		# Rotate a little
+		# rotate a little
 		self.cursor_sprite_outside.rotation_degrees += 0.5
 		self.snapping = false
 	else:
-		# Set to snap to nearest angle
+		# set to snap to nearest angle
 		self.snapping = true
 
 	if (self.snapping):
-		# Snap back to nearest angle (outside)
+		# snap back to nearest angle (outside)
 		var over_times = floor(abs(self.cursor_sprite_outside.rotation_degrees) / 90)
 		var degrees_remaining = abs(self.cursor_sprite_outside.rotation_degrees) - (90 * over_times)
 		if (degrees_remaining >= 45):
 			self.cursor_sprite_outside.rotation_degrees += min(7, degrees_remaining)
 		else:
 			self.cursor_sprite_outside.rotation_degrees -= min(7, degrees_remaining)
-		# Shrink
+		# shrink
 		if (self.cursor_sprite.scale.x > 0.75):
 			self.cursor_sprite.scale.x -= 0.05
 			self.cursor_sprite.scale.y -= 0.05
-		# Hue shift
+		# hue shift
 		self.cursor_sprite_outside.get_material().set_shader_param('shift_amount', 0.1)
 		self.cursor_sprite_inside.get_material().set_shader_param('shift_amount', 0.1)
 	else:
-		# Back to normal size
+		# back to normal size
 		if (self.cursor_sprite.scale.x < 1):
 			self.cursor_sprite.scale.x += 0.05
 			self.cursor_sprite.scale.y += 0.05
-		# Shift back hue
+		# shift back hue
 		self.cursor_sprite_outside.get_material().set_shader_param('shift_amount', 0)
 		self.cursor_sprite_inside.get_material().set_shader_param('shift_amount', 0)
 

@@ -16,4 +16,4 @@ func set(key, value):
 
 func reset():
 	self.variables = {}
-	print ("[VARS] game variables (re)initialized")
+	if OS.is_debug_build(): print ("[VARS] game variables (re)initialized")

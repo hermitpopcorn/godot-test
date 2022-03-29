@@ -1,7 +1,7 @@
 extends Node2D
 
-export var size: float = 36.512 # Size of the diamonds
-export var fade_speed: float = 0.01 # Speed of diamond fade. Smaller = faster
+export var size: float = 36.512 # size of the diamonds
+export var fade_speed: float = 0.01 # speed of diamond fade. smaller = faster
 
 func show_diamond_stripe(length, text):
 	create_stripe(length)
