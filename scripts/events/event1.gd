@@ -2,52 +2,52 @@ static func dia1():
 	return [
 		1.0,
 		['>sprite|show|bg', {
-			'src': 'res://images/bg/izumito.png',
+			'src': preload('res://images/bg/izumito.png'),
 			'position': Vector2(0, 0),
 		} ],
 		0.5,
 		['>show_message_box'],
 		['>audio|sfx|bike', {
-			'src': "res://audio/voice/bike_00.wav",
+			'src': preload('res://audio/voice/bike_00.wav'),
 		} ],
 		1.0,
 		['>sprite|show|yoshiko', {
 			'src': 'res://images/dialog_sprite/yoshiko_n2.png',
-			'position': Vector2(-265, 790),
+			'position': Vector2(-265, 540),
 			'duration': 0.1,
 			'z_index': 2,
 		} ],
 		['>sprite|move|yoshiko', {
-			'position': Vector2(1201, 790),
+			'position': Vector2(1201, 540),
 			'duration': 0.5,
 		} ],
 		['>sprite|move|yoshiko|nowait', {
-			'position': Vector2(1250, 790),
+			'position': Vector2(1250, 540),
 			'duration': 10,
 		} ],
-		['>audio|voice|yoshiko_00.wav'],
+		['>audio|voice', { 'src': preload('res://audio/voice/yoshiko_00.wav') }],
 		"Yoshiko|Yo.",
 		['>sprite|change|yoshiko', {
-			'src': 'res://images/dialog_sprite/yoshiko_a2.png',
+			'src': preload('res://images/dialog_sprite/yoshiko_a2.png'),
 		} ],
-		['>audio|voice|yoshiko_01.wav'],
+		['>audio|voice', { 'src': preload('res://audio/voice/yoshiko_01.wav') }],
 		"Yoshiko|Let's get this party goin', YOROSHIKU!!",
 		['>sprite|dim|yoshiko'],
 		['>sprite|show|dia', {
 			'src': 'res://images/dialog_sprite/dia_a2.png',
-			'position': Vector2(2211, 790),
+			'position': Vector2(2211, 540),
 			'duration': 0.1,
 			'z_index': 1,
 		} ],
 		['>sprite|move|dia', {
-			'position': Vector2(510, 790),
+			'position': Vector2(510, 540),
 			'duration': 0.5,
 		} ],
 		['>sprite|move|dia|nowait', {
-			'position': Vector2(480, 790),
+			'position': Vector2(480, 540),
 			'duration': 10,
 		} ],
-		['>audio|voice|dia_00.wav'],
+		['>audio|voice', { 'src': preload('res://audio/voice/dia_00.wav') }],
 		"Dia|YOROSHIKU.",
 		['>sprite|light|yoshiko|nowait'],
 		['>sprite|dim|dia'],
@@ -56,7 +56,7 @@ static func dia1():
 		['>container|move|sprites|nowait', {
 			'scale': Vector2(1.1, 1.1),
 			'rotation': 5,
-			'position': Vector2(-50, 50),
+			'position': Vector2(-50+960, 50+540),
 			'duration': 0.5,
 		} ],
 		['>container|move|background|nowait', {
@@ -69,14 +69,14 @@ static func dia1():
 			'duration': 0.5,
 		} ],
 		['>container|move|background|nowait', {
-			'position': Vector2(30, 0),
+			'position': Vector2(30+960, 0+540),
 			'duration': 10,
 		} ],
 		['>sprite|move|yoshiko|nowait', {
-			'position': Vector2(1280, 790),
+			'position': Vector2(1280, 540),
 			'duration': 10,
 		} ],
-		['>audio|voice|yoshiko_02.wav'],
+		['>audio|voice', { 'src': preload('res://audio/voice/yoshiko_02.wav') }],
 		"Yoshiko|Wuzzat? Your decoration game WEAK. You dare callin' this christmas decor, huh?!",
 		['>container|clear|background'],
 		['>sprite|clear|yoshiko'],
@@ -85,7 +85,7 @@ static func dia1():
 		['>container|move|sprites|nowait', {
 			'scale': Vector2(1.1, 1.1),
 			'rotation': -5,
-			'position': Vector2(50, 50),
+			'position': Vector2(50+960, 50+540),
 			'duration': 0.5,
 		} ],
 		['>container|move|background|nowait', {
@@ -99,19 +99,19 @@ static func dia1():
 		} ],
 		['>sprite|move|dia', {
 			'scale': Vector2(1.2, 1.2),
-			'position': Vector2(480, 900),
+			'position': Vector2(480, 650),
 			'duration': 0.5,
 		} ],
 		0.5,
 		['>container|move|background|nowait', {
-			'position': Vector2(-30, 0),
+			'position': Vector2(-30+960, 0+540),
 			'duration': 10,
 		} ],
 		['>sprite|move|dia|nowait', {
-			'position': Vector2(510, 900),
+			'position': Vector2(510, 650),
 			'duration': 10,
 		} ],
-		['>audio|voice|dia_01.wav'],
+		['>audio|voice', { 'src': preload('res://audio/voice/dia_01.wav') }],
 		"Dia|What, you got a problem with one of my creations?!",
 		['>container|clear|background'],
 		['>sprite|clear|yoshiko'],
@@ -121,7 +121,7 @@ static func dia1():
 		['>container|move|sprites|nowait', {
 			'scale': Vector2(1.1, 1.1),
 			'rotation': 5,
-			'position': Vector2(-50, 50),
+			'position': Vector2(-50+960, 50+540),
 			'duration': 0.5,
 		} ],
 		['>container|move|background|nowait', {
@@ -134,28 +134,28 @@ static func dia1():
 			'duration': 0.5,
 		} ],
 		['>container|move|background|nowait', {
-			'position': Vector2(0, 0),
+			'position': Vector2(0+960, 0+540),
 			'duration': 10,
 		} ],
 		['>sprite|move|dia|nowait', {
-			'position': Vector2(550, 900),
+			'position': Vector2(550, 650),
 			'duration': 10,
 		} ],
 		['>sprite|move|yoshiko|nowait', {
-			'position': Vector2(1200, 790),
+			'position': Vector2(1200, 540),
 			'duration': 10,
 		} ],
-		['>audio|voice|yoshiko_03.wav'],
+		['>audio|voice', { 'src': preload('res://audio/voice/yoshiko_03.wav') }],
 		"Yoshiko|I got problems with ALL your creations!",
 		['>container|clear|background'],
 		['>container|clear|sprites'],
 		['>container|move|background|nowait', {
-			'position': Vector2(0, 50),
+			'position': Vector2(0+960, 50+540),
 			'scale': Vector2(1.4, 1.4),
 			'duration': 0.5,
 		} ],
 		['>container|move|sprites|nowait', {
-			'position': Vector2(-100, 415),
+			'position': Vector2(-100+960, 415+540),
 			'scale': Vector2(1.3, 1.3),
 			'duration': 0.5,
 		} ],
@@ -163,7 +163,7 @@ static func dia1():
 			'scale': Vector2(1.4, 1.4),
 			'duration': 0.5,
 		} ],
-		['>audio|voice|yoshiko_04.wav'],
+		['>audio|voice', { 'src': preload('res://audio/voice/yoshiko_04.wav') }],
 		"Yoshiko|Don't be disrespectin' Christmas, skank!",
 		['>sprite|hide|bg'],
 		['>sprite|hide|yoshiko|nowait', {
@@ -174,6 +174,8 @@ static func dia1():
 		} ],
 		['>hide_message_box'],
 		1.0,
+		['>sprite|remove|yoshiko'],
+		['>sprite|remove|dia'],
 		['>container|reset|background'],
 		['>container|reset|sprites'],
 	]

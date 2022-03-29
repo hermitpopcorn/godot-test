@@ -12,20 +12,25 @@
 [sub_resource type="GDScript" id=1]
 script/source = "extends Control
 
-export var message_speed = 0.02
-var temporary_message_speed = null
+export var message_speed: int = 50 # in miliseconds
+export var play_advance_click_sound = true
 
-var message_length
-var timer
-var typing_finsihed = true
-var tween
-var tweening_finished = true
-var visibility
-var state = 'disabled' # 'disabled', 'typing', 'waiting_input', 'standby'
+onready var background = $ClickableArea/Background
+onready var message = $ClickableArea/Message
+onready var nameplate = $ClickableArea/Nameplate
+onready var nameplate_text = $ClickableArea/Nameplate/NameText
+onready var next_caret = $ClickableArea/NextCaret
+onready var tween = $Tween
+onready var message_tick_timer = $MessageTickTimer
+onready var click_sound_player = $ClickSound
+
+var message_length: int
+var typing_finsihed: bool = true
+var tweening_finished: bool = true
+var state: String = 'disabled' # 'disabled', 'typing', 'waiting_input', 'standby'
 var tags = []
 var instructions = {}
-
-export var click_sound = true
+var temporary_message_speed: int = 0
 
 signal finished_typing
 signal finished_tweening
@@ -35,9 +40,8 @@ signal hover_on
 signal hover_off
 
 func _ready():
-	$ClickableArea/Message.bbcode_text = \"\"
-
-	self.visibility = true if (self.modulate.a == 1) else false
+	self.message.bbcode_text = ''
+	self.visible = true if (self.modulate.a == 1) else false
 	self.state = 'standby'
 
 func show_text(text, options: Dictionary = {}):
@@ -50,10 +54,11 @@ func show_text(text, options: Dictionary = {}):
 		# continue text or fresh text
 		if (text.begins_with('_')):
 			text = text.substr(1)
-			self.tags.push_back(\"continue\")
+			self.tags.push_back('pickup')
+		# skip without player confirmation
 		elif (text.ends_with('>>')):
 			text = text.substr(0, text.length() - 2)
-			self.tags.push_back(\"no_confirmation\")
+			self.tags.push_back('no_confirmation')
 		else:
 			tag_scan = false
 	
@@ -61,8 +66,8 @@ func show_text(text, options: Dictionary = {}):
 	self.instructions = {}
 	var instruction_scan = true
 	var push_by = 0
-	if (\"continue\" in self.tags):
-		push_by = (self.get_bbcodeless_text($ClickableArea/Message.bbcode_text)).length()
+	if ('pickup' in self.tags):
+		push_by = (self.get_bbcodeless_text(self.message.bbcode_text)).length()
 	while (instruction_scan):
 		var opening_bracket_position = text.find('{')
 		if (opening_bracket_position != -1):
@@ -95,15 +100,15 @@ func show_text(text, options: Dictionary = {}):
 		else:
 			instruction_scan = false
 		
-	if (\"continue\" in self.tags):
-		$ClickableArea/Message.visible_characters = (self.get_bbcodeless_text($ClickableArea/Message.bbcode_text)).length()
-		$ClickableArea/Message.bbcode_text = $ClickableArea/Message.bbcode_text + text
+	if ('pickup' in self.tags):
+		self.message.visible_characters = (self.get_bbcodeless_text(self.message.bbcode_text)).length()
+		self.message.bbcode_text = self.message.bbcode_text + text
 	else:
-		$ClickableArea/Message.bbcode_text = text
-		$ClickableArea/Message.visible_characters = 0
-	self.message_length = (self.get_bbcodeless_text($ClickableArea/Message.bbcode_text)).length()
+		self.message.bbcode_text = text
+		self.message.visible_characters = 0
+	self.message_length = (self.get_bbcodeless_text(self.message.bbcode_text)).length()
 	self.typing_finsihed = false
-	$ClickableArea/NextCaret.visible = false
+	self.next_caret.visible = false
 	if (options.has('nameplate')):
 		var hue = 0
 		if (options['nameplate'].has('hue')):
@@ -112,12 +117,12 @@ func show_text(text, options: Dictionary = {}):
 	else:
 		self._hide_nameplate()
 	
-	self.go_over_instructions()
-	if (self.temporary_message_speed):
-		$Timer.start(self.temporary_message_speed)
-		self.temporary_message_speed = null
+	self._go_over_instructions()
+	if (self.temporary_message_speed > 0):
+		self.message_tick_timer.start((float(self.temporary_message_speed) / 1000) || 0.02)
+		self.temporary_message_speed = 0
 	else:
-		$Timer.start(self.message_speed)
+		self.message_tick_timer.start(float(self.message_speed) / 1000)
 
 func get_bbcodeless_text(text):
 	if !(text):
@@ -132,55 +137,64 @@ func get_bbcodeless_text(text):
 			text.erase(s_pos, (e_pos - s_pos) + 1)
 	return text
 
-func go_over_instructions():
-	if ($ClickableArea/Message.visible_characters in self.instructions):
-		var instruction = self.instructions[$ClickableArea/Message.visible_characters]
-		if (instruction.begins_with(\"w\")):
-			$Timer.stop()
-			var wait_timer = Timer.new()
-			wait_timer.one_shot = true
-			wait_timer.wait_time = float(instruction.substr(1))
-			wait_timer.connect(\"timeout\", self, \"_intext_timer_timeout\", [wait_timer])
-			$Timer.add_child(wait_timer)
-			wait_timer.start()
-		elif (instruction.begins_with(\"s\")):
-			if ($ClickableArea/Message.visible_characters > 0):
-				$Timer.wait_time = float(instruction.substr(1))
-			else:
-				self.temporary_message_speed = float(instruction.substr(1))
+func _go_over_instructions():
+	if (self.message.visible_characters in self.instructions):
+		for instruction in self.instructions[self.message.visible_characters]:
+			if (instruction.begins_with('w')):
+				self.message_tick_timer.stop()
+				var wait_timer = Timer.new()
+				wait_timer.one_shot = true
+				wait_timer.wait_time = float(instruction.substr(1))
+				wait_timer.connect('timeout', self, '_intext_timer_timeout', [wait_timer])
+				self.message_tick_timer.add_child(wait_timer)
+				wait_timer.start()
+			elif (instruction.begins_with('s')):
+				var speed = instruction.substr(1)
+				# reset if unspecified
+				if (speed == ''): speed = self.message_speed
+				else: speed = speed.to_int()
+				
+				# if already started typing text, set timer wait time. else, set temp message speed
+				if (self.message.visible_characters > 0):
+					self.timer.wait_time = float(speed) / 1000
+				else:
+					self.temporary_message_speed = speed
 
 func _type_text_character():
-	$ClickableArea/Message.visible_characters += 1
-	if ($ClickableArea/Message.visible_characters >= self.message_length):
+	self.message.visible_characters += 1
+	if (self.message.visible_characters >= self.message_length):
 		self._end_typing()
 	else:
-		self.go_over_instructions()
+		self._go_over_instructions()
 
 func _intext_timer_timeout(itself):
-	$Timer.remove_child(itself)
-	$Timer.start()
+	# remove in-text timer from main timer and restart main timer
+	self.message_tick_timer.remove_child(itself)
+	self.message_tick_timer.start()
 
-func _show_nameplate(name, hue: float = 0):
-	$ClickableArea/Nameplate/NameText.bbcode_text = \"[center]\" + name + \"[/center]\"
-	$ClickableArea/Nameplate.get_material().set_shader_param('shift_amount', hue)
-	$ClickableArea/Nameplate.visible = true
+func _show_nameplate(name: String, hue: float = 0.0):
+	if (self.nameplate.visible == false || self.nameplate.modulate.a < 0.1):
+		self.nameplate.modulate.a = 1
+		self.nameplate.visible = true
+	self.nameplate_text.bbcode_text = '[center]' + name + '[/center]'
+	self.nameplate.get_material().set_shader_param('shift_amount', hue)
 
 func _hide_nameplate():
-	$ClickableArea/Nameplate.visible = false
+	self.nameplate.visible = false
 
 func _skip_typing():
-	$Timer.stop()
-	$ClickableArea/Message.visible_characters = $ClickableArea/Message.bbcode_text.length()
+	self.message_tick_timer.stop()
+	self.message.visible_characters = self.message.bbcode_text.length()
 	self._end_typing()
 
 func _end_typing():
-	$Timer.stop()
-	for i in $Timer.get_children():
-		$Timer.remove_child(i)
+	self.message_tick_timer.stop()
+	for i in self.message_tick_timer.get_children():
+		self.message_tick_timer.remove_child(i)
 	self.typing_finsihed = true
 	self.state = 'waiting_input'
-	if !(\"no_confirmation\" in self.tags):
-		$ClickableArea/NextCaret.visible = true
+	if !('no_confirmation' in self.tags):
+		self.next_caret.visible = true
 	emit_signal('finished_typing', self.tags)
 
 func hide(animate: bool = true):
@@ -189,27 +203,36 @@ func hide(animate: bool = true):
 func show(animate: bool = true):
 	self.toggle_visibility(true, animate)
 
-func toggle_visibility(show: bool, animate: bool = true):
+func toggle_visibility(target_visibility: bool, animate: bool = true):
 	self._hide_nameplate()
-	$ClickableArea/NextCaret.visible = false
-	if show: self.visible = true
-	else: $ClickableArea/Message.text = \"\"
-	if (animate):
-		$Tween.interpolate_property(self, \"modulate:a\", (0 if show else 1), (1 if show else 0), 0.5, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT)
-		$Tween.interpolate_property($ClickableArea/Background, \"position:y\", (670 if show else 410), (410 if show else 670), 0.5, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT)
-		self.tweening_finished = false
-		$Tween.start()
+	self.next_caret.visible = false
+	if target_visibility == true:
+		self.modulate.a = 0;
+		self.visible = true
 	else:
-		self.modulate.a = (1 if show else 0)
-		$ClickableArea/Background.position.y = (410 if show else 670)
+		self.message.text = ''
+	if (animate):
+		self.tween.interpolate_property(self, 'modulate:a', (0 if target_visibility else 1), (1 if target_visibility else 0), 0.5, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT)
+		self.tween.interpolate_property(self.background, 'position:y', (670 if target_visibility else 410), (410 if target_visibility else 670), 0.5, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT)
+		self.tweening_finished = false
+		self.tween.start()
+	else:
+		self.modulate.a = (1 if target_visibility else 0)
+		self.tweening_finished = true
+		if self.modulate.a == 1:
+			self.state = 'standby'
+		else:
+			self.state = 'disabled'
+		if self.modulate.a == 0: self.visible = false
+		self.background.position.y = (410 if target_visibility else 670)
 		self._end_tween()
 
 func _skip_tween():
-	$Tween.playback_speed = 10.0
+	self.tween.playback_speed = 10.0
 
 func _end_tween():
-	$Tween.playback_speed = 1.0
-	$Tween.remove_all()
+	self.tween.playback_speed = 1.0
+	self.tween.remove_all()
 	self.tweening_finished = true
 	if self.modulate.a == 1: self.state = 'standby'; else: self.state = 'disabled'
 	if self.modulate.a == 0: self.visible = false
@@ -217,7 +240,7 @@ func _end_tween():
 
 func _advance():
 	if self.typing_finsihed && self.tweening_finished:
-		$ClickableArea/NextCaret.visible = false
+		self.next_caret.visible = false
 		self._play_click_sfx()
 		emit_signal('next')
 		self.state = 'standby'
@@ -228,17 +251,9 @@ func _advance():
 			self._skip_tween()
 
 func _play_click_sfx():
-	if (!self.click_sound): return
+	if (!self.play_advance_click_sound): return
 	if (self.state != 'waiting_input'): return
-	$ClickSound.play()
-
-func get_nameplate_hue(name):
-	var hue = 0
-	match (name):
-		\"Yoshiko\": hue = 0.9
-		\"Dia\": hue = 0.3
-		_: hue = 0
-	return hue
+	self.click_sound_player.play()
 
 func _on_click(viewport, event, shape_idx):
 	if (event is InputEventMouseButton):
@@ -247,7 +262,7 @@ func _on_click(viewport, event, shape_idx):
 			self._advance()
 
 func _input(event):
-	if event.is_action_pressed(\"ui_accept\"):
+	if event.is_action_pressed('ui_accept'):
 		emit_signal('clicked')
 		self._advance()
 
@@ -256,14 +271,13 @@ func _on_tween_all_completed():
 
 func _on_tween_started(object, key):
 	if (object == self && key == ':modulate:a'):
-		if (self.visibility == false):
-			$ClickableArea/Message.bbcode_text = \"\"
-			$ClickableArea/Message.visible_characters = 0
+		if (self.visible == false):
+			self.message.bbcode_text = ''
+			self.message.visible_characters = 0
 
 func _on_tween_completed(object, key):
 	if (object == self && key == ':modulate:a'):
-		self.visibility = true if (self.modulate.a == 1) else false
-
+		self.visible = true if (self.modulate.a == 1) else false
 
 func _on_ClickableArea_mouse_entered(): emit_signal('hover_on')
 func _on_ClickableArea_mouse_exited(): emit_signal('hover_off')
@@ -378,7 +392,6 @@ script = SubResource( 1 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
-message_speed = 0.04
 
 [node name="ClickableArea" type="Area2D" parent="."]
 position = Vector2( 960, 540 )
@@ -405,12 +418,12 @@ margin_top = 5.0
 margin_right = 426.025
 margin_bottom = 57.0
 mouse_filter = 2
-custom_fonts/bold_font = SubResource( 3 )
-custom_fonts/normal_font = SubResource( 4 )
 custom_colors/default_color = Color( 1, 1, 1, 1 )
 custom_colors/font_color_shadow = Color( 0.101961, 0.0705882, 0.345098, 0.447059 )
 custom_constants/shadow_offset_x = 3
 custom_constants/shadow_offset_y = 3
+custom_fonts/bold_font = SubResource( 3 )
+custom_fonts/normal_font = SubResource( 4 )
 bbcode_enabled = true
 meta_underlined = false
 scroll_active = false
@@ -424,12 +437,12 @@ margin_top = 318.0
 margin_right = 704.0
 margin_bottom = 500.0
 mouse_filter = 2
-custom_fonts/bold_font = SubResource( 3 )
-custom_fonts/normal_font = SubResource( 4 )
 custom_colors/default_color = Color( 1, 1, 1, 1 )
 custom_colors/font_color_shadow = Color( 0.101961, 0.0705882, 0.345098, 0.447059 )
 custom_constants/shadow_offset_x = 3
 custom_constants/shadow_offset_y = 3
+custom_fonts/bold_font = SubResource( 3 )
+custom_fonts/normal_font = SubResource( 4 )
 bbcode_enabled = true
 meta_underlined = false
 scroll_active = false
@@ -441,6 +454,7 @@ __meta__ = {
 position = Vector2( 728.382, 460 )
 scale = Vector2( 0.186289, 0.186289 )
 frames = SubResource( 20 )
+frame = 4
 playing = true
 __meta__ = {
 "_edit_lock_": true
@@ -455,14 +469,15 @@ one_way_collision = true
 
 [node name="Tween" type="Tween" parent="."]
 
-[node name="Timer" type="Timer" parent="."]
+[node name="MessageTickTimer" type="Timer" parent="."]
 
 [node name="ClickSound" type="AudioStreamPlayer" parent="."]
 stream = ExtResource( 5 )
+
 [connection signal="input_event" from="ClickableArea" to="." method="_on_click"]
 [connection signal="mouse_entered" from="ClickableArea" to="." method="_on_ClickableArea_mouse_entered"]
 [connection signal="mouse_exited" from="ClickableArea" to="." method="_on_ClickableArea_mouse_exited"]
 [connection signal="tween_all_completed" from="Tween" to="." method="_on_tween_all_completed"]
 [connection signal="tween_completed" from="Tween" to="." method="_on_tween_completed"]
 [connection signal="tween_started" from="Tween" to="." method="_on_tween_started"]
-[connection signal="timeout" from="Timer" to="." method="_type_text_character"]
+[connection signal="timeout" from="MessageTickTimer" to="." method="_type_text_character"]
