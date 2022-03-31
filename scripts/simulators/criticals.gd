@@ -48,12 +48,12 @@ var critical_receive_proof_decay = 0.1
 var critical_deal_proof_increase = 0.3
 var critical_receive_proof_increase = 0.4
 
-func _process(delta):
-	if (Input.is_action_just_pressed("jump")): reroll()
-	if (Input.is_action_just_pressed("move_left")): attack()
-	if (Input.is_action_just_pressed("move_right")): defense()
-	if (Input.is_action_just_pressed("move_backward")): simulate(10, false)
-	if (Input.is_action_just_pressed("move_forward")): simulate(10, true)
+func _input(event):
+	if (Input.is_key_pressed(KEY_Q)): reroll()
+	if (Input.is_key_pressed(KEY_W)): attack()
+	if (Input.is_key_pressed(KEY_E)): defense()
+	if (Input.is_key_pressed(KEY_R)): simulate(10, true)
+	if (Input.is_key_pressed(KEY_T)): simulate(10, false)
 
 func reroll():
 	print("=== Reroll ===")

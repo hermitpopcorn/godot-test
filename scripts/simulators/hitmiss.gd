@@ -27,22 +27,22 @@ func calculate_hitmiss(hit, eva):
 	print("Difference: ", eva - hit, " | Dodge Factor: ", dodge_factor, " | Variance: ", variance)
 	return (100 - dodge_factor - variance) / 100
 
-func _process(delta):
-	if (Input.is_action_just_pressed("ui_accept")): hit()
-	if (Input.is_action_just_pressed("toggle_cursor")): simulate(100)
-	if (Input.is_action_just_pressed("ui_left")):
+func _input(event):
+	if (Input.is_key_pressed(KEY_G)): hit()
+	if (Input.is_key_pressed(KEY_H)): simulate(100)
+	if (Input.is_key_pressed(KEY_A)):
 		party_hit -= 1
 		party_eva -= 1
 		print("Party HIT/EVA reduced to ", [party_hit, party_eva])
-	if (Input.is_action_just_pressed("ui_right")):
+	if (Input.is_key_pressed(KEY_S)):
 		party_hit += 1
 		party_eva += 1
 		print("Party HIT/EVA increased to ", [party_hit, party_eva])
-	if (Input.is_action_just_pressed("ui_down")):
+	if (Input.is_key_pressed(KEY_D)):
 		enemy_hit -= 1
 		enemy_eva -= 1
 		print("Enemy HIT/EVA reduced to ", [enemy_hit, enemy_eva])
-	if (Input.is_action_just_pressed("ui_up")):
+	if (Input.is_key_pressed(KEY_F)):
 		enemy_hit += 1
 		enemy_eva += 1
 		print("Enemy HIT/EVA increased to ", [enemy_hit, enemy_eva])

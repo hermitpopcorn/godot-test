@@ -1,8 +1,9 @@
-[gd_scene load_steps=5 format=2]
+[gd_scene load_steps=6 format=2]
 
 [ext_resource path="res://scenes/Base.tscn" type="PackedScene" id=1]
 [ext_resource path="res://scripts/simulators/criticals.gd" type="Script" id=2]
 [ext_resource path="res://scripts/simulators/hitmiss.gd" type="Script" id=3]
+[ext_resource path="res://scripts/simulators/damage.gd" type="Script" id=4]
 
 [sub_resource type="GDScript" id=1]
 script/source = "extends \"res://scripts/base_scene.gd\"
@@ -16,3 +17,6 @@ script = ExtResource( 2 )
 
 [node name="HitMissSimulator" type="Node" parent="." index="7"]
 script = ExtResource( 3 )
+
+[node name="DamageSimulator" type="Node" parent="." index="8"]
+script = ExtResource( 4 )
