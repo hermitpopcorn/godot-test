@@ -1,0 +1,11 @@
+[gd_resource type="DynamicFont" load_steps=2 format=2]
+
+[ext_resource path="res://fonts/digital-display-tfb/digital-display-tfb.ttf" type="DynamicFontData" id=1]
+
+[resource]
+size = 90
+outline_size = 2
+outline_color = Color( 0.623529, 0.564706, 0.956863, 0.47451 )
+use_mipmaps = true
+use_filter = true
+font_data = ExtResource( 1 )

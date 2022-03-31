@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/diamond-bhalf.png-b340a5cf154365d80b5b593af0536fdf.stex"
+path="res://.import/party_panel.png-b8f3147f30bbcfab37edf3aceea56354.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://images/ui/diamond-bhalf.png"
-dest_files=[ "res://.import/diamond-bhalf.png-b340a5cf154365d80b5b593af0536fdf.stex" ]
+source_file="res://images/ui/party_panel.png"
+dest_files=[ "res://.import/party_panel.png-b8f3147f30bbcfab37edf3aceea56354.stex" ]
 
 [params]
 
