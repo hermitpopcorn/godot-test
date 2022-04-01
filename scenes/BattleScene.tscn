@@ -1,64 +1,16 @@
-[gd_scene load_steps=6 format=2]
+[gd_scene load_steps=5 format=2]
 
 [ext_resource path="res://images/bg/dark-dungeon-stock-photo.jpg" type="Texture" id=1]
 [ext_resource path="res://components/member_status.tscn" type="PackedScene" id=2]
-[ext_resource path="res://scripts/battle_animation_controller.gd" type="Script" id=3]
-[ext_resource path="res://images/ui/anims_overlays/party_panel_damage_red.png" type="Texture" id=4]
-
-[sub_resource type="GDScript" id=1]
-script/source = "extends Node
-
-onready var bac = $BattleAnimationController
-
-func _ready():
-	self.bac.set_gui($GUILayer/GUI)
-
-func _input(event):
-	if (Input.is_physical_key_pressed(KEY_Q)):
-		self.bac.gui_shake(1, 50, 1)
-	if (Input.is_physical_key_pressed(KEY_W)):
-		self.bac.flash_damage_on_party_member($GUILayer/GUI/PartyStatusContainer/MemberStatus)
-		$GUILayer/GUI/PartyStatusContainer/MemberStatus.damage(5)
-	if (Input.is_physical_key_pressed(KEY_E)):
-		self.bac.flash_damage_on_party_member($GUILayer/GUI/PartyStatusContainer/MemberStatus2)
-		$GUILayer/GUI/PartyStatusContainer/MemberStatus2.damage(5)
-"
+[ext_resource path="res://scripts/game_objects/item.gd" type="Script" id=5]
+[ext_resource path="res://scripts/battle_scene.gd" type="Script" id=8]
 
 [node name="BattleScene" type="Node"]
-script = SubResource( 1 )
+script = ExtResource( 8 )
 __meta__ = {
-"_edit_horizontal_guides_": [ 830.284, 1079.79 ],
+"_edit_horizontal_guides_": [ 1079.79 ],
 "_edit_vertical_guides_": [ 959.757, 480.0, 1440.49, -0.292374, 1919.53 ]
 }
-
-[node name="BattleAnimationController" type="Node" parent="."]
-script = ExtResource( 3 )
-
-[node name="ShakeTween" type="Tween" parent="BattleAnimationController"]
-
-[node name="DamageFlashTween" type="Tween" parent="BattleAnimationController"]
-
-[node name="ControlContainer" type="Control" parent="BattleAnimationController"]
-anchor_right = 1.0
-anchor_bottom = 1.0
-
-[node name="DamageFlashRect" type="TextureRect" parent="BattleAnimationController/ControlContainer"]
-visible = false
-anchor_right = 1.0
-anchor_bottom = 1.0
-size_flags_horizontal = 3
-size_flags_vertical = 3
-texture = ExtResource( 4 )
-expand = true
-stretch_mode = 1
-
-[node name="Background" type="TextureRect" parent="."]
-margin_right = 1920.0
-margin_bottom = 1168.0
-mouse_filter = 2
-texture = ExtResource( 1 )
-expand = true
-stretch_mode = 1
 
 [node name="GUILayer" type="CanvasLayer" parent="."]
 
@@ -94,7 +46,15 @@ margin_right = 1430.0
 margin_left = 1450.0
 margin_right = 1910.0
 
-[connection signal="tween_completed" from="BattleAnimationController/ShakeTween" to="BattleAnimationController" method="_on_ShakeTween_tween_completed"]
-[connection signal="tween_completed" from="BattleAnimationController/DamageFlashTween" to="BattleAnimationController" method="_on_DamageFlashTween_tween_completed"]
+[node name="Background" type="TextureRect" parent="."]
+margin_right = 1920.0
+margin_bottom = 1168.0
+mouse_filter = 2
+texture = ExtResource( 1 )
+expand = true
+stretch_mode = 1
 
-[editable path="GUILayer/GUI/PartyStatusContainer/MemberStatus"]
+[node name="Node" type="Node" parent="."]
+script = ExtResource( 5 )
+
+[node name="ShakeTween" type="Tween" parent="."]
