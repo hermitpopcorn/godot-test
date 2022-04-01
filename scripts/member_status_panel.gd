@@ -7,7 +7,9 @@ func get_overlay_container(): return self.overlay_container
 onready var full_overlay_container: Node = $Panel/FullOverlays
 func get_full_overlay_container(): return self.full_overlay_container
 
+var maxhp = 100
 var hp = 100
+var maxap = 100
 var ap = 100
 
 func _ready():
@@ -18,27 +20,43 @@ func _ready():
 	$Panel/VBoxContainer/HBoxContainer/APContainer/APBar/Change.value = self.ap
 	$Panel/VBoxContainer/HBoxContainer/APContainer/APBar.value = self.ap
 
+func attach(unit: PartyUnit):
+	$Panel/VBoxContainer/MarginContainer/Name.set_text(unit.name)
+	print([unit.maxhp, unit.hp, unit.maxap, unit.ap])
+	self.maxhp = unit.maxhp
+	self.hp = unit.hp
+	self.maxap = unit.maxap
+	self.ap = unit.ap
+	update_hp_number()
+	update_ap_number()
+	update_hp_bar()
+	update_ap_bar()
+
 # damage or heal
 
 func damage(amount):
 	self.hp -= amount
-	self.hp = min(max(0, self.hp), 100)
+	self.hp = min(max(0, self.hp), self.maxhp)
+	
 	if (amount > 0):
-		self.shake(1, 50, 1)
+		var shake_strength = max((amount / self.maxhp) * 75, 20)
+		self.shake(1, shake_strength, 1)
 		self.damage_flash()
 		self.create_flying_number('damage', amount)
 	else:
+		self.heal_flash()
 		self.create_flying_number('heal', amount * -1)
 	self.update_hp_number()
 	self.update_hp_bar()
 
 # shake
 
+onready var panel: Node = $Panel
 onready var shake_tween: Tween = $Tweens/ShakeTween
 var current_shake_priority = 0
 
 func _move(vector):
-	self.rect_position = Vector2(rand_range(-vector.x, vector.x), rand_range(-vector.y, vector.y))
+	self.panel.rect_position = Vector2(rand_range(-vector.x, vector.x), rand_range(-vector.y, vector.y))
 
 func shake(shake_length, shake_power, shake_priority):
 	if shake_priority >= self.current_shake_priority:
@@ -48,7 +66,6 @@ func shake(shake_length, shake_power, shake_priority):
 
 func _on_ShakeTween_tween_completed(object, key):
 	self.current_shake_priority = 0
-	self.rect_position = Vector2(0, 0)
 
 # update hp/ap text
 
@@ -72,17 +89,19 @@ func update_hp_bar(): self.update_bar('hp')
 func update_ap_bar(): self.update_bar('ap')
 
 func update_bar(type: String):
-	var new_percentage: int = self.hp
+	var new_percentage: int
 	var bar: TextureProgress
 	var bar_change: TextureProgress
 	var tween: Tween
 	var decrease: bool
 	match type:
 		'hp':
+			new_percentage = int(floor((self.hp / self.maxhp) * 100))
 			bar = self.hp_bar
 			bar_change = self.hp_bar_change
 			tween = self.hp_bar_tween
 		'ap':
+			new_percentage = int(floor((self.ap / self.maxap) * 100))
 			bar = self.ap_bar
 			bar_change = self.hp_bar_change
 			tween = self.ap_bar_tween
@@ -125,6 +144,29 @@ func _on_DamageFlashTween_tween_completed(object, key):
 	if(self.damage_flash_rect.modulate.a == 0):
 		self.damage_flash_rect.visible = false
 
+# heal flash
+
+onready var heal_flash_tween: Tween = $Tweens/HealFlashTween
+onready var heal_flash_rect: TextureRect = $Panel/PanelOverlays/HealFlashRect
+
+func heal_flash():
+	self.heal_flash_rect.modulate.a = 0
+	self.heal_flash_rect.visible = true
+	self.heal_flash_tween.interpolate_property(self.heal_flash_rect, "modulate:a", 0.0, 1.0, 0.3, Tween.TRANS_QUART, Tween.EASE_OUT)
+	self.heal_flash_tween.interpolate_property(self.heal_flash_rect, "modulate:a", 1.0, 0.0, 0.4, Tween.TRANS_QUART, Tween.EASE_IN, 0.2)
+	
+	self.panel_background.set_shine_width(0.315)
+	self.panel_background.set_shine_angle(-16.3)
+	self.panel_background.set_shine_location(-0.5)
+	self.panel_background.set_shine_color(Color.whitesmoke)
+	self.heal_flash_tween.interpolate_method(self.panel_background, "set_shine_location", -0.5, 1.22, 0.6, Tween.TRANS_CUBIC, Tween.EASE_OUT, 0.1)
+	
+	self.heal_flash_tween.start()
+
+func _on_HealFlashTween_tween_completed(object, key):
+	if(self.heal_flash_rect.modulate.a == 0):
+		self.heal_flash_rect.visible = false
+
 # buff flash
 
 onready var buff_tween: Tween = $Tweens/BuffTween
@@ -136,6 +178,7 @@ func debuff(): self.buffdebuff(false)
 func buffdebuff(buff: bool):
 	self.buff_tween.stop_all()
 	self.panel_background.set_shine_width(0.2)
+	self.panel_background.set_shine_angle(90)
 	if (buff):
 		self.panel_background.set_shine_location(1.2)
 		self.panel_background.set_shine_color(Color.green)

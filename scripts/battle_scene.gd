@@ -22,6 +22,9 @@ func _on_ShakeTween_tween_completed(object, key):
 
 # debug
 
+func _ready():
+	$GUILayer/GUI/PartyStatusContainer/MemberStatus.attach($"Test/Paul Kirigaya")
+
 func _input(event):
 	if (Input.is_physical_key_pressed(KEY_Q)):
 		gui_shake(1, 50, 1)
@@ -31,3 +34,6 @@ func _input(event):
 		$GUILayer/GUI/PartyStatusContainer/MemberStatus2.buff()
 	if (Input.is_physical_key_pressed(KEY_R)):
 		$GUILayer/GUI/PartyStatusContainer/MemberStatus3.debuff()
+	if (Input.is_physical_key_pressed(KEY_T)):
+		print($"Test/Paul Kirigaya")
+		print($"Test/Paul Kirigaya".weapon)

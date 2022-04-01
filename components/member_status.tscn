@@ -1,4 +1,4 @@
-[gd_scene load_steps=46 format=2]
+[gd_scene load_steps=51 format=2]
 
 [ext_resource path="res://dynamic_fonts/hpap-numbers.tres" type="DynamicFont" id=1]
 [ext_resource path="res://images/ui/party_panel.png" type="Texture" id=2]
@@ -16,9 +16,6 @@
 [sub_resource type="VisualShaderNodeScalarFunc" id=23]
 function = 27
 
-[sub_resource type="VisualShaderNodeScalarConstant" id=24]
-constant = 90.0
-
 [sub_resource type="VisualShaderNodeScalarConstant" id=25]
 constant = 0.626
 
@@ -31,11 +28,16 @@ uniform_name = "shine_width"
 [sub_resource type="VisualShaderNodeScalarUniform" id=28]
 uniform_name = "shine_location"
 
-[sub_resource type="VisualShaderNodeIf" id=33]
+[sub_resource type="VisualShaderNodeScalarUniform" id=52]
+uniform_name = "shine_angle"
 
-[sub_resource type="VisualShaderNodeColorConstant" id=34]
+[sub_resource type="VisualShaderNodeCustom" id=53]
+default_input_values = [ 1, 1.0, 2, 1.0, 3, 1.0 ]
+initialized = true
+script = ExtResource( 9 )
 
-[sub_resource type="VisualShaderNodeScalarConstant" id=35]
+[sub_resource type="VisualShaderNodeScalarUniform" id=54]
+uniform_name = "hue"
 
 [sub_resource type="ImageTexture" id=36]
 
@@ -56,10 +58,44 @@ constant = 1.0
 
 [sub_resource type="VisualShader" id=17]
 code = "shader_type canvas_item;
+uniform float hue;
 uniform float shine_location;
+uniform float shine_angle;
 uniform float shine_width;
 uniform vec4 shine_color : hint_color;
 
+
+// ShiftHSV
+
+vec3 hsv2rgbHSVChan9eFunc(vec3 _hsv_c0l0r_HSVChan9e){
+	vec4 _K_hsv2rgbHSVChan9e = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+	vec3 _p_hsv2rgbHSVChan9e = abs(fract(_hsv_c0l0r_HSVChan9e.xxx + _K_hsv2rgbHSVChan9e.xyz) * 6.0 - _K_hsv2rgbHSVChan9e.www);
+	return vec3(_hsv_c0l0r_HSVChan9e.z * mix(_K_hsv2rgbHSVChan9e.xxx, 
+				clamp(_p_hsv2rgbHSVChan9e - _K_hsv2rgbHSVChan9e.xxx, 0.0, 1.0),
+				_hsv_c0l0r_HSVChan9e.y));
+}
+
+vec3 rgb2hvsHSVChan9eFunc(vec3 _rgb_c0l0r_HSVChan9e){
+	vec4 _K_rgb2hvsHSVChan9e = vec4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);
+	vec4 _p_rgb2hvsHSVChan9e = mix( vec4(_rgb_c0l0r_HSVChan9e.bg, _K_rgb2hvsHSVChan9e.wz),
+									vec4(_rgb_c0l0r_HSVChan9e.gb, _K_rgb2hvsHSVChan9e.xy),
+									step(_rgb_c0l0r_HSVChan9e.b, _rgb_c0l0r_HSVChan9e.g));
+	vec4 _q_rgb2hvsHSVChan9e = mix( vec4(_p_rgb2hvsHSVChan9e.xyw, _rgb_c0l0r_HSVChan9e.r), 
+									vec4(_rgb_c0l0r_HSVChan9e.r, _p_rgb2hvsHSVChan9e.yzx),
+									step(_p_rgb2hvsHSVChan9e.x, _rgb_c0l0r_HSVChan9e.r));
+	float _d_rgb2hvsHSVChan9e = _q_rgb2hvsHSVChan9e.x - min(_q_rgb2hvsHSVChan9e.w, _q_rgb2hvsHSVChan9e.y);
+	return vec3(vec3(abs(_q_rgb2hvsHSVChan9e.z + (_q_rgb2hvsHSVChan9e.w - _q_rgb2hvsHSVChan9e.y) / (6.0 * _d_rgb2hvsHSVChan9e + 1.0e-10)),
+					_d_rgb2hvsHSVChan9e / (_q_rgb2hvsHSVChan9e.x + 1.0e-10),
+					_q_rgb2hvsHSVChan9e.x));
+}
+
+vec3 hsvChangeHSVChan9eFunc(vec3 _c0l0r_HSVChan9e, float _h_HSVChan9e, float _s_HSVChan9e, float _v_HSVChan9e){
+	_c0l0r_HSVChan9e = rgb2hvsHSVChan9eFunc(_c0l0r_HSVChan9e);
+	_c0l0r_HSVChan9e.r *= _h_HSVChan9e;
+	_c0l0r_HSVChan9e.g *= _s_HSVChan9e;
+	_c0l0r_HSVChan9e.b *= _v_HSVChan9e;
+	return hsv2rgbHSVChan9eFunc(_c0l0r_HSVChan9e);
+}
 
 // ShineFX
 
@@ -92,14 +128,25 @@ void fragment() {
 		n_out3p1 = _tex_read.a;
 	}
 
+// ScalarUniform:24
+	float n_out24p0 = hue;
+
+// ShiftHSV:23
+	float n_in23p2 = 1.00000;
+	float n_in23p3 = 1.00000;
+	vec3 n_out23p0;
+	{
+		n_out23p0 = hsvChangeHSVChan9eFunc(n_out3p0, n_out24p0, n_in23p2, n_in23p3);
+	}
+
 // ScalarUniform:18
 	float n_out18p0 = shine_location;
 
-// Scalar:13
-	float n_out13p0 = 90.000000;
+// ScalarUniform:22
+	float n_out22p0 = shine_angle;
 
 // ScalarFunc:12
-	float n_out12p0 = radians(n_out13p0);
+	float n_out12p0 = radians(n_out22p0);
 
 // ScalarUniform:17
 	float n_out17p0 = shine_width;
@@ -120,35 +167,12 @@ void fragment() {
 	float n_out5p1;
 	{
 		n_out5p1 = n_out3p1;
-		n_out5p0 = shineFunc(vec4(n_out3p0, n_out3p1), n_out6p0.xy, n_out18p0, n_out12p0, n_out17p0, n_out14p0, n_out8p0, n_in5p8, n_out15p0).rgb;
-	}
-
-// Color:20
-	vec3 n_out20p0 = vec3(1.000000, 1.000000, 1.000000);
-	float n_out20p1 = 1.000000;
-
-// Scalar:21
-	float n_out21p0 = 0.000000;
-
-// If:19
-	float n_in19p2 = 0.00001;
-	vec3 n_out19p0;
-	if(abs(dot(n_out5p0, vec3(0.333333, 0.333333, 0.333333)) - dot(n_out20p0, vec3(0.333333, 0.333333, 0.333333))) < n_in19p2)
-	{
-		n_out19p0 = vec3(n_out21p0);
-	}
-	else if(dot(n_out5p0, vec3(0.333333, 0.333333, 0.333333)) < dot(n_out20p0, vec3(0.333333, 0.333333, 0.333333)))
-	{
-		n_out19p0 = vec3(n_out5p1);
-	}
-	else
-	{
-		n_out19p0 = vec3(n_out5p1);
+		n_out5p0 = shineFunc(vec4(n_out23p0, n_out3p1), n_out6p0.xy, n_out18p0, n_out12p0, n_out17p0, n_out14p0, n_out8p0, n_in5p8, n_out15p0).rgb;
 	}
 
 // Output:0
 	COLOR.rgb = n_out5p0;
-	COLOR.a = dot(n_out19p0, vec3(0.333333, 0.333333, 0.333333));
+	COLOR.a = n_out5p1;
 
 }
 
@@ -157,22 +181,20 @@ void light() {
 
 }
 "
-graph_offset = Vector2( -471, 132 )
+graph_offset = Vector2( -783.957, -132.426 )
 mode = 1
 flags/light_only = false
-nodes/fragment/0/position = Vector2( 660, 120 )
+nodes/fragment/0/position = Vector2( 280, 120 )
 nodes/fragment/3/node = SubResource( 15 )
-nodes/fragment/3/position = Vector2( -400, 80 )
+nodes/fragment/3/position = Vector2( -700, -40 )
 nodes/fragment/5/node = SubResource( 19 )
-nodes/fragment/5/position = Vector2( 40, 120 )
+nodes/fragment/5/position = Vector2( 60, 120 )
 nodes/fragment/6/node = SubResource( 20 )
-nodes/fragment/6/position = Vector2( -200, 60 )
+nodes/fragment/6/position = Vector2( -140, 0 )
 nodes/fragment/8/node = SubResource( 22 )
 nodes/fragment/8/position = Vector2( -440, 400 )
 nodes/fragment/12/node = SubResource( 23 )
 nodes/fragment/12/position = Vector2( -240, 260 )
-nodes/fragment/13/node = SubResource( 24 )
-nodes/fragment/13/position = Vector2( -440, 260 )
 nodes/fragment/14/node = SubResource( 25 )
 nodes/fragment/14/position = Vector2( -220, 340 )
 nodes/fragment/15/node = SubResource( 26 )
@@ -181,31 +203,37 @@ nodes/fragment/17/node = SubResource( 27 )
 nodes/fragment/17/position = Vector2( -420, 320 )
 nodes/fragment/18/node = SubResource( 28 )
 nodes/fragment/18/position = Vector2( -480, 200 )
-nodes/fragment/19/node = SubResource( 33 )
-nodes/fragment/19/position = Vector2( 440, 160 )
-nodes/fragment/20/node = SubResource( 34 )
-nodes/fragment/20/position = Vector2( 260, 60 )
-nodes/fragment/21/node = SubResource( 35 )
-nodes/fragment/21/position = Vector2( 240, 200 )
-nodes/fragment/connections = PoolIntArray( 12, 0, 5, 4, 13, 0, 12, 0, 14, 0, 5, 6, 8, 0, 5, 7, 17, 0, 5, 5, 15, 0, 5, 9, 18, 0, 5, 3, 6, 0, 5, 0, 3, 0, 5, 1, 5, 0, 0, 0, 3, 1, 5, 2, 5, 0, 19, 0, 20, 0, 19, 1, 21, 0, 19, 3, 19, 0, 0, 1, 5, 1, 19, 4, 5, 1, 19, 5 )
+nodes/fragment/22/node = SubResource( 52 )
+nodes/fragment/22/position = Vector2( -540, 260 )
+nodes/fragment/23/node = SubResource( 53 )
+nodes/fragment/23/position = Vector2( -420, -40 )
+nodes/fragment/24/node = SubResource( 54 )
+nodes/fragment/24/position = Vector2( -700, 100 )
+nodes/fragment/connections = PoolIntArray( 12, 0, 5, 4, 14, 0, 5, 6, 8, 0, 5, 7, 3, 1, 5, 2, 15, 0, 5, 9, 17, 0, 5, 5, 18, 0, 5, 3, 22, 0, 12, 0, 5, 0, 0, 0, 5, 1, 0, 1, 3, 0, 23, 0, 6, 0, 5, 0, 23, 0, 5, 1, 24, 0, 23, 1 )
 
 [sub_resource type="ShaderMaterial" id=18]
 resource_local_to_scene = true
 shader = SubResource( 17 )
-shader_param/shine_location = null
-shader_param/shine_width = null
+shader_param/hue = 1.0
+shader_param/shine_location = 0.0
+shader_param/shine_angle = 90.0
+shader_param/shine_width = 0.0
 shader_param/shine_color = Color( 0, 1, 0, 1 )
 
 [sub_resource type="GDScript" id=37]
 script/source = "extends TextureRect
 
+func set_hue(to: float): self.get_material().set_shader_param(\"hue\", to)
 func set_shine_width(to: float): self.get_material().set_shader_param(\"shine_width\", to)
 func set_shine_location(to: float): self.get_material().set_shader_param(\"shine_location\", to)
 func set_shine_color(to: Color): self.get_material().set_shader_param(\"shine_color\", to)
+func set_shine_angle(to: float): self.get_material().set_shader_param(\"shine_angle\", to)
 
 func _ready():
+	set_hue(1.0)
 	set_shine_width(0.0)
 	set_shine_location(-2.0)
+	set_shine_angle(90)
 "
 
 [sub_resource type="VisualShaderNodeCustom" id=38]
@@ -318,6 +346,113 @@ resource_local_to_scene = true
 shader = SubResource( 40 )
 shader_param/hue = null
 
+[sub_resource type="VisualShaderNodeTexture" id=46]
+source = 2
+
+[sub_resource type="VisualShaderNodeCustom" id=47]
+default_input_values = [ 1, 1.0, 2, 1.0, 3, 1.0 ]
+initialized = true
+script = ExtResource( 9 )
+
+[sub_resource type="VisualShaderNodeScalarConstant" id=48]
+
+[sub_resource type="VisualShaderNodeScalarConstant" id=49]
+constant = 1.0
+
+[sub_resource type="VisualShader" id=50]
+resource_local_to_scene = true
+code = "shader_type canvas_item;
+
+
+// ShiftHSV
+
+vec3 hsv2rgbHSVChan9eFunc(vec3 _hsv_c0l0r_HSVChan9e){
+	vec4 _K_hsv2rgbHSVChan9e = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+	vec3 _p_hsv2rgbHSVChan9e = abs(fract(_hsv_c0l0r_HSVChan9e.xxx + _K_hsv2rgbHSVChan9e.xyz) * 6.0 - _K_hsv2rgbHSVChan9e.www);
+	return vec3(_hsv_c0l0r_HSVChan9e.z * mix(_K_hsv2rgbHSVChan9e.xxx, 
+				clamp(_p_hsv2rgbHSVChan9e - _K_hsv2rgbHSVChan9e.xxx, 0.0, 1.0),
+				_hsv_c0l0r_HSVChan9e.y));
+}
+
+vec3 rgb2hvsHSVChan9eFunc(vec3 _rgb_c0l0r_HSVChan9e){
+	vec4 _K_rgb2hvsHSVChan9e = vec4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);
+	vec4 _p_rgb2hvsHSVChan9e = mix( vec4(_rgb_c0l0r_HSVChan9e.bg, _K_rgb2hvsHSVChan9e.wz),
+									vec4(_rgb_c0l0r_HSVChan9e.gb, _K_rgb2hvsHSVChan9e.xy),
+									step(_rgb_c0l0r_HSVChan9e.b, _rgb_c0l0r_HSVChan9e.g));
+	vec4 _q_rgb2hvsHSVChan9e = mix( vec4(_p_rgb2hvsHSVChan9e.xyw, _rgb_c0l0r_HSVChan9e.r), 
+									vec4(_rgb_c0l0r_HSVChan9e.r, _p_rgb2hvsHSVChan9e.yzx),
+									step(_p_rgb2hvsHSVChan9e.x, _rgb_c0l0r_HSVChan9e.r));
+	float _d_rgb2hvsHSVChan9e = _q_rgb2hvsHSVChan9e.x - min(_q_rgb2hvsHSVChan9e.w, _q_rgb2hvsHSVChan9e.y);
+	return vec3(vec3(abs(_q_rgb2hvsHSVChan9e.z + (_q_rgb2hvsHSVChan9e.w - _q_rgb2hvsHSVChan9e.y) / (6.0 * _d_rgb2hvsHSVChan9e + 1.0e-10)),
+					_d_rgb2hvsHSVChan9e / (_q_rgb2hvsHSVChan9e.x + 1.0e-10),
+					_q_rgb2hvsHSVChan9e.x));
+}
+
+vec3 hsvChangeHSVChan9eFunc(vec3 _c0l0r_HSVChan9e, float _h_HSVChan9e, float _s_HSVChan9e, float _v_HSVChan9e){
+	_c0l0r_HSVChan9e = rgb2hvsHSVChan9eFunc(_c0l0r_HSVChan9e);
+	_c0l0r_HSVChan9e.r *= _h_HSVChan9e;
+	_c0l0r_HSVChan9e.g *= _s_HSVChan9e;
+	_c0l0r_HSVChan9e.b *= _v_HSVChan9e;
+	return hsv2rgbHSVChan9eFunc(_c0l0r_HSVChan9e);
+}
+
+
+void vertex() {
+// Output:0
+
+}
+
+void fragment() {
+// Texture:3
+	vec3 n_out3p0;
+	float n_out3p1;
+	{
+		vec4 _tex_read = texture(TEXTURE , UV.xy);
+		n_out3p0 = _tex_read.rgb;
+		n_out3p1 = _tex_read.a;
+	}
+
+// Scalar:5
+	float n_out5p0 = 0.000000;
+
+// Scalar:6
+	float n_out6p0 = 1.000000;
+
+// ShiftHSV:4
+	float n_in4p1 = 1.00000;
+	vec3 n_out4p0;
+	{
+		n_out4p0 = hsvChangeHSVChan9eFunc(n_out3p0, n_in4p1, n_out5p0, n_out6p0);
+	}
+
+// Output:0
+	COLOR.rgb = n_out4p0;
+	COLOR.a = n_out3p1;
+
+}
+
+void light() {
+// Output:0
+
+}
+"
+graph_offset = Vector2( -293, 82 )
+mode = 1
+flags/light_only = false
+nodes/fragment/3/node = SubResource( 46 )
+nodes/fragment/3/position = Vector2( -60, 120 )
+nodes/fragment/4/node = SubResource( 47 )
+nodes/fragment/4/position = Vector2( 200, 140 )
+nodes/fragment/5/node = SubResource( 48 )
+nodes/fragment/5/position = Vector2( -80, 260 )
+nodes/fragment/6/node = SubResource( 49 )
+nodes/fragment/6/position = Vector2( 120, 300 )
+nodes/fragment/connections = PoolIntArray( 3, 1, 0, 1, 3, 0, 4, 0, 4, 0, 0, 0, 5, 0, 4, 2, 6, 0, 4, 3 )
+
+[sub_resource type="ShaderMaterial" id=51]
+resource_local_to_scene = true
+shader = SubResource( 50 )
+
 [sub_resource type="Gradient" id=5]
 colors = PoolColorArray( 0, 0.494118, 0.329412, 1, 0, 0.713726, 0.478431, 1 )
 
@@ -387,6 +522,14 @@ stretch_mode = 1
 visible = false
 self_modulate = Color( 1, 1, 1, 0.705882 )
 material = SubResource( 45 )
+anchor_right = 1.0
+anchor_bottom = 1.0
+texture = ExtResource( 10 )
+expand = true
+
+[node name="HealFlashRect" type="TextureRect" parent="Panel/PanelOverlays"]
+visible = false
+material = SubResource( 51 )
 anchor_right = 1.0
 anchor_bottom = 1.0
 texture = ExtResource( 10 )
@@ -628,7 +771,10 @@ valign = 1
 
 [node name="FlyingTextTween" type="Tween" parent="Tweens"]
 
+[node name="HealFlashTween" type="Tween" parent="Tweens"]
+
 [connection signal="tween_all_completed" from="Tweens/BuffTween" to="." method="_on_BuffTween_tween_all_completed"]
 [connection signal="tween_completed" from="Tweens/DamageFlashTween" to="." method="_on_DamageFlashTween_tween_completed"]
 [connection signal="tween_completed" from="Tweens/ShakeTween" to="." method="_on_ShakeTween_tween_completed"]
 [connection signal="tween_completed" from="Tweens/FlyingTextTween" to="." method="_on_FlyingTextTween_tween_completed"]
+[connection signal="tween_completed" from="Tweens/HealFlashTween" to="." method="_on_HealFlashTween_tween_completed"]

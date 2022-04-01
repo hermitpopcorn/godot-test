@@ -1,0 +1,7 @@
+[gd_scene load_steps=3 format=2]
+
+[ext_resource path="res://data/party_units/_party_units_base.tscn" type="PackedScene" id=1]
+[ext_resource path="res://data/party_units/paul_kirigaya.gd" type="Script" id=2]
+
+[node name="Paul Kirigaya" instance=ExtResource( 1 )]
+script = ExtResource( 2 )
