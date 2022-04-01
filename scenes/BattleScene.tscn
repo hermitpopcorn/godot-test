@@ -1,8 +1,7 @@
-[gd_scene load_steps=5 format=2]
+[gd_scene load_steps=4 format=2]
 
 [ext_resource path="res://images/bg/dark-dungeon-stock-photo.jpg" type="Texture" id=1]
 [ext_resource path="res://components/member_status.tscn" type="PackedScene" id=2]
-[ext_resource path="res://scripts/game_objects/item.gd" type="Script" id=5]
 [ext_resource path="res://scripts/battle_scene.gd" type="Script" id=8]
 
 [node name="BattleScene" type="Node"]
@@ -55,6 +54,5 @@ expand = true
 stretch_mode = 1
 
 [node name="Node" type="Node" parent="."]
-script = ExtResource( 5 )
 
 [node name="ShakeTween" type="Tween" parent="."]
