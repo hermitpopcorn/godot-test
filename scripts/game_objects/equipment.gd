@@ -10,3 +10,4 @@ export(int) var atk = 0
 export(int) var def = 0
 export(int) var hit = 0
 export(int) var eva = 0
+export(int) var spd = 0

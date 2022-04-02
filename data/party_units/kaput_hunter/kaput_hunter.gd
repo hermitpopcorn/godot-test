@@ -14,5 +14,5 @@ func _init():
 	
 	weapon = preload("res://data/weapons/bayonets/cross_knife.tres")
 	
-	battler_panel_texture_rect = preload("res://data/party_units/kaput_hunter/kaput_hunter-BattlerTextureRect.tscn").instance()
+	battler_textures = preload("res://data/party_units/kaput_hunter/kaput_hunter-BattlerTextureRect.tscn").instance()
 

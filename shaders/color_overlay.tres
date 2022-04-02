@@ -1,0 +1,116 @@
+[gd_resource type="ShaderMaterial" load_steps=8 format=2]
+
+[ext_resource path="res://addons/shaderV/rgba/blendAwithB.gd" type="Script" id=1]
+
+[sub_resource type="VisualShaderNodeTexture" id=4]
+source = 2
+
+[sub_resource type="VisualShaderNodeBooleanUniform" id=5]
+uniform_name = "apply_color_overlay"
+
+[sub_resource type="VisualShaderNodeIf" id=6]
+default_input_values = [ 0, 0.0, 1, 1.0, 2, 1e-05, 3, Vector3( 0, 0, 0 ), 4, Vector3( 0, 0, 0 ), 5, Vector3( 0, 0, 0 ) ]
+
+[sub_resource type="VisualShaderNodeColorUniform" id=7]
+uniform_name = "color_overlay"
+
+[sub_resource type="VisualShaderNodeCustom" id=9]
+default_input_values = [ 1, 1.0, 3, 1.0, 4, 1.0 ]
+initialized = true
+script = ExtResource( 1 )
+
+[sub_resource type="VisualShader" id=8]
+resource_local_to_scene = true
+code = "shader_type canvas_item;
+uniform bool apply_color_overlay;
+uniform vec4 color_overlay : hint_color;
+
+
+// BlendAwithB
+
+vec4 blendAwithBFunc(vec4 _c0l0r_blendA_rgba, vec4 _c0l0r_blendB_rgba, float _fade_blend_c0l0r){
+	return mix(_c0l0r_blendA_rgba, _c0l0r_blendB_rgba, _c0l0r_blendB_rgba.a * _fade_blend_c0l0r);
+}
+
+
+void vertex() {
+// Output:0
+
+}
+
+void fragment() {
+// BooleanUniform:4
+	bool n_out4p0 = apply_color_overlay;
+
+// Texture:3
+	vec3 n_out3p0;
+	float n_out3p1;
+	{
+		vec4 _tex_read = texture(TEXTURE , UV.xy);
+		n_out3p0 = _tex_read.rgb;
+		n_out3p1 = _tex_read.a;
+	}
+
+// ColorUniform:6
+	vec3 n_out6p0 = color_overlay.rgb;
+	float n_out6p1 = color_overlay.a;
+
+// BlendAwithB:7
+	float n_in7p4 = 1.00000;
+	vec3 n_out7p0;
+	float n_out7p1;
+	{
+		vec4 n_out7p0n_out7p1 = blendAwithBFunc(vec4(n_out3p0, n_out3p1), vec4(n_out6p0, n_out6p1), n_in7p4);
+		n_out7p0 = n_out7p0n_out7p1.rgb;
+		n_out7p1 = n_out7p0n_out7p1.a;
+	}
+
+// If:5
+	float n_in5p1 = 1.00000;
+	float n_in5p2 = 0.00001;
+	vec3 n_out5p0;
+	if(abs((n_out4p0 ? 1.0 : 0.0) - n_in5p1) < n_in5p2)
+	{
+		n_out5p0 = n_out7p0;
+	}
+	else if((n_out4p0 ? 1.0 : 0.0) < n_in5p1)
+	{
+		n_out5p0 = n_out3p0;
+	}
+	else
+	{
+		n_out5p0 = n_out3p0;
+	}
+
+// Output:0
+	COLOR.rgb = n_out5p0;
+	COLOR.a = n_out3p1;
+
+}
+
+void light() {
+// Output:0
+
+}
+"
+graph_offset = Vector2( -187, 26 )
+mode = 1
+flags/light_only = false
+nodes/fragment/0/position = Vector2( 600, 240 )
+nodes/fragment/3/node = SubResource( 4 )
+nodes/fragment/3/position = Vector2( -140, 260 )
+nodes/fragment/4/node = SubResource( 5 )
+nodes/fragment/4/position = Vector2( -60, 60 )
+nodes/fragment/5/node = SubResource( 6 )
+nodes/fragment/5/position = Vector2( 400, 40 )
+nodes/fragment/6/node = SubResource( 7 )
+nodes/fragment/6/position = Vector2( -80, 140 )
+nodes/fragment/7/node = SubResource( 9 )
+nodes/fragment/7/position = Vector2( 140, 140 )
+nodes/fragment/connections = PoolIntArray( 4, 0, 5, 0, 5, 0, 0, 0, 3, 1, 0, 1, 3, 0, 5, 4, 3, 0, 5, 5, 7, 0, 5, 3, 3, 0, 7, 0, 3, 1, 7, 1, 6, 0, 7, 2, 6, 1, 7, 3 )
+
+[resource]
+resource_local_to_scene = true
+shader = SubResource( 8 )
+shader_param/apply_color_overlay = false
+shader_param/color_overlay = Color( 1, 1, 1, 1 )

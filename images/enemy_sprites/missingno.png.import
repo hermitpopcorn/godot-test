@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/party_panel.png-b8f3147f30bbcfab37edf3aceea56354.stex"
+path="res://.import/missingno.png-e8a50c95e09dda2e0051fe9b7e2ac212.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://images/ui/party_panel.png"
-dest_files=[ "res://.import/party_panel.png-b8f3147f30bbcfab37edf3aceea56354.stex" ]
+source_file="res://images/enemy_sprites/missingno.png"
+dest_files=[ "res://.import/missingno.png-e8a50c95e09dda2e0051fe9b7e2ac212.stex" ]
 
 [params]
 

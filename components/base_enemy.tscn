@@ -1,0 +1,314 @@
+[gd_scene load_steps=17 format=2]
+
+[ext_resource path="res://addons/shaderV/rgba/blendAwithB.gd" type="Script" id=1]
+[ext_resource path="res://images/enemy_sprites/missingno.png" type="Texture" id=3]
+
+[sub_resource type="GDScript" id=14]
+script/source = "extends Control
+
+export(String, FILE, \"*.gd\") var enemy_resource_script
+var enemy_data
+
+var hovered_area = []
+
+signal mouse_click
+
+func _ready():
+	enemy_data = load(enemy_resource_script).new()
+
+func _on_hover(area):
+	if not hovered_area.has(area): hovered_area.append(area)
+
+func _on_blur(area):
+	hovered_area.erase(area)
+
+func _process(delta):
+	if Input.is_action_just_pressed(\"mouse_left\") and hovered_area.size() > 0:
+		emit_signal(\"mouse_click\", hovered_area)
+"
+
+[sub_resource type="VisualShaderNodeTexture" id=4]
+source = 2
+
+[sub_resource type="VisualShaderNodeBooleanUniform" id=5]
+uniform_name = "apply_color_overlay"
+
+[sub_resource type="VisualShaderNodeIf" id=6]
+default_input_values = [ 0, 0.0, 1, 1.0, 2, 1e-05, 3, Vector3( 0, 0, 0 ), 4, Vector3( 0, 0, 0 ), 5, Vector3( 0, 0, 0 ) ]
+
+[sub_resource type="VisualShaderNodeColorUniform" id=7]
+uniform_name = "color_overlay"
+
+[sub_resource type="VisualShaderNodeCustom" id=9]
+default_input_values = [ 1, 1.0, 3, 1.0, 4, 1.0 ]
+initialized = true
+script = ExtResource( 1 )
+
+[sub_resource type="VisualShader" id=12]
+resource_local_to_scene = true
+code = "shader_type canvas_item;
+uniform bool apply_color_overlay;
+uniform vec4 color_overlay : hint_color;
+
+
+// BlendAwithB
+
+vec4 blendAwithBFunc(vec4 _c0l0r_blendA_rgba, vec4 _c0l0r_blendB_rgba, float _fade_blend_c0l0r){
+	return mix(_c0l0r_blendA_rgba, _c0l0r_blendB_rgba, _c0l0r_blendB_rgba.a * _fade_blend_c0l0r);
+}
+
+
+void vertex() {
+// Output:0
+
+}
+
+void fragment() {
+// BooleanUniform:4
+	bool n_out4p0 = apply_color_overlay;
+
+// Texture:3
+	vec3 n_out3p0;
+	float n_out3p1;
+	{
+		vec4 _tex_read = texture(TEXTURE , UV.xy);
+		n_out3p0 = _tex_read.rgb;
+		n_out3p1 = _tex_read.a;
+	}
+
+// ColorUniform:6
+	vec3 n_out6p0 = color_overlay.rgb;
+	float n_out6p1 = color_overlay.a;
+
+// BlendAwithB:7
+	float n_in7p4 = 1.00000;
+	vec3 n_out7p0;
+	float n_out7p1;
+	{
+		vec4 n_out7p0n_out7p1 = blendAwithBFunc(vec4(n_out3p0, n_out3p1), vec4(n_out6p0, n_out6p1), n_in7p4);
+		n_out7p0 = n_out7p0n_out7p1.rgb;
+		n_out7p1 = n_out7p0n_out7p1.a;
+	}
+
+// If:5
+	float n_in5p1 = 1.00000;
+	float n_in5p2 = 0.00001;
+	vec3 n_out5p0;
+	if(abs((n_out4p0 ? 1.0 : 0.0) - n_in5p1) < n_in5p2)
+	{
+		n_out5p0 = n_out7p0;
+	}
+	else if((n_out4p0 ? 1.0 : 0.0) < n_in5p1)
+	{
+		n_out5p0 = n_out3p0;
+	}
+	else
+	{
+		n_out5p0 = n_out3p0;
+	}
+
+// Output:0
+	COLOR.rgb = n_out5p0;
+	COLOR.a = n_out3p1;
+
+}
+
+void light() {
+// Output:0
+
+}
+"
+graph_offset = Vector2( -187, 26 )
+mode = 1
+flags/light_only = false
+nodes/fragment/0/position = Vector2( 600, 240 )
+nodes/fragment/3/node = SubResource( 4 )
+nodes/fragment/3/position = Vector2( -140, 260 )
+nodes/fragment/4/node = SubResource( 5 )
+nodes/fragment/4/position = Vector2( -60, 60 )
+nodes/fragment/5/node = SubResource( 6 )
+nodes/fragment/5/position = Vector2( 400, 40 )
+nodes/fragment/6/node = SubResource( 7 )
+nodes/fragment/6/position = Vector2( -80, 140 )
+nodes/fragment/7/node = SubResource( 9 )
+nodes/fragment/7/position = Vector2( 140, 140 )
+nodes/fragment/connections = PoolIntArray( 4, 0, 5, 0, 5, 0, 0, 0, 3, 1, 0, 1, 3, 0, 5, 4, 3, 0, 5, 5, 7, 0, 5, 3, 3, 0, 7, 0, 3, 1, 7, 1, 6, 0, 7, 2, 6, 1, 7, 3 )
+
+[sub_resource type="ShaderMaterial" id=13]
+resource_local_to_scene = true
+shader = SubResource( 12 )
+shader_param/apply_color_overlay = false
+shader_param/color_overlay = Color( 1, 1, 1, 1 )
+
+[sub_resource type="GDScript" id=3]
+script/source = "extends TextureRect
+
+onready var common_animation_player = $CommonAnimationPlayer
+var selected: bool = false
+
+var mouse_hover
+
+func _on_hover(area):
+	common_animation_player.play(\"Selected\")
+
+func _on_blur(area):
+	common_animation_player.play(\"RESET\")
+"
+
+[sub_resource type="Animation" id=11]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/path = NodePath(".:material:shader_param/apply_color_overlay")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PoolRealArray( 0 ),
+"transitions": PoolRealArray( 1 ),
+"update": 0,
+"values": [ false ]
+}
+tracks/1/type = "value"
+tracks/1/path = NodePath(".:material:shader_param/color_overlay")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/keys = {
+"times": PoolRealArray( 0 ),
+"transitions": PoolRealArray( 1 ),
+"update": 0,
+"values": [ Color( 1, 1, 1, 1 ) ]
+}
+
+[sub_resource type="Animation" id=10]
+resource_name = "Selected"
+length = 2.0
+loop = true
+tracks/0/type = "value"
+tracks/0/path = NodePath(".:material:shader_param/apply_color_overlay")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PoolRealArray( 0 ),
+"transitions": PoolRealArray( 1 ),
+"update": 1,
+"values": [ true ]
+}
+tracks/1/type = "value"
+tracks/1/path = NodePath(".:material:shader_param/color_overlay")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/keys = {
+"times": PoolRealArray( 0, 1, 2 ),
+"transitions": PoolRealArray( 1, 1, 1 ),
+"update": 0,
+"values": [ Color( 1, 1, 1, 0 ), Color( 1, 1, 1, 0.392157 ), Color( 1, 1, 1, 0 ) ]
+}
+
+[sub_resource type="Animation" id=1]
+resource_name = "Breathe"
+length = 4.5
+loop = true
+tracks/0/type = "value"
+tracks/0/path = NodePath(".:rect_scale")
+tracks/0/interp = 2
+tracks/0/loop_wrap = true
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PoolRealArray( 0, 1.4, 2, 4 ),
+"transitions": PoolRealArray( 1.36604, 1, 1, 1 ),
+"update": 0,
+"values": [ Vector2( 1, 1 ), Vector2( 1, 1.016 ), Vector2( 1, 1.018 ), Vector2( 1, 1 ) ]
+}
+
+[sub_resource type="Animation" id=2]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/path = NodePath(".:rect_scale")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PoolRealArray( 0 ),
+"transitions": PoolRealArray( 1 ),
+"update": 0,
+"values": [ Vector2( 1, 1.051 ) ]
+}
+
+[sub_resource type="AtlasTexture" id=15]
+resource_local_to_scene = true
+flags = 5
+atlas = ExtResource( 3 )
+region = Rect2( 20, 20, 300, 300 )
+
+[node name="BaseEnemy" type="Control"]
+mouse_filter = 1
+script = SubResource( 14 )
+
+[node name="Sprite" type="TextureRect" parent="."]
+material = SubResource( 13 )
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+margin_left = -290.999
+margin_top = -336.0
+margin_right = 290.999
+margin_bottom = 336.0
+grow_vertical = 0
+rect_scale = Vector2( 1, 1.051 )
+rect_pivot_offset = Vector2( 291, 672 )
+texture = ExtResource( 3 )
+expand = true
+stretch_mode = 6
+script = SubResource( 3 )
+
+[node name="CommonAnimationPlayer" type="AnimationPlayer" parent="Sprite"]
+autoplay = "RESET"
+anims/RESET = SubResource( 11 )
+anims/Selected = SubResource( 10 )
+
+[node name="IdleAnimationPlayer" type="AnimationPlayer" parent="Sprite"]
+autoplay = "Breathe"
+anims/Breathe = SubResource( 1 )
+anims/RESET = SubResource( 2 )
+
+[node name="Body" type="Area2D" parent="."]
+
+[node name="Head" type="Area2D" parent="."]
+
+[node name="Icon" type="ColorRect" parent="."]
+visible = false
+grow_horizontal = 2
+grow_vertical = 2
+rect_min_size = Vector2( 75, 75 )
+mouse_filter = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+color = Color( 0.423529, 0.0588235, 0.0941176, 1 )
+
+[node name="TextureRect" type="TextureRect" parent="Icon"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+texture = SubResource( 15 )
+expand = true
+stretch_mode = 6
+
+[connection signal="gui_input" from="." to="." method="_on_BaseEnemy_gui_input"]
+[connection signal="mouse_entered" from="Body" to="." method="_on_hover" binds= [ "body" ]]
+[connection signal="mouse_entered" from="Body" to="Sprite" method="_on_hover" binds= [ "body" ]]
+[connection signal="mouse_exited" from="Body" to="." method="_on_blur" binds= [ "head" ]]
+[connection signal="mouse_exited" from="Body" to="Sprite" method="_on_blur" binds= [ "body" ]]
+[connection signal="mouse_entered" from="Head" to="." method="_on_hover" binds= [ "head" ]]
+[connection signal="mouse_entered" from="Head" to="Sprite" method="_on_hover" binds= [ "head" ]]
+[connection signal="mouse_exited" from="Head" to="." method="_on_blur" binds= [ "head" ]]
+[connection signal="mouse_exited" from="Head" to="Sprite" method="_on_blur" binds= [ "head" ]]

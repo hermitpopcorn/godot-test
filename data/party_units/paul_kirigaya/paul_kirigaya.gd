@@ -13,4 +13,4 @@ func _init():
 	
 	weapon = preload("res://data/weapons/dual_swords/shinai_n_suru.tres")
 	
-	battler_panel_texture_rect = preload("res://data/party_units/paul_kirigaya/paul_kirigaya-BattlerTextureRect.tscn").instance()
+	battler_textures = preload("res://data/party_units/paul_kirigaya/paul_kirigaya-BattlerTextureRect.tscn").instance()

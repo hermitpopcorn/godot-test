@@ -1,7 +1,7 @@
 [gd_scene load_steps=54 format=2]
 
 [ext_resource path="res://dynamic_fonts/hpap-numbers.tres" type="DynamicFont" id=1]
-[ext_resource path="res://images/ui/party_panel.png" type="Texture" id=2]
+[ext_resource path="res://images/ui/panel.png" type="Texture" id=2]
 [ext_resource path="res://images/ui/stat_bar-over.png" type="Texture" id=3]
 [ext_resource path="res://dynamic_fonts/party_member_panel-name.tres" type="DynamicFont" id=4]
 [ext_resource path="res://dynamic_fonts/status_dice_display.tres" type="DynamicFont" id=5]
@@ -651,10 +651,12 @@ size_flags_vertical = 3
 script = ExtResource( 6 )
 
 [node name="Panel" type="Panel" parent="."]
+self_modulate = Color( 1, 1, 1, 0 )
 anchor_right = 1.0
 anchor_bottom = 1.0
 
 [node name="PanelBackground" type="TextureRect" parent="Panel"]
+self_modulate = Color( 1, 1, 1, 0.490196 )
 material = SubResource( 18 )
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -933,6 +935,12 @@ valign = 1
 [node name="ShakeTween" type="Tween" parent="Tweens"]
 
 [node name="FlyingTextTween" type="Tween" parent="Tweens"]
+
+[node name="ActiveTween" type="Tween" parent="Tweens"]
+
+[node name="LoopingActiveTween" type="Tween" parent="Tweens/ActiveTween"]
+repeat = true
+playback/repeat = true
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="."]
 autoplay = "RESET"

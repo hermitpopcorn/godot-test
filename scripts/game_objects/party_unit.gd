@@ -4,6 +4,19 @@ class_name PartyUnit
 
 # party unit exclusive stats
 
+var maxap = 1 setget set_maxap, get_maxap
+var ap = 1 setget set_ap, get_ap
+func set_maxap(new_value): maxap = new_value
+func set_ap(new_value):
+	if (ap > new_value):
+		emit_signal("ap_changed")
+		emit_signal("ap_decreased")
+	elif (ap < new_value):
+		emit_signal("ap_changed")
+		emit_signal("ap_increased")
+	ap = new_value
+func get_ap(): return ap
+
 var level = 1
 var lck = 5
 
@@ -15,6 +28,7 @@ var atk_curve = { 1: 10 }
 var def_curve = { 1: 10 }
 var hit_curve = { 1: 10 }
 var eva_curve = { 1: 10 }
+var spd_curve = { 1: 20 }
 
 func get_base_maxhp(): return get_base_stat_from_curve(maxhp_curve)
 func get_base_maxap(): return get_base_stat_from_curve(maxap_curve)
@@ -22,6 +36,7 @@ func get_base_atk(): return get_base_stat_from_curve(atk_curve)
 func get_base_def(): return get_base_stat_from_curve(def_curve)
 func get_base_hit(): return get_base_stat_from_curve(hit_curve)
 func get_base_eva(): return get_base_stat_from_curve(eva_curve)
+func get_base_spd(): return get_base_stat_from_curve(spd_curve)
 
 func get_base_stat_from_curve(curve, at_level = null):
 	var on_level = at_level if at_level != null else self.level
@@ -48,6 +63,7 @@ func get_atk(): return get_stat('atk')
 func get_def(): return get_stat('def')
 func get_hit(): return get_stat('hit')
 func get_eva(): return get_stat('eva')
+func get_spd(): return get_stat('spd')
 
 # equipment
 
@@ -64,4 +80,4 @@ func get_equipment_stat(stat):
 
 # visuals
 
-export(PackedScene) var battler_panel_texture_rect = null
+export(PackedScene) var battler_textures = null

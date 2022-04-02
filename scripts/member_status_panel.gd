@@ -7,6 +7,8 @@ func get_overlay_container(): return self.overlay_container
 onready var full_overlay_container: Node = $Panel/FullOverlays
 func get_full_overlay_container(): return self.full_overlay_container
 
+var panel_background_battler: Node
+
 onready var animation_player: AnimationPlayer = $AnimationPlayer
 
 var maxhp = 100
@@ -24,8 +26,10 @@ func _ready():
 
 func attach(unit: PartyUnit):
 	$Panel/VBoxContainer/MarginContainer/Name.set_text(unit.name)
-	if (unit.battler_panel_texture_rect):
-		$Panel/PanelBackground.add_child(unit.battler_panel_texture_rect)
+	if (unit.battler_textures):
+		self.panel_background_battler = unit.battler_textures.get_node("PanelBackground").duplicate()
+		if (self.panel_background_battler):
+			$Panel/PanelBackground.add_child(self.panel_background_battler)
 	
 	self.maxhp = unit.maxhp
 	self.hp = unit.hp
@@ -35,6 +39,27 @@ func attach(unit: PartyUnit):
 	update_ap_number()
 	update_hp_bar()
 	update_ap_bar()
+
+# active status
+
+var active = false setget set_active
+onready var active_tween = $Tweens/ActiveTween
+onready var looping_active_tween = $Tweens/ActiveTween/LoopingActiveTween
+
+func set_active(new_status: bool):
+	active = new_status
+	self.active_tween.remove_all()
+	if (new_status == true):
+		self.active_tween.interpolate_property(self.panel_background, "self_modulate:a", self.panel_background.self_modulate.a, 1, 0.2, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT)
+		self.looping_active_tween.interpolate_method(self.panel_background, "set_hue", 1, 0.9, 1, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT)
+		self.looping_active_tween.interpolate_method(self.panel_background, "set_hue", 0.9, 1, 1, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT, 1)
+		self.active_tween.start()
+		self.looping_active_tween.start()
+	else:
+		self.looping_active_tween.remove_all()
+		self.active_tween.interpolate_property(self.panel_background, "self_modulate:a", self.panel_background.self_modulate.a, 0.5, 0.2, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT)
+		self.active_tween.interpolate_method(self.panel_background, "set_hue", self.panel_background.get_material().get_shader_param("hue"), 1, 0.2, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT)
+		self.active_tween.start()
 
 # damage or heal
 

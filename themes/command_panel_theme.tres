@@ -1,0 +1,42 @@
+[gd_resource type="Theme" load_steps=7 format=2]
+
+[ext_resource path="res://dynamic_fonts/command_panel.tres" type="DynamicFont" id=1]
+[ext_resource path="res://images/ui/panel.png" type="Texture" id=2]
+
+[sub_resource type="StyleBoxFlat" id=6]
+content_margin_left = 24.0
+content_margin_right = 18.0
+content_margin_top = 8.0
+content_margin_bottom = 8.0
+bg_color = Color( 0.160784, 0.403922, 0.552941, 1 )
+
+[sub_resource type="StyleBoxFlat" id=5]
+content_margin_left = 24.0
+content_margin_right = 24.0
+content_margin_top = 8.0
+content_margin_bottom = 8.0
+bg_color = Color( 0.141176, 0.329412, 0.447059, 1 )
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color( 0.0156863, 0.12549, 0.196078, 1 )
+border_blend = true
+
+[sub_resource type="StyleBoxFlat" id=7]
+content_margin_left = 24.0
+content_margin_right = 18.0
+content_margin_top = 8.0
+content_margin_bottom = 8.0
+bg_color = Color( 0.101961, 0.266667, 0.368627, 1 )
+
+[sub_resource type="StyleBoxTexture" id=4]
+texture = ExtResource( 2 )
+region_rect = Rect2( 0, 0, 460, 252 )
+
+[resource]
+default_font = ExtResource( 1 )
+Button/styles/hover = SubResource( 6 )
+Button/styles/normal = SubResource( 5 )
+Button/styles/pressed = SubResource( 7 )
+Panel/styles/panel = SubResource( 4 )

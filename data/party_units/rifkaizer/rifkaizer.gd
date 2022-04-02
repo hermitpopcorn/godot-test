@@ -14,5 +14,5 @@ func _init():
 	
 	weapon = preload("res://data/weapons/laser_guns/butterfly.tres")
 	
-	battler_panel_texture_rect = preload("res://data/party_units/rifkaizer/rifkaizer-BattlerTextureRect.tscn").instance()
+	battler_textures = preload("res://data/party_units/rifkaizer/rifkaizer-BattlerTextureRect.tscn").instance()
 
