@@ -1,6 +1,7 @@
 extends Node
 
 enum Actions { ATTACK, DEFEND, RUN }
+enum InfoTextType { PROMPT, ENEMY_INFO }
 
 onready var gui: Node = $GUILayer/GUI
 
@@ -50,6 +51,9 @@ func prepare_enemy_battlers(enemy_cluster: Node):
 	for i in enemy_cluster.get_children():
 		self.enemy_battlers.append(i.enemy_data)
 		self.enemy_battlers_link[i.enemy_data] = i
+		i.connect("mouse_hover", self, "_on_enemy_hover")
+		i.connect("mouse_blur", self, "_on_enemy_blur")
+		i.connect("mouse_click", self, "_on_enemy_click")
 
 func start_battle():
 	# TODO: process pre battle things
@@ -146,7 +150,10 @@ func start_command_input():
 	active_input_index = -1
 	next_command_input()
 
+onready var command_buttons_container = $GUILayer/GUI/CommandPanel/ButtonsContainer
+
 func next_command_input():
+	for i in command_buttons_container.get_children(): i.disabled = false
 	active_input_index += 1
 	if (active_input_index < self.party_battlers.size()):
 		show_active_input_member(active_input_index)
@@ -184,15 +191,76 @@ func show_active_input_member(index: int):
 	self.atp_tween.interpolate_property(p, "rect_position:x", self.active_battler_portrait.rect_size.x, 0, 0.5, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT)
 	self.atp_tween.start()
 
+var selected_action = null
+
+onready var attack_button = $GUILayer/GUI/CommandPanel/ButtonsContainer/Attack
+
 func _on_Attack_button_up():
 	if active_input_index < 0: return
-	self.party_actions[self.party_battlers[self.active_input_index]] = Actions.ATTACK
-	next_command_input()
+	if targeting_mode: return
+	attack_button.disabled = true
+	selected_action = Actions.ATTACK
+	start_enemy_targeting()
 
 func calculate_enemy_actions():
 	self.enemy_actions.clear()
 	for i in self.enemy_battlers:
 		self.enemy_actions[i] = Actions.ATTACK
+
+var targeting_mode: bool = false
+
+func start_enemy_targeting():
+	targeting_mode = true
+	add_infotext(InfoTextType.PROMPT, "Choose a target.")
+
+var hovered_objects = {}
+
+func _on_enemy_hover(node: Node, hovered_area: Array):
+	if not hovered_objects.has(node):
+		hovered_objects[node] = hovered_area
+		add_infotext(InfoTextType.ENEMY_INFO, node.enemy_data.name)
+
+func _on_enemy_blur(node: Node, blurred_area: String):
+	if hovered_objects.has(node):
+		hovered_objects[node].erase(blurred_area)
+		if hovered_objects[node].size() < 1:
+			hovered_objects.erase(node)
+			remove_infotext(InfoTextType.ENEMY_INFO)
+
+func _on_enemy_click(node: Node, hovered_area: Array):
+	print("CLICK")
+	print([node, hovered_area])
+	if (targeting_mode):
+		end_targeting(node.enemy_data)
+
+func end_targeting(target_battler):
+	self.targeting_mode = false
+	self.party_actions[self.party_battlers[self.active_input_index]] = {
+		'action': self.selected_action,
+		'target': target_battler,
+	}
+	next_command_input()
+
+var active_info_texts = {}
+onready var infopanel_text = $GUILayer/GUI/InfoPanel/InfoPanelText
+
+func add_infotext(type: int, text: String):
+	active_info_texts[type] = text
+	refresh_infotext()
+
+func remove_infotext(type: int):
+	active_info_texts.erase(type)
+	refresh_infotext()
+
+func refresh_infotext():
+	if active_info_texts.size() < 1:
+		infopanel_text.bbcode_text = ""
+		return
+	if active_info_texts.size() == 1:
+		infopanel_text.bbcode_text = active_info_texts.values().front()
+		return
+	# sort by priority and display most important
+	infopanel_text.bbcode_text = active_info_texts[active_info_texts.keys().max()]
 
 # visual effect
 # shake
@@ -224,7 +292,7 @@ func _debug_ready():
 	party_battlers.append(paul)
 	party_battlers.append(rifkaizer)
 	party_battlers.append(the_bonk)
-	prepare_enemy_battlers(preload("res://data/enemy_clusters/si_kompret_lonesome.tscn").instance())
+	prepare_enemy_battlers(preload("res://data/enemy_clusters/si_kompret_bunshin.tscn").instance())
 	prepare_ui()
 
 func _input(event):

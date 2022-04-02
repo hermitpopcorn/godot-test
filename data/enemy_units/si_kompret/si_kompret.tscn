@@ -138,8 +138,5 @@ polygon = PoolVector2Array( -99.8707, -348.792, 0.129272, -346.792, 56.1293, -31
 [node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="Head" index="0"]
 polygon = PoolVector2Array( -111.871, -302.792, -27.8707, -312.792, 40.1293, -304.792, 60.1293, -276.792, 64.1293, -228.792, 48.1293, -174.792, 26.1293, -150.792, -17.8707, -136.792, -49.8707, -144.792, -96.4008, -159.016, -110.174, -203.514, -115.871, -242.792, -117.871, -272.792 )
 
-[node name="Icon" parent="." index="3"]
-visible = false
-
 [node name="TextureRect" parent="Icon" index="0"]
 texture = SubResource( 12 )

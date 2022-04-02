@@ -1,13 +1,22 @@
-[gd_scene load_steps=7 format=2]
+[gd_scene load_steps=9 format=2]
 
 [ext_resource path="res://images/bg/dark-dungeon-stock-photo.jpg" type="Texture" id=1]
 [ext_resource path="res://fonts/montreal/Montreal-Bold.ttf" type="DynamicFontData" id=2]
+[ext_resource path="res://fonts/montreal/Montreal-Regular.ttf" type="DynamicFontData" id=3]
 [ext_resource path="res://dynamic_fonts/command_panel.tres" type="DynamicFont" id=4]
 [ext_resource path="res://themes/command_panel_theme.tres" type="Theme" id=5]
 [ext_resource path="res://scripts/battle_scene.gd" type="Script" id=8]
 
+[sub_resource type="DynamicFont" id=2]
+size = 48
+use_mipmaps = true
+use_filter = true
+font_data = ExtResource( 3 )
+
 [sub_resource type="DynamicFont" id=1]
 size = 38
+use_mipmaps = true
+use_filter = true
 font_data = ExtResource( 2 )
 
 [node name="BattleScene" type="Node"]
@@ -32,6 +41,16 @@ rect_min_size = Vector2( 0, 100 )
 mouse_filter = 2
 theme = ExtResource( 5 )
 
+[node name="InfoPanelText" type="RichTextLabel" parent="GUILayer/GUI/InfoPanel"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_left = 24.0
+margin_top = 18.0
+margin_right = 24.0
+mouse_filter = 2
+custom_fonts/normal_font = SubResource( 2 )
+bbcode_enabled = true
+
 [node name="CommandPanel" type="Panel" parent="GUILayer/GUI"]
 self_modulate = Color( 1, 1, 1, 0.490196 )
 anchor_top = 0.5
@@ -43,50 +62,58 @@ grow_vertical = 2
 rect_min_size = Vector2( 330, 700 )
 theme = ExtResource( 5 )
 
-[node name="VBoxContainer" type="VBoxContainer" parent="GUILayer/GUI/CommandPanel"]
+[node name="ButtonsContainer" type="VBoxContainer" parent="GUILayer/GUI/CommandPanel"]
 anchor_right = 1.0
 anchor_bottom = 1.0
 custom_constants/separation = 12
 alignment = 1
 
-[node name="Attack" type="Button" parent="GUILayer/GUI/CommandPanel/VBoxContainer"]
-margin_top = 88.0
+[node name="Attack" type="Button" parent="GUILayer/GUI/CommandPanel/ButtonsContainer"]
+margin_top = 35.0
 margin_right = 330.0
-margin_bottom = 183.0
+margin_bottom = 130.0
 custom_fonts/font = ExtResource( 4 )
 text = "Attack"
 align = 2
 
-[node name="Skill" type="Button" parent="GUILayer/GUI/CommandPanel/VBoxContainer"]
-margin_top = 195.0
+[node name="Skill" type="Button" parent="GUILayer/GUI/CommandPanel/ButtonsContainer"]
+margin_top = 142.0
 margin_right = 330.0
-margin_bottom = 290.0
+margin_bottom = 237.0
 custom_fonts/font = ExtResource( 4 )
 text = "Skill"
 align = 2
 
-[node name="Defend" type="Button" parent="GUILayer/GUI/CommandPanel/VBoxContainer"]
-margin_top = 302.0
+[node name="Defend" type="Button" parent="GUILayer/GUI/CommandPanel/ButtonsContainer"]
+margin_top = 249.0
 margin_right = 330.0
-margin_bottom = 397.0
+margin_bottom = 344.0
 custom_fonts/font = ExtResource( 4 )
 text = "Defend"
 align = 2
 
-[node name="Examine" type="Button" parent="GUILayer/GUI/CommandPanel/VBoxContainer"]
-margin_top = 409.0
+[node name="Examine" type="Button" parent="GUILayer/GUI/CommandPanel/ButtonsContainer"]
+margin_top = 356.0
 margin_right = 330.0
-margin_bottom = 504.0
+margin_bottom = 451.0
 custom_fonts/font = ExtResource( 4 )
 text = "Examine"
 align = 2
 
-[node name="Run" type="Button" parent="GUILayer/GUI/CommandPanel/VBoxContainer"]
-margin_top = 516.0
+[node name="Run" type="Button" parent="GUILayer/GUI/CommandPanel/ButtonsContainer"]
+margin_top = 463.0
 margin_right = 330.0
-margin_bottom = 611.0
+margin_bottom = 558.0
 custom_fonts/font = ExtResource( 4 )
 text = "Run"
+align = 2
+
+[node name="Cancel" type="Button" parent="GUILayer/GUI/CommandPanel/ButtonsContainer"]
+margin_top = 570.0
+margin_right = 330.0
+margin_bottom = 665.0
+custom_fonts/font = ExtResource( 4 )
+text = "Cancel"
 align = 2
 
 [node name="ActiveBattlerPortrait" type="ReferenceRect" parent="GUILayer/GUI"]
@@ -181,4 +208,4 @@ __meta__ = {
 "_edit_lock_": true
 }
 
-[connection signal="button_up" from="GUILayer/GUI/CommandPanel/VBoxContainer/Attack" to="." method="_on_Attack_button_up"]
+[connection signal="button_up" from="GUILayer/GUI/CommandPanel/ButtonsContainer/Attack" to="." method="_on_Attack_button_up"]

@@ -12,19 +12,23 @@ var enemy_data
 var hovered_area = []
 
 signal mouse_click
+signal mouse_hover
+signal mouse_blur
 
 func _ready():
 	enemy_data = load(enemy_resource_script).new()
 
 func _on_hover(area):
 	if not hovered_area.has(area): hovered_area.append(area)
+	emit_signal(\"mouse_hover\", self, hovered_area)
 
 func _on_blur(area):
 	hovered_area.erase(area)
+	emit_signal(\"mouse_blur\", self, area)
 
 func _process(delta):
 	if Input.is_action_just_pressed(\"mouse_left\") and hovered_area.size() > 0:
-		emit_signal(\"mouse_click\", hovered_area)
+		emit_signal(\"mouse_click\", self, hovered_area)
 "
 
 [sub_resource type="VisualShaderNodeTexture" id=4]
@@ -147,12 +151,17 @@ onready var common_animation_player = $CommonAnimationPlayer
 var selected: bool = false
 
 var mouse_hover
+var hovered_area = []
 
 func _on_hover(area):
-	common_animation_player.play(\"Selected\")
+	if not hovered_area.has(area):
+		hovered_area.append(area)
+		common_animation_player.play(\"Selected\")
 
 func _on_blur(area):
-	common_animation_player.play(\"RESET\")
+	hovered_area.erase(area)
+	if hovered_area.size() < 1:
+		common_animation_player.play(\"RESET\")
 "
 
 [sub_resource type="Animation" id=11]
@@ -306,7 +315,7 @@ stretch_mode = 6
 [connection signal="gui_input" from="." to="." method="_on_BaseEnemy_gui_input"]
 [connection signal="mouse_entered" from="Body" to="." method="_on_hover" binds= [ "body" ]]
 [connection signal="mouse_entered" from="Body" to="Sprite" method="_on_hover" binds= [ "body" ]]
-[connection signal="mouse_exited" from="Body" to="." method="_on_blur" binds= [ "head" ]]
+[connection signal="mouse_exited" from="Body" to="." method="_on_blur" binds= [ "body" ]]
 [connection signal="mouse_exited" from="Body" to="Sprite" method="_on_blur" binds= [ "body" ]]
 [connection signal="mouse_entered" from="Head" to="." method="_on_hover" binds= [ "head" ]]
 [connection signal="mouse_entered" from="Head" to="Sprite" method="_on_hover" binds= [ "head" ]]
