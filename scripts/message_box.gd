@@ -132,7 +132,6 @@ func get_bbcodeless_text(text):
 func _go_over_instructions():
 	if (self.message.visible_characters in self.instructions):
 		for instruction in self.instructions[self.message.visible_characters]:
-			print(instruction)
 			if (instruction.begins_with("w")):
 				self.message_tick_timer.stop()
 				var wait_timer = Timer.new()

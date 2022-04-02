@@ -1,6 +1,8 @@
-extends Node
+extends Resource
 
 class_name Unit
+
+var name = "Zeneon"
 
 # stats
 
@@ -55,9 +57,11 @@ func set_ap(new_value):
 
 func get_ap(): return ap
 
-var active_buffs = {}
-var active_status_effect = {}
-
-func _ready():
+func full_heal():
 	self.hp = self.maxhp
 	self.ap = self.maxap
+	emit_signal("hp_changed")
+	emit_signal("ap_changed")
+
+var active_buffs = {}
+var active_status_effect = {}

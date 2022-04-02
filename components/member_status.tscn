@@ -1,9 +1,9 @@
-[gd_scene load_steps=51 format=2]
+[gd_scene load_steps=54 format=2]
 
 [ext_resource path="res://dynamic_fonts/hpap-numbers.tres" type="DynamicFont" id=1]
 [ext_resource path="res://images/ui/party_panel.png" type="Texture" id=2]
 [ext_resource path="res://images/ui/stat_bar-over.png" type="Texture" id=3]
-[ext_resource path="res://components/text_theme.tres" type="Theme" id=4]
+[ext_resource path="res://dynamic_fonts/party_member_panel-name.tres" type="DynamicFont" id=4]
 [ext_resource path="res://dynamic_fonts/status_dice_display.tres" type="DynamicFont" id=5]
 [ext_resource path="res://scripts/member_status_panel.gd" type="Script" id=6]
 [ext_resource path="res://dynamic_fonts/hpap-labels.tres" type="DynamicFont" id=7]
@@ -181,7 +181,7 @@ void light() {
 
 }
 "
-graph_offset = Vector2( -783.957, -132.426 )
+graph_offset = Vector2( -720, -51 )
 mode = 1
 flags/light_only = false
 nodes/fragment/0/position = Vector2( 280, 120 )
@@ -218,10 +218,11 @@ shader_param/hue = 1.0
 shader_param/shine_location = 0.0
 shader_param/shine_angle = 90.0
 shader_param/shine_width = 0.0
-shader_param/shine_color = Color( 0, 1, 0, 1 )
+shader_param/shine_color = Color( 0, 1, 0.0470588, 1 )
 
 [sub_resource type="GDScript" id=37]
-script/source = "extends TextureRect
+script/source = "tool
+extends TextureRect
 
 func set_hue(to: float): self.get_material().set_shader_param(\"hue\", to)
 func set_shine_width(to: float): self.get_material().set_shader_param(\"shine_width\", to)
@@ -229,11 +230,13 @@ func set_shine_location(to: float): self.get_material().set_shader_param(\"shine
 func set_shine_color(to: Color): self.get_material().set_shader_param(\"shine_color\", to)
 func set_shine_angle(to: float): self.get_material().set_shader_param(\"shine_angle\", to)
 
-func _ready():
+func reset_shine():
 	set_hue(1.0)
 	set_shine_width(0.0)
 	set_shine_location(-2.0)
 	set_shine_angle(90)
+
+func _ready(): reset_shine()
 "
 
 [sub_resource type="VisualShaderNodeCustom" id=38]
@@ -344,7 +347,7 @@ nodes/fragment/connections = PoolIntArray( 6, 0, 2, 0, 2, 0, 0, 0, 7, 0, 2, 2, 7
 [sub_resource type="ShaderMaterial" id=45]
 resource_local_to_scene = true
 shader = SubResource( 40 )
-shader_param/hue = null
+shader_param/hue = 1.0
 
 [sub_resource type="VisualShaderNodeTexture" id=46]
 source = 2
@@ -484,6 +487,161 @@ colors = PoolColorArray( 0.313726, 0.0235294, 0.0235294, 1 )
 [sub_resource type="GradientTexture" id=13]
 gradient = SubResource( 12 )
 
+[sub_resource type="Animation" id=55]
+resource_name = "DamageFlash"
+length = 0.7
+tracks/0/type = "value"
+tracks/0/path = NodePath("Panel/PanelOverlays/DamageFlashRect:modulate")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PoolRealArray( 0, 0.2, 0.7 ),
+"transitions": PoolRealArray( 1, 1, 1 ),
+"update": 0,
+"values": [ Color( 1, 1, 1, 0 ), Color( 1, 1, 1, 1 ), Color( 1, 1, 1, 0 ) ]
+}
+
+[sub_resource type="Animation" id=56]
+resource_name = "HealFlash"
+length = 0.7
+tracks/0/type = "value"
+tracks/0/path = NodePath("Panel/PanelOverlays/HealFlashRect:modulate")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PoolRealArray( 0, 0.3, 0.7 ),
+"transitions": PoolRealArray( 1, 1, 1 ),
+"update": 0,
+"values": [ Color( 1, 1, 1, 0 ), Color( 1, 1, 1, 1 ), Color( 1, 1, 1, 0 ) ]
+}
+tracks/1/type = "value"
+tracks/1/path = NodePath("Panel/PanelBackground:material:shader_param/shine_color")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/keys = {
+"times": PoolRealArray( 0 ),
+"transitions": PoolRealArray( 1 ),
+"update": 0,
+"values": [ Color( 1, 1, 1, 1 ) ]
+}
+tracks/2/type = "value"
+tracks/2/path = NodePath("Panel/PanelBackground:material:shader_param/shine_location")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/keys = {
+"times": PoolRealArray( 0, 0.7 ),
+"transitions": PoolRealArray( 1, 1 ),
+"update": 0,
+"values": [ -0.5, 1.22 ]
+}
+tracks/3/type = "value"
+tracks/3/path = NodePath("Panel/PanelBackground:material:shader_param/shine_angle")
+tracks/3/interp = 1
+tracks/3/loop_wrap = true
+tracks/3/imported = false
+tracks/3/enabled = true
+tracks/3/keys = {
+"times": PoolRealArray( 0 ),
+"transitions": PoolRealArray( 1 ),
+"update": 0,
+"values": [ -16.3 ]
+}
+tracks/4/type = "value"
+tracks/4/path = NodePath("Panel/PanelBackground:material:shader_param/shine_width")
+tracks/4/interp = 1
+tracks/4/loop_wrap = true
+tracks/4/imported = false
+tracks/4/enabled = true
+tracks/4/keys = {
+"times": PoolRealArray( 0 ),
+"transitions": PoolRealArray( 1 ),
+"update": 0,
+"values": [ 0.3 ]
+}
+
+[sub_resource type="Animation" id=57]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/path = NodePath("Panel/PanelBackground:material:shader_param/shine_color")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PoolRealArray( 0 ),
+"transitions": PoolRealArray( 1 ),
+"update": 0,
+"values": [ Color( 0, 1, 0.0470588, 1 ) ]
+}
+tracks/1/type = "value"
+tracks/1/path = NodePath("Panel/PanelBackground:material:shader_param/shine_location")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/keys = {
+"times": PoolRealArray( 0 ),
+"transitions": PoolRealArray( 1 ),
+"update": 0,
+"values": [ 0.0 ]
+}
+tracks/2/type = "value"
+tracks/2/path = NodePath("Panel/PanelBackground:material:shader_param/shine_angle")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/keys = {
+"times": PoolRealArray( 0 ),
+"transitions": PoolRealArray( 1 ),
+"update": 0,
+"values": [ 90.0 ]
+}
+tracks/3/type = "value"
+tracks/3/path = NodePath("Panel/PanelBackground:material:shader_param/shine_width")
+tracks/3/interp = 1
+tracks/3/loop_wrap = true
+tracks/3/imported = false
+tracks/3/enabled = true
+tracks/3/keys = {
+"times": PoolRealArray( 0 ),
+"transitions": PoolRealArray( 1 ),
+"update": 0,
+"values": [ 0.0 ]
+}
+tracks/4/type = "value"
+tracks/4/path = NodePath("Panel/PanelOverlays/DamageFlashRect:modulate")
+tracks/4/interp = 1
+tracks/4/loop_wrap = true
+tracks/4/imported = false
+tracks/4/enabled = true
+tracks/4/keys = {
+"times": PoolRealArray( 0 ),
+"transitions": PoolRealArray( 1 ),
+"update": 0,
+"values": [ Color( 1, 1, 1, 0 ) ]
+}
+tracks/5/type = "value"
+tracks/5/path = NodePath("Panel/PanelOverlays/HealFlashRect:modulate")
+tracks/5/interp = 1
+tracks/5/loop_wrap = true
+tracks/5/imported = false
+tracks/5/enabled = true
+tracks/5/keys = {
+"times": PoolRealArray( 0 ),
+"transitions": PoolRealArray( 1 ),
+"update": 0,
+"values": [ Color( 1, 1, 1, 0 ) ]
+}
+
 [node name="MemberStatus" type="Control"]
 margin_left = 730.0
 margin_right = 1190.0
@@ -500,6 +658,7 @@ anchor_bottom = 1.0
 material = SubResource( 18 )
 anchor_right = 1.0
 anchor_bottom = 1.0
+rect_clip_content = true
 texture = ExtResource( 2 )
 expand = true
 script = SubResource( 37 )
@@ -507,9 +666,13 @@ script = SubResource( 37 )
 [node name="PanelOverlays" type="Control" parent="Panel"]
 anchor_right = 1.0
 anchor_bottom = 1.0
+__meta__ = {
+"_edit_group_": true,
+"_edit_lock_": true
+}
 
 [node name="DamageFlashRect" type="TextureRect" parent="Panel/PanelOverlays"]
-visible = false
+modulate = Color( 1, 1, 1, 0 )
 anchor_right = 1.0
 anchor_bottom = 1.0
 size_flags_horizontal = 3
@@ -519,7 +682,7 @@ expand = true
 stretch_mode = 1
 
 [node name="BuffOverlayRect" type="TextureRect" parent="Panel/PanelOverlays"]
-visible = false
+modulate = Color( 1, 1, 1, 0 )
 self_modulate = Color( 1, 1, 1, 0.705882 )
 material = SubResource( 45 )
 anchor_right = 1.0
@@ -528,7 +691,7 @@ texture = ExtResource( 10 )
 expand = true
 
 [node name="HealFlashRect" type="TextureRect" parent="Panel/PanelOverlays"]
-visible = false
+modulate = Color( 1, 1, 1, 0 )
 material = SubResource( 51 )
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -541,6 +704,7 @@ anchor_bottom = 1.0
 mouse_filter = 2
 alignment = 2
 __meta__ = {
+"_edit_group_": true,
 "_edit_lock_": true
 }
 
@@ -559,7 +723,7 @@ margin_right = 440.0
 margin_bottom = 105.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
-theme = ExtResource( 4 )
+custom_fonts/font = ExtResource( 4 )
 valign = 1
 clip_text = true
 
@@ -724,6 +888,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 mouse_filter = 2
 __meta__ = {
+"_edit_group_": true,
 "_edit_lock_": true
 }
 
@@ -761,8 +926,6 @@ valign = 1
 
 [node name="BuffTween" type="Tween" parent="Tweens"]
 
-[node name="DamageFlashTween" type="Tween" parent="Tweens"]
-
 [node name="HPBarTween" type="Tween" parent="Tweens"]
 
 [node name="APBarTween" type="Tween" parent="Tweens"]
@@ -771,10 +934,12 @@ valign = 1
 
 [node name="FlyingTextTween" type="Tween" parent="Tweens"]
 
-[node name="HealFlashTween" type="Tween" parent="Tweens"]
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+autoplay = "RESET"
+anims/DamageFlash = SubResource( 55 )
+anims/HealFlash = SubResource( 56 )
+anims/RESET = SubResource( 57 )
 
 [connection signal="tween_all_completed" from="Tweens/BuffTween" to="." method="_on_BuffTween_tween_all_completed"]
-[connection signal="tween_completed" from="Tweens/DamageFlashTween" to="." method="_on_DamageFlashTween_tween_completed"]
 [connection signal="tween_completed" from="Tweens/ShakeTween" to="." method="_on_ShakeTween_tween_completed"]
 [connection signal="tween_completed" from="Tweens/FlyingTextTween" to="." method="_on_FlyingTextTween_tween_completed"]
-[connection signal="tween_completed" from="Tweens/HealFlashTween" to="." method="_on_HealFlashTween_tween_completed"]

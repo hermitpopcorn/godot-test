@@ -1,0 +1,19 @@
+[gd_resource type="Resource" load_steps=2 format=2]
+
+[ext_resource path="res://scripts/game_objects/equipment.gd" type="Script" id=1]
+
+[resource]
+script = ExtResource( 1 )
+name = "Shinai & Suru"
+description = "Kendo training swords Paul stole from Efraim."
+usable = false
+price = 0
+sellable = true
+sell_price = 2
+type = 2
+maxhp = 0
+maxap = 0
+atk = 5
+def = 0
+hit = 0
+eva = 0

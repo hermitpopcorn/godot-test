@@ -9,25 +9,10 @@
 config_version=4
 
 _global_script_classes=[ {
-"base": "Equipment",
-"class": "Accessory",
-"language": "GDScript",
-"path": "res://scripts/game_objects/accessory.gd"
-}, {
-"base": "Equipment",
-"class": "Armor",
-"language": "GDScript",
-"path": "res://scripts/game_objects/armor.gd"
-}, {
 "base": "Node",
 "class": "BaseScene",
 "language": "GDScript",
 "path": "res://scripts/base_scene.gd"
-}, {
-"base": "Node",
-"class": "Buff",
-"language": "GDScript",
-"path": "res://scripts/game_objects/buff.gd"
 }, {
 "base": "Unit",
 "class": "EnemyUnit",
@@ -49,7 +34,7 @@ _global_script_classes=[ {
 "language": "GDScript",
 "path": "res://scripts/expandable_diamond.gd"
 }, {
-"base": "Node",
+"base": "Resource",
 "class": "Item",
 "language": "GDScript",
 "path": "res://scripts/game_objects/item.gd"
@@ -64,7 +49,7 @@ _global_script_classes=[ {
 "language": "GDScript",
 "path": "res://scripts/game_objects/party_unit.gd"
 }, {
-"base": "Node",
+"base": "Resource",
 "class": "Skill",
 "language": "GDScript",
 "path": "res://scripts/game_objects/skill.gd"
@@ -74,7 +59,7 @@ _global_script_classes=[ {
 "language": "GDScript",
 "path": "res://scripts/game_objects/status_effect.gd"
 }, {
-"base": "Node",
+"base": "Resource",
 "class": "Unit",
 "language": "GDScript",
 "path": "res://scripts/game_objects/unit.gd"
@@ -538,17 +523,9 @@ _global_script_classes=[ {
 "class": "VisualShaderToolsvec2Compose",
 "language": "GDScript",
 "path": "res://addons/shaderV/tools/vec2Compose.gd"
-}, {
-"base": "Equipment",
-"class": "Weapon",
-"language": "GDScript",
-"path": "res://scripts/game_objects/weapon.gd"
 } ]
 _global_script_class_icons={
-"Accessory": "",
-"Armor": "",
 "BaseScene": "",
-"Buff": "",
 "EnemyUnit": "",
 "Equipment": "",
 "EventProcessor": "",
@@ -650,8 +627,7 @@ _global_script_class_icons={
 "VisualShaderToolsSinTIME": "",
 "VisualShaderToolsSphericalToCartesian": "",
 "VisualShaderToolsTIMEscaled": "",
-"VisualShaderToolsvec2Compose": "",
-"Weapon": ""
+"VisualShaderToolsvec2Compose": ""
 }
 
 [application]
@@ -659,6 +635,12 @@ _global_script_class_icons={
 config/name="Test"
 run/main_scene="res://scenes/BattleScene.tscn"
 config/icon="res://icon.png"
+
+[autoload]
+
+Player="*res://scripts/player.gd"
+ItemDatabase="*res://scripts/item_database.gd"
+BattleStateDatabase="*res://scripts/battle_state_database.gd"
 
 [debug]
 
@@ -674,8 +656,8 @@ shapes/navigation/disabled_geometry_color=Color( 1, 0.701961, 0.101961, 1 )
 
 window/size/width=1920
 window/size/height=1080
-window/size/test_width=600
-window/size/test_height=338
+window/size/test_width=1280
+window/size/test_height=720
 window/dpi/allow_hidpi=true
 window/per_pixel_transparency/allowed=true
 window/stretch/mode="2d"

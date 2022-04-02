@@ -1,0 +1,10 @@
+[gd_scene load_steps=2 format=2]
+
+[ext_resource path="res://images/battler_sprites/kaput_hunter.png" type="Texture" id=1]
+
+[node name="KaputHunter" type="TextureRect"]
+margin_right = 690.0
+margin_bottom = 275.0
+texture = ExtResource( 1 )
+expand = true
+stretch_mode = 6

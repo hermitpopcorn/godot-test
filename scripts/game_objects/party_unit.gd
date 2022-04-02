@@ -16,15 +16,15 @@ var def_curve = { 1: 10 }
 var hit_curve = { 1: 10 }
 var eva_curve = { 1: 10 }
 
-func get_base_maxhp(): return get_base_stat(maxhp_curve)
-func get_base_maxap(): return get_base_stat(maxap_curve)
-func get_base_atk(): return get_base_stat(atk_curve)
-func get_base_def(): return get_base_stat(def_curve)
-func get_base_hit(): return get_base_stat(hit_curve)
-func get_base_eva(): return get_base_stat(eva_curve)
+func get_base_maxhp(): return get_base_stat_from_curve(maxhp_curve)
+func get_base_maxap(): return get_base_stat_from_curve(maxap_curve)
+func get_base_atk(): return get_base_stat_from_curve(atk_curve)
+func get_base_def(): return get_base_stat_from_curve(def_curve)
+func get_base_hit(): return get_base_stat_from_curve(hit_curve)
+func get_base_eva(): return get_base_stat_from_curve(eva_curve)
 
-func get_base_stat(curve):
-	var on_level = self.level
+func get_base_stat_from_curve(curve, at_level = null):
+	var on_level = at_level if at_level != null else self.level
 	var value = curve[on_level]
 	if (value != null): return value
 	
@@ -34,27 +34,34 @@ func get_base_stat(curve):
 		if (on_level <= 0): return 0
 	return value
 
-func get_maxhp():
-	var base = get_base_maxhp()
-	return base
-func get_maxap():
-	var base = get_base_maxap()
-	return base
-func get_atk():
-	var base = get_base_atk()
-	return base
-func get_def():
-	var base = get_base_def()
-	return base
-func get_hit():
-	var base = get_base_hit()
-	return base
-func get_eva():
-	var base = get_base_eva()
-	return base
+func get_base_stat(stat):
+	return self.call("get_base_" + stat)
+
+func get_stat(stat):
+	var base = get_base_stat(stat)
+	var equipment = get_equipment_stat(stat)
+	return base + equipment
+
+func get_maxhp(): return get_stat('maxhp')
+func get_maxap(): return get_stat('maxap')
+func get_atk(): return get_stat('atk')
+func get_def(): return get_stat('def')
+func get_hit(): return get_stat('hit')
+func get_eva(): return get_stat('eva')
 
 # equipment
 
-var weapon
-var armor
-var accessory
+export(Resource) var weapon = null
+export(Resource) var armor = null
+export(Resource) var accessory = null
+
+func get_equipment_stat(stat):
+	var sum: int = 0
+	if (self.weapon): sum += weapon.get(stat)
+	if (self.armor): sum += armor.get(stat)
+	if (self.accessory): sum += accessory.get(stat)
+	return sum
+
+# visuals
+
+export(PackedScene) var battler_panel_texture_rect = null

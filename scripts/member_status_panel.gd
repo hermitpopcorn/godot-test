@@ -7,6 +7,8 @@ func get_overlay_container(): return self.overlay_container
 onready var full_overlay_container: Node = $Panel/FullOverlays
 func get_full_overlay_container(): return self.full_overlay_container
 
+onready var animation_player: AnimationPlayer = $AnimationPlayer
+
 var maxhp = 100
 var hp = 100
 var maxap = 100
@@ -22,7 +24,9 @@ func _ready():
 
 func attach(unit: PartyUnit):
 	$Panel/VBoxContainer/MarginContainer/Name.set_text(unit.name)
-	print([unit.maxhp, unit.hp, unit.maxap, unit.ap])
+	if (unit.battler_panel_texture_rect):
+		$Panel/PanelBackground.add_child(unit.battler_panel_texture_rect)
+	
 	self.maxhp = unit.maxhp
 	self.hp = unit.hp
 	self.maxap = unit.maxap
@@ -129,43 +133,19 @@ func update_bar(type: String):
 
 # damage flash
 
-onready var damage_flash_tween: Tween = $Tweens/DamageFlashTween
-onready var damage_flash_rect: TextureRect = $Panel/PanelOverlays/DamageFlashRect
-var active_damage_flashes = {}
-
 func damage_flash():
-	self.damage_flash_rect.modulate.a = 0
-	self.damage_flash_rect.visible = true
-	self.damage_flash_tween.interpolate_property(self.damage_flash_rect, "modulate:a", 0.0, 1.0, 0.2, Tween.TRANS_QUART, Tween.EASE_OUT)
-	self.damage_flash_tween.interpolate_property(self.damage_flash_rect, "modulate:a", 1.0, 0.0, 0.3, Tween.TRANS_QUART, Tween.EASE_IN, 0.2)
-	self.damage_flash_tween.start()
-
-func _on_DamageFlashTween_tween_completed(object, key):
-	if(self.damage_flash_rect.modulate.a == 0):
-		self.damage_flash_rect.visible = false
+	self.animation_player.stop(true)
+	self.animation_player.play("RESET")
+	yield(get_tree().create_timer(0.01), "timeout")
+	self.animation_player.play("DamageFlash")
 
 # heal flash
 
-onready var heal_flash_tween: Tween = $Tweens/HealFlashTween
-onready var heal_flash_rect: TextureRect = $Panel/PanelOverlays/HealFlashRect
-
 func heal_flash():
-	self.heal_flash_rect.modulate.a = 0
-	self.heal_flash_rect.visible = true
-	self.heal_flash_tween.interpolate_property(self.heal_flash_rect, "modulate:a", 0.0, 1.0, 0.3, Tween.TRANS_QUART, Tween.EASE_OUT)
-	self.heal_flash_tween.interpolate_property(self.heal_flash_rect, "modulate:a", 1.0, 0.0, 0.4, Tween.TRANS_QUART, Tween.EASE_IN, 0.2)
-	
-	self.panel_background.set_shine_width(0.315)
-	self.panel_background.set_shine_angle(-16.3)
-	self.panel_background.set_shine_location(-0.5)
-	self.panel_background.set_shine_color(Color.whitesmoke)
-	self.heal_flash_tween.interpolate_method(self.panel_background, "set_shine_location", -0.5, 1.22, 0.6, Tween.TRANS_CUBIC, Tween.EASE_OUT, 0.1)
-	
-	self.heal_flash_tween.start()
-
-func _on_HealFlashTween_tween_completed(object, key):
-	if(self.heal_flash_rect.modulate.a == 0):
-		self.heal_flash_rect.visible = false
+	self.animation_player.stop(true)
+	self.animation_player.play("RESET")
+	yield(get_tree().create_timer(0.01), "timeout")
+	self.animation_player.play("HealFlash")
 
 # buff flash
 
@@ -188,7 +168,6 @@ func buffdebuff(buff: bool):
 		self.panel_background.set_shine_color(Color.red)
 		self.buff_overlay_rect.get_material().set_shader_param("hue", 0)
 	self.buff_overlay_rect.modulate.a = 0
-	self.buff_overlay_rect.visible = true
 	self.buff_tween.interpolate_property(self.buff_overlay_rect, "modulate:a", 0, 1, 0.2, Tween.TRANS_LINEAR, Tween.EASE_IN)
 	if (buff):
 		self.buff_tween.interpolate_method(self.panel_background, "set_shine_location", 1.2, -0.2, 0.6, Tween.TRANS_CUBIC, Tween.EASE_OUT, 0.1)
@@ -199,7 +178,6 @@ func buffdebuff(buff: bool):
 
 func _on_BuffTween_tween_all_completed():
 	self.buff_overlay_rect.modulate.a = 0
-	self.buff_overlay_rect.visible = false
 
 # flying numbers
 

@@ -1,9 +1,41 @@
-[gd_scene load_steps=5 format=2]
+[gd_scene load_steps=7 format=2]
 
 [ext_resource path="res://images/bg/dark-dungeon-stock-photo.jpg" type="Texture" id=1]
 [ext_resource path="res://components/member_status.tscn" type="PackedScene" id=2]
-[ext_resource path="res://data/party_units/paul_kirigaya.tscn" type="PackedScene" id=3]
+[ext_resource path="res://images/enemy_sprites/shopee_kompret.png" type="Texture" id=3]
 [ext_resource path="res://scripts/battle_scene.gd" type="Script" id=8]
+
+[sub_resource type="Animation" id=1]
+resource_name = "Breathe"
+length = 4.5
+loop = true
+tracks/0/type = "value"
+tracks/0/path = NodePath(".:rect_scale")
+tracks/0/interp = 2
+tracks/0/loop_wrap = true
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PoolRealArray( 0, 1.4, 2, 4 ),
+"transitions": PoolRealArray( 1.36604, 1, 1, 1 ),
+"update": 0,
+"values": [ Vector2( 1, 1 ), Vector2( 1, 1.016 ), Vector2( 1, 1.018 ), Vector2( 1, 1 ) ]
+}
+
+[sub_resource type="Animation" id=2]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/path = NodePath(".:rect_scale")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PoolRealArray( 0 ),
+"transitions": PoolRealArray( 1 ),
+"update": 0,
+"values": [ Vector2( 1, 1.051 ) ]
+}
 
 [node name="BattleScene" type="Node"]
 script = ExtResource( 8 )
@@ -46,6 +78,8 @@ margin_right = 1430.0
 margin_left = 1450.0
 margin_right = 1910.0
 
+[node name="ShakeTween" type="Tween" parent="GUILayer"]
+
 [node name="Background" type="TextureRect" parent="."]
 margin_right = 1920.0
 margin_bottom = 1168.0
@@ -54,10 +88,26 @@ texture = ExtResource( 1 )
 expand = true
 stretch_mode = 1
 
-[node name="Node" type="Node" parent="."]
+[node name="Enemies" type="Control" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+__meta__ = {
+"_edit_lock_": true
+}
 
-[node name="ShakeTween" type="Tween" parent="."]
+[node name="TextureRect" type="TextureRect" parent="Enemies"]
+margin_left = 671.0
+margin_top = 198.0
+margin_right = 1253.0
+margin_bottom = 870.0
+grow_vertical = 0
+rect_scale = Vector2( 1, 1.051 )
+rect_pivot_offset = Vector2( 291, 672 )
+texture = ExtResource( 3 )
+expand = true
+stretch_mode = 6
 
-[node name="Test" type="Node" parent="."]
-
-[node name="Paul Kirigaya" parent="Test" instance=ExtResource( 3 )]
+[node name="AnimationPlayer" type="AnimationPlayer" parent="Enemies/TextureRect"]
+autoplay = "Breathe"
+anims/Breathe = SubResource( 1 )
+anims/RESET = SubResource( 2 )
