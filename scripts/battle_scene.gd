@@ -58,11 +58,12 @@ func prepare_enemy_battlers(enemy_cluster: Node):
 	self.enemy_battlers_link.clear()
 	self.enemies_container.add_child(enemy_cluster)
 	for i in enemy_cluster.get_children():
-		self.enemy_battlers.append(i.enemy_data)
-		self.enemy_battlers_link[i.enemy_data] = i
+		self.enemy_battlers.append(i.unit)
+		self.enemy_battlers_link[i.unit] = i
 		i.connect("mouse_hover", self, "_on_enemy_hover")
 		i.connect("mouse_blur", self, "_on_enemy_blur")
 		i.connect("mouse_click", self, "_on_enemy_click")
+		i.connect("death", self, "_on_enemy_death")
 
 func start_battle():
 	# TODO: process pre battle things
@@ -78,23 +79,30 @@ func process_turn():
 	
 	while (turn_order.size() > 0):
 		var acting_battler = turn_order.pop_front()
-		# skip if KO
+		
+		# skip if dead
+		if acting_battler.is_dead():
+			continue;
+		
+		# get action
 		var action
 		if (acting_battler is PartyUnit):
 			action = party_actions[acting_battler]
 		else:
 			action = enemy_actions[acting_battler]
+		
 		# do action
 		yield(
 			execute_action(acting_battler, action),
 		"completed")
-		# check if party/enemy battlers are all dead
 		
-		# remove turn icon
-		turn_order_container.get_child(1).queue_free()
+		# TODO: check if party/enemy battlers are all dead
 		
 		# wait
 		yield(get_tree().create_timer(0.2), "timeout")
+		
+		# cleanup
+		erase_turn_icon(acting_battler)
 		remove_infotext(InfoTextType.NARRATION)
 	
 	yield(get_tree().create_timer(0.5), "timeout")
@@ -194,6 +202,8 @@ func calculate_turn_order():
 	all_battlers.append_array(party_battlers)
 	all_battlers.append_array(enemy_battlers)
 	for battler in all_battlers:
+		if battler.is_dead(): continue
+		
 		var speed: float = float(battler.spd)
 		
 		randomizer.randomize()
@@ -215,9 +225,11 @@ func sort_turn_order(a, b):
 		return false
 
 onready var turn_order_container = $GUILayer/GUI/TurnOrderDisplay/TurnOrderContainer
+var turn_order_link = {}
 
 func display_turn_order():
 	# clear
+	turn_order_link.clear()
 	for i in turn_order_container.get_children():
 		if i is Label: continue
 		i.queue_free()
@@ -232,6 +244,13 @@ func display_turn_order():
 		icon.set_v_size_flags(Control.SIZE_SHRINK_CENTER)
 		turn_order_container.add_child(icon)
 		icon.visible = true
+		turn_order_link[icon] = battler
+
+func erase_turn_icon(battler, all = false):
+	for icon in turn_order_link.keys():
+		if turn_order_link[icon] == battler:
+			icon.queue_free()
+			if not all: return
 
 onready var command_panel_tween = $GUILayer/CommandPanelTween
 var active_input_index
@@ -335,7 +354,7 @@ var hovered_objects = {}
 func _on_enemy_hover(node: Node, hovered_area: Array):
 	if not hovered_objects.has(node):
 		hovered_objects[node] = hovered_area
-		add_infotext(InfoTextType.ENEMY_INFO, node.enemy_data.name)
+		add_infotext(InfoTextType.ENEMY_INFO, node.unit.name)
 
 func _on_enemy_blur(node: Node, blurred_area: String):
 	if hovered_objects.has(node):
@@ -346,7 +365,7 @@ func _on_enemy_blur(node: Node, blurred_area: String):
 
 func _on_enemy_click(node: Node, hovered_area: Array):
 	if (targeting_mode):
-		end_targeting(node.enemy_data)
+		end_targeting(node.unit)
 
 func _on_party_hover(node: Node):
 	if not hovered_objects.has(node):
@@ -393,6 +412,14 @@ func refresh_infotext():
 		return
 	# sort by priority and display most important
 	infopanel_text.bbcode_text = active_info_texts[active_info_texts.keys().max()]
+
+func _on_enemy_death(node: Node):
+	turn_order.erase(node.unit)
+	erase_turn_icon(node.unit, true)
+	node.unit.add_state(BattleDatabase.BattleStates.KNOCKOUT)
+	var death_animation_time = node.animate_death()
+	yield(get_tree().create_timer(death_animation_time), "timeout")
+	node.visible = false
 
 # visual effect
 # shake

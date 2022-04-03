@@ -58,7 +58,7 @@ func damage(amount):
 	if (amount > 0):
 		self.heal_flash()
 	else:
-		var shake_strength = max((abs(amount) / unit.maxhp) * 75, 20)
+		var shake_strength = min(max((abs(amount) / unit.maxhp) * 75, 20), 150)
 		self.shake(1, shake_strength, 1)
 		self.damage_flash()
 	self.create_flying_number(amount)

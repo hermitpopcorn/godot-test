@@ -54,8 +54,17 @@ func get_spd(): return spd
 
 # buffs
 
-var active_buffs = {}
-var active_status_effect = {}
+var buffs = {}
+var states = {}
+
+func is_dead(): return states.has(BattleDatabase.BattleStates.KNOCKOUT)
+func is_knocked_out(): return states.has(BattleDatabase.BattleStates.KNOCKOUT)
+
+func add_state(state, data = true):
+	states[state] = data
+
+func remove_state(state):
+	states.erase(state)
 
 # visuals
 

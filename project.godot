@@ -640,7 +640,7 @@ config/icon="res://icon.png"
 
 Player="*res://scripts/player.gd"
 ItemDatabase="*res://scripts/item_database.gd"
-BattleStateDatabase="*res://scripts/battle_state_database.gd"
+BattleDatabase="*res://scripts/battle_database.gd"
 
 [debug]
 
