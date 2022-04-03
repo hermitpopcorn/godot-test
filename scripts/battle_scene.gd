@@ -116,7 +116,7 @@ func highlight_active_party_member(attacking_battler):
 	var index = self.party_battlers_link[attacking_battler].get_index()
 	var p = self.active_battler_portrait.get_child(index)
 	p.visible = true
-	self.atp_tween.interpolate_property(p, "rect_position:x", self.active_battler_portrait.rect_size.x, 0, 0.5, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT)
+	self.atp_tween.interpolate_property(p, "rect_position:x", self.active_battler_portrait.rect_size.x, 0, 0.3, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT)
 	self.atp_tween.start()
 
 func dehighlight_active_party_member(attacking_battler):
@@ -124,7 +124,7 @@ func dehighlight_active_party_member(attacking_battler):
 	
 	var index = self.party_battlers_link[attacking_battler].get_index()
 	var p = self.active_battler_portrait.get_child(index)
-	self.atp_tween.interpolate_property(p, "rect_position:x", p.rect_position.x, self.active_battler_portrait.rect_size.x, 0.5, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT)
+	self.atp_tween.interpolate_property(p, "rect_position:x", p.rect_position.x, self.active_battler_portrait.rect_size.x, 0.3, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT)
 	self.atp_tween.start()
 	yield(get_tree().create_timer(0.5), "timeout")
 	p.visible = false
@@ -135,7 +135,7 @@ func execute_attack(attacking_battler, attacked_battler):
 	elif (attacking_battler is EnemyUnit):
 		self.enemy_battlers_link[attacking_battler].flash_action()
 	add_infotext(InfoTextType.NARRATION, attacking_battler.name + " attacks " + attacked_battler.name + "!")
-	yield(get_tree().create_timer(1), "timeout")
+	yield(get_tree().create_timer(0.4), "timeout")
 	
 	var result = battle_calculations.process_attack(attacking_battler, attacked_battler)
 	if not result.hit:
