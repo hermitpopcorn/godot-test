@@ -96,10 +96,11 @@ func process_turn():
 			execute_action(acting_battler, action),
 		"completed")
 		
-		# TODO: check if party/enemy battlers are all dead
-		
 		# wait
 		yield(get_tree().create_timer(0.2), "timeout")
+		
+		# TODO: check if party/enemy battlers are all dead
+		if check_battle_end(): return victory()
 		
 		# cleanup
 		erase_turn_icon(acting_battler)
@@ -108,11 +109,29 @@ func process_turn():
 	yield(get_tree().create_timer(0.5), "timeout")
 	end_turn()
 
+func check_battle_end() -> bool:
+	return check_enemy_all_dead()
+
+func check_enemy_all_dead():
+	for i in enemy_battlers:
+		if !i.is_dead(): return false
+	return true
+
+func victory():
+	add_infotext(InfoTextType.NARRATION, "Glory to mankind.")
+
 func execute_action(battler, action_dict: Dictionary):
 	var action = action_dict.action
 	var target = action_dict.target if action_dict.has('target') else null
 	
 	# TODO: randomize target if target is dead
+	if target.is_dead():
+		if (battler is PartyUnit):
+			target = randomize_enemy_target()
+		elif (battler is EnemyUnit):
+			target = randomize_party_target()
+		else:
+			return
 	
 	match action:
 		Actions.ATTACK:
@@ -120,6 +139,17 @@ func execute_action(battler, action_dict: Dictionary):
 				execute_attack(battler, target),
 			"completed")
 				
+func randomize_enemy_target(): return randomize_target(enemy_battlers)
+func randomize_party_target(): return randomize_target(party_battlers)
+
+func randomize_target(battlers):
+	var randomizer = RandomNumberGenerator.new()
+	var living_targets = []
+	for i in battlers:
+		if not i.is_dead(): living_targets.append(i)
+	randomizer.randomize()
+	var random_index = randomizer.randi_range(0, living_targets.size() - 1)
+	return living_targets[random_index]
 
 func highlight_active_party_member(attacking_battler):
 	self.party_battlers_link[attacking_battler].active = true
@@ -249,6 +279,7 @@ func display_turn_order():
 func erase_turn_icon(battler, all = false):
 	for icon in turn_order_link.keys():
 		if turn_order_link[icon] == battler:
+			turn_order_link.erase(icon)
 			icon.queue_free()
 			if not all: return
 
