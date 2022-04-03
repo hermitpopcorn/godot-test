@@ -1,7 +1,7 @@
 extends Node
 
 enum Actions { ATTACK, DEFEND, RUN }
-enum InfoTextType { PROMPT, ENEMY_INFO, NARRATION }
+enum InfoTextType { PROMPT, PARTY_INFO, ENEMY_INFO, NARRATION }
 
 var battle_calculations = preload("res://scripts/battle_calculations.gd").new()
 
@@ -35,6 +35,9 @@ func prepare_ui():
 		self.party_status_container.add_child(new_member_status_panel)
 		new_member_status_panel.attach(unit)
 		self.party_battlers_link[unit] = new_member_status_panel
+		new_member_status_panel.connect("mouse_hover", self, "_on_party_hover")
+		new_member_status_panel.connect("mouse_blur", self, "_on_party_blur")
+		new_member_status_panel.connect("mouse_click", self, "_on_party_click")
 	
 	# add portraits
 	for i in party_battlers:
@@ -328,6 +331,22 @@ func _on_enemy_blur(node: Node, blurred_area: String):
 func _on_enemy_click(node: Node, hovered_area: Array):
 	if (targeting_mode):
 		end_targeting(node.enemy_data)
+
+func _on_party_hover(node: Node):
+	if not hovered_objects.has(node):
+		hovered_objects[node] = ['status_panel']
+		add_infotext(InfoTextType.PARTY_INFO, node.unit.name)
+
+func _on_party_blur(node: Node):
+	if hovered_objects.has(node):
+		hovered_objects[node].erase('status_panel')
+		if hovered_objects[node].size() < 1:
+			hovered_objects.erase(node)
+			remove_infotext(InfoTextType.PARTY_INFO)
+
+func _on_party_click(node: Node):
+	if (targeting_mode):
+		end_targeting(node.unit)
 
 func end_targeting(target_battler):
 	remove_infotext(InfoTextType.PROMPT)

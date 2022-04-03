@@ -1,5 +1,9 @@
 extends Control
 
+signal mouse_hover
+signal mouse_blur
+signal mouse_click
+
 onready var panel_background: Node = $Panel/PanelBackground
 func get_panel_background(): return self.panel_background
 onready var overlay_container: Node = $Panel/PanelOverlays
@@ -226,3 +230,19 @@ func create_flying_number(number):
 func _on_FlyingTextTween_tween_completed(object, key):
 	if (key == 'modulate:a' && object.modulate.a == 0):
 		object.queue_free()
+
+var hovered: bool = false
+
+func _process(delta):
+	if Input.is_action_just_pressed("mouse_left") and hovered:
+		emit_signal("mouse_click", self)
+
+func _on_self_mouse_entered():
+	hovered = true
+	if not active: self.panel_background.self_modulate.a = 1
+	emit_signal("mouse_hover", self)
+
+func _on_self_mouse_exited():
+	hovered = false
+	if not active: self.panel_background.self_modulate.a = 125.0/255.0
+	emit_signal("mouse_blur", self)

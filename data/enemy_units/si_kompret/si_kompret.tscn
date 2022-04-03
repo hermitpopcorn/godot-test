@@ -124,12 +124,10 @@ atlas = ExtResource( 2 )
 region = Rect2( 20, 20, 300, 300 )
 
 [node name="SiKompret" instance=ExtResource( 1 )]
-mouse_filter = 2
 enemy_resource_script = "res://data/enemy_units/si_kompret/si_kompret.gd"
 
 [node name="Sprite" parent="." index="0"]
 material = SubResource( 11 )
-mouse_filter = 2
 texture = ExtResource( 2 )
 
 [node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="Body" index="0"]

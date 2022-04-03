@@ -203,18 +203,26 @@ script/source = "extends TextureRect
 onready var common_animation_player = $CommonAnimationPlayer
 var selected: bool = false
 
-var mouse_hover
 var hovered_area = []
 
 func _on_hover(area):
 	if not hovered_area.has(area):
 		hovered_area.append(area)
 		common_animation_player.play(\"Selected\")
+		update_cursor()
 
 func _on_blur(area):
 	hovered_area.erase(area)
 	if hovered_area.size() < 1:
 		common_animation_player.play(\"RESET\")
+		update_cursor()
+
+func update_cursor():
+	print(hovered_area)
+	if hovered_area.size() > 0:
+		Input.set_default_cursor_shape(Input.CURSOR_POINTING_HAND)
+	else:
+		Input.set_default_cursor_shape(Input.CURSOR_ARROW)
 "
 
 [sub_resource type="Animation" id=16]
@@ -380,7 +388,7 @@ colors = PoolColorArray( 0.513726, 0, 0, 1, 0.34902, 0, 0, 1 )
 gradient = SubResource( 20 )
 
 [node name="BaseEnemy" type="Control"]
-mouse_filter = 1
+mouse_filter = 2
 script = SubResource( 14 )
 
 [node name="Sprite" type="TextureRect" parent="."]
@@ -396,6 +404,7 @@ margin_bottom = 336.0
 grow_vertical = 0
 rect_scale = Vector2( 1, 1.051 )
 rect_pivot_offset = Vector2( 291, 672 )
+mouse_filter = 2
 texture = ExtResource( 3 )
 expand = true
 stretch_mode = 6
@@ -422,7 +431,7 @@ visible = false
 grow_horizontal = 2
 grow_vertical = 2
 rect_min_size = Vector2( 75, 75 )
-mouse_filter = 2
+mouse_filter = 1
 size_flags_horizontal = 4
 size_flags_vertical = 4
 color = Color( 0.423529, 0.0588235, 0.0941176, 1 )
@@ -447,6 +456,7 @@ margin_bottom = 100.0
 grow_horizontal = 2
 grow_vertical = 0
 rect_min_size = Vector2( 20, 200 )
+mouse_filter = 2
 value = 100.0
 texture_under = SubResource( 19 )
 texture_over = ExtResource( 4 )
@@ -458,6 +468,7 @@ nine_patch_stretch = true
 [node name="FlyingTexts" type="Control" parent="."]
 anchor_right = 1.0
 anchor_bottom = 1.0
+mouse_filter = 2
 __meta__ = {
 "_edit_lock_": true
 }
@@ -481,7 +492,6 @@ valign = 1
 
 [node name="ShakeTween" type="Tween" parent="."]
 
-[connection signal="gui_input" from="." to="." method="_on_BaseEnemy_gui_input"]
 [connection signal="mouse_entered" from="Body" to="." method="_on_hover" binds= [ "body" ]]
 [connection signal="mouse_entered" from="Body" to="Sprite" method="_on_hover" binds= [ "body" ]]
 [connection signal="mouse_exited" from="Body" to="." method="_on_blur" binds= [ "body" ]]
