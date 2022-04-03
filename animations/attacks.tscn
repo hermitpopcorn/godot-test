@@ -191,8 +191,8 @@ tracks/4/keys = {
 
 [sub_resource type="Animation" id=22]
 resource_name = "pierce"
-length = 0.555556
-loop = true
+length = 0.533333
+step = 0.0166667
 tracks/0/type = "value"
 tracks/0/path = NodePath("AnimatedSprites:animation")
 tracks/0/interp = 1
@@ -224,10 +224,10 @@ tracks/2/loop_wrap = true
 tracks/2/imported = false
 tracks/2/enabled = true
 tracks/2/keys = {
-"times": PoolRealArray( 0, 0.0555556, 0.222222, 0.5 ),
-"transitions": PoolRealArray( 1, 1, 1, 1 ),
+"times": PoolRealArray( 0, 0.000999987, 0.0555556, 0.222222, 0.502487 ),
+"transitions": PoolRealArray( 1, 1, 1, 1, 1 ),
 "update": 0,
-"values": [ Vector2( 1, 1 ), Vector2( 3.46853, 3.46853 ), Vector2( 1, 1 ), Vector2( 1.83522, 1.83522 ) ]
+"values": [ Vector2( 1, 1 ), Vector2( 1.83522, 1.83522 ), Vector2( 3.46853, 3.46853 ), Vector2( 1, 1 ), Vector2( 1.83522, 1.83522 ) ]
 }
 tracks/3/type = "value"
 tracks/3/path = NodePath("AnimatedSprites:self_modulate")
@@ -236,7 +236,7 @@ tracks/3/loop_wrap = true
 tracks/3/imported = false
 tracks/3/enabled = true
 tracks/3/keys = {
-"times": PoolRealArray( 0, 0.0555556, 0.222222, 0.555556 ),
+"times": PoolRealArray( 0, 0.0555556, 0.222222, 0.503335 ),
 "transitions": PoolRealArray( 1, 1, 1, 1 ),
 "update": 0,
 "values": [ Color( 1, 1, 1, 1 ), Color( 1, 1, 1, 0.188235 ), Color( 1, 1, 1, 1 ), Color( 1, 1, 1, 0 ) ]

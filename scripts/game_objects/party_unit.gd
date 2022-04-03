@@ -88,3 +88,10 @@ func get_equipment_stat(stat):
 # visuals
 
 export(PackedScene) var battler_textures = null
+
+func get_attack_animation():
+	if weapon != null:
+		if weapon.animation_scene != null and weapon.animation_name != null:
+			return { 'packed_scene': weapon.animation_scene, 'animation_name': weapon.animation_name }
+	
+	return .get_attack_animation()

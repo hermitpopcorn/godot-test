@@ -12,7 +12,7 @@ func _init():
 	
 	full_heal()
 	
-	weapon = preload("res://data/weapons/laser_guns/butterfly.tres")
+	weapon = preload("res://data/weapons/comically_large_spoons/plastic_spoon.tres")
 	
 	battler_textures = preload("res://data/party_units/the_bonk/the_bonk-BattlerTextureRect.tscn").instance()
 

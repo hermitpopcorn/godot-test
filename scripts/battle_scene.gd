@@ -142,15 +142,17 @@ func execute_attack(attacking_battler, attacked_battler):
 		add_infotext(InfoTextType.NARRATION, "But they missed...")
 		yield(get_tree().create_timer(1), "timeout")
 	else:
+		var animation
+		animation = attacking_battler.get_attack_animation()
 		yield(
-			play_animation("hit", attacked_battler, result),
+			play_animation(animation, attacked_battler, result),
 		"completed")
 	if (attacking_battler is PartyUnit):
 		dehighlight_active_party_member(attacking_battler)
 
 onready var animation_layer = $AnimationLayer
 
-func play_animation(what, battler, result):
+func play_animation(animation: Dictionary, battler: Unit, result):
 	var position: Vector2 = Vector2(0, 0)
 	if (battler is PartyUnit):
 		position = self.party_status_container.get_position()
@@ -160,24 +162,21 @@ func play_animation(what, battler, result):
 		position = self.enemies_container.get_position()
 		position += self.enemy_battlers_link[battler].get_position()
 	
-	var animation
-	match what:
-		"hit":
-			animation = preload("res://animations/attacks.tscn").instance()
-			animation_layer.add_child(animation)
-			animation.set_position(position)
-			var hit_frame = animation.play("hit")
-			yield(get_tree().create_timer(hit_frame), "timeout")
-			add_infotext(InfoTextType.NARRATION, "Dealt " + String(abs(int(result.hp))) + " damage!")
-			battler.hp += result.hp
-			if (battler is PartyUnit):
-				self.party_battlers_link[battler].damage(result.hp)
-				self.party_battlers_link[battler].update_hp_display()
-			elif (battler is EnemyUnit):
-				self.enemy_battlers_link[battler].flash_damage(result.hp)
-				self.enemy_battlers_link[battler].update_hp_bar()
-			yield(get_tree().create_timer(0.5), "timeout")
-			animation.queue_free()
+	var animation_node: Node = animation.packed_scene.instance()
+	animation_layer.add_child(animation_node)
+	animation_node.set_position(position)
+	var hit_frame = animation_node.play(animation.animation_name)
+	yield(get_tree().create_timer(hit_frame), "timeout")
+	add_infotext(InfoTextType.NARRATION, "Dealt " + String(abs(int(result.hp))) + " damage!")
+	battler.hp += result.hp
+	if (battler is PartyUnit):
+		self.party_battlers_link[battler].damage(result.hp)
+		self.party_battlers_link[battler].update_hp_display()
+	elif (battler is EnemyUnit):
+		self.enemy_battlers_link[battler].flash_damage(result.hp)
+		self.enemy_battlers_link[battler].update_hp_bar()
+	yield(get_tree().create_timer(0.5), "timeout")
+	animation_node.queue_free()
 
 func end_turn():
 	# do end turn things

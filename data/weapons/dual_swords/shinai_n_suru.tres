@@ -18,3 +18,4 @@ def = 0
 hit = 0
 eva = 0
 spd = 0
+animation_name = ""

@@ -56,3 +56,14 @@ func get_spd(): return spd
 
 var active_buffs = {}
 var active_status_effect = {}
+
+# visuals
+
+export(PackedScene) var attack_animation_scene
+export(String) var attack_animation_name
+
+func get_attack_animation():
+	if attack_animation_scene != null and attack_animation_name != null:
+		return { "packed_scene": attack_animation_scene, "animation_name": attack_animation_name }
+	else:
+		return { "packed_scene": preload("res://animations/attacks.tscn"), "animation_name": "hit" }

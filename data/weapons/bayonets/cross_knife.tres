@@ -1,6 +1,7 @@
-[gd_resource type="Resource" load_steps=2 format=2]
+[gd_resource type="Resource" load_steps=3 format=2]
 
 [ext_resource path="res://scripts/game_objects/equipment.gd" type="Script" id=1]
+[ext_resource path="res://animations/attacks.tscn" type="PackedScene" id=2]
 
 [resource]
 script = ExtResource( 1 )
@@ -18,3 +19,5 @@ def = 0
 hit = 0
 eva = 0
 spd = 0
+animation_scene = ExtResource( 2 )
+animation_name = "pierce"
