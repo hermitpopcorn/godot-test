@@ -257,6 +257,12 @@ func next_command_input():
 		end_command_input()
 		process_turn()
 
+func prev_command_input():
+	if active_input_index <= 0: return
+	party_actions.erase(party_battlers[active_input_index - 1])
+	active_input_index -= 1
+	show_active_input_member(active_input_index)
+
 func end_command_input():
 	active_input_index = -1
 	# shelve command panel
@@ -297,6 +303,16 @@ func _on_Attack_button_up():
 	attack_button.disabled = true
 	selected_action = Actions.ATTACK
 	start_enemy_targeting()
+
+func _on_Cancel_button_up():
+	if targeting_mode:
+		if selected_action == Actions.ATTACK:
+			targeting_mode = false
+			attack_button.disabled = false
+			remove_infotext(InfoTextType.PROMPT)
+			return
+	else:
+		if active_input_index > 0: prev_command_input()
 
 func calculate_enemy_actions():
 	var randomizer = RandomNumberGenerator.new()

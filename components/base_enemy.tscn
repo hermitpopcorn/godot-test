@@ -218,7 +218,6 @@ func _on_blur(area):
 		update_cursor()
 
 func update_cursor():
-	print(hovered_area)
 	if hovered_area.size() > 0:
 		Input.set_default_cursor_shape(Input.CURSOR_POINTING_HAND)
 	else:
