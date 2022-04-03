@@ -1,7 +1,11 @@
 extends Node
 
 enum Actions { ATTACK, DEFEND, RUN }
-enum InfoTextType { PROMPT, ENEMY_INFO }
+enum InfoTextType { PROMPT, ENEMY_INFO, NARRATION }
+
+var battle_calculations = preload("res://scripts/battle_calculations.gd").new()
+
+signal action_sequence_finished
 
 onready var gui: Node = $GUILayer/GUI
 
@@ -12,6 +16,7 @@ func _ready():
 var turn = 0
 var turn_order = []
 var party_battlers = []
+var party_battlers_link = {}
 var party_actions = {}
 var enemy_battlers = []
 var enemy_battlers_link = {}
@@ -25,10 +30,11 @@ onready var active_battler_portrait = $GUILayer/GUI/ActiveBattlerPortrait
 func prepare_ui():
 	# create party member panels
 	var member_status_panel_packedscene = preload("res://components/member_status.tscn")
-	for i in party_battlers:
+	for unit in party_battlers:
 		var new_member_status_panel = member_status_panel_packedscene.instance()
 		self.party_status_container.add_child(new_member_status_panel)
-		new_member_status_panel.attach(i)
+		new_member_status_panel.attach(unit)
+		self.party_battlers_link[unit] = new_member_status_panel
 	
 	# add portraits
 	for i in party_battlers:
@@ -76,7 +82,9 @@ func process_turn():
 		else:
 			action = enemy_actions[acting_battler]
 		# do action
-		print([acting_battler.name, action])
+		yield(
+			execute_action(acting_battler, action),
+		"completed")
 		# check if party/enemy battlers are all dead
 		
 		# remove turn icon
@@ -84,7 +92,92 @@ func process_turn():
 		
 		# wait
 		yield(get_tree().create_timer(0.2), "timeout")
+		remove_infotext(InfoTextType.NARRATION)
+	
+	yield(get_tree().create_timer(0.5), "timeout")
 	end_turn()
+
+func execute_action(battler, action_dict: Dictionary):
+	var action = action_dict.action
+	var target = action_dict.target if action_dict.has('target') else null
+	
+	# TODO: randomize target if target is dead
+	
+	match action:
+		Actions.ATTACK:
+			yield(
+				execute_attack(battler, target),
+			"completed")
+				
+
+func highlight_active_party_member(attacking_battler):
+	self.party_battlers_link[attacking_battler].active = true
+	
+	var index = self.party_battlers_link[attacking_battler].get_index()
+	var p = self.active_battler_portrait.get_child(index)
+	p.visible = true
+	self.atp_tween.interpolate_property(p, "rect_position:x", self.active_battler_portrait.rect_size.x, 0, 0.5, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT)
+	self.atp_tween.start()
+
+func dehighlight_active_party_member(attacking_battler):
+	self.party_battlers_link[attacking_battler].active = false
+	
+	var index = self.party_battlers_link[attacking_battler].get_index()
+	var p = self.active_battler_portrait.get_child(index)
+	self.atp_tween.interpolate_property(p, "rect_position:x", p.rect_position.x, self.active_battler_portrait.rect_size.x, 0.5, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT)
+	self.atp_tween.start()
+	yield(get_tree().create_timer(0.5), "timeout")
+	p.visible = false
+
+func execute_attack(attacking_battler, attacked_battler):
+	if (attacking_battler is PartyUnit):
+		highlight_active_party_member(attacking_battler)
+	elif (attacking_battler is EnemyUnit):
+		self.enemy_battlers_link[attacking_battler].flash_action()
+	add_infotext(InfoTextType.NARRATION, attacking_battler.name + " attacks " + attacked_battler.name + "!")
+	yield(get_tree().create_timer(1), "timeout")
+	
+	var result = battle_calculations.process_attack(attacking_battler, attacked_battler)
+	if not result.hit:
+		add_infotext(InfoTextType.NARRATION, "But they missed...")
+		yield(get_tree().create_timer(1), "timeout")
+	else:
+		yield(
+			play_animation("hit", attacked_battler, result),
+		"completed")
+	if (attacking_battler is PartyUnit):
+		dehighlight_active_party_member(attacking_battler)
+
+onready var animation_layer = $AnimationLayer
+
+func play_animation(what, battler, result):
+	var position: Vector2 = Vector2(0, 0)
+	if (battler is PartyUnit):
+		position = self.party_status_container.get_position()
+		position += self.party_battlers_link[battler].get_position()
+		position += self.party_battlers_link[battler].get_size() / 2
+	elif (battler is EnemyUnit):
+		position = self.enemies_container.get_position()
+		position += self.enemy_battlers_link[battler].get_position()
+	
+	var animation
+	match what:
+		"hit":
+			animation = preload("res://animations/attacks.tscn").instance()
+			animation_layer.add_child(animation)
+			animation.set_position(position)
+			var hit_frame = animation.play("hit")
+			yield(get_tree().create_timer(hit_frame), "timeout")
+			add_infotext(InfoTextType.NARRATION, "Dealt " + String(abs(int(result.hp))) + " damage!")
+			battler.hp += result.hp
+			if (battler is PartyUnit):
+				self.party_battlers_link[battler].damage(result.hp)
+				self.party_battlers_link[battler].update_hp_display()
+			elif (battler is EnemyUnit):
+				self.enemy_battlers_link[battler].flash_damage(result.hp)
+				self.enemy_battlers_link[battler].update_hp_bar()
+			yield(get_tree().create_timer(0.5), "timeout")
+			animation.queue_free()
 
 func end_turn():
 	# do end turn things
@@ -153,6 +246,7 @@ func start_command_input():
 onready var command_buttons_container = $GUILayer/GUI/CommandPanel/ButtonsContainer
 
 func next_command_input():
+	remove_infotext(InfoTextType.PROMPT)
 	for i in command_buttons_container.get_children(): i.disabled = false
 	active_input_index += 1
 	if (active_input_index < self.party_battlers.size()):
@@ -165,12 +259,12 @@ func end_command_input():
 	active_input_index = -1
 	# shelve command panel
 	self.command_panel_tween.remove_all()
-	self.command_panel_tween.interpolate_property(self.command_panel, "rect_position:x", 0, self.command_panel.rect_size.x * -1, 0.5, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT)
+	self.command_panel_tween.interpolate_property(self.command_panel, "rect_position:x", 0, self.command_panel.rect_size.x * -1, 0.3, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT)
 	self.command_panel_tween.start()
 	# shelve portraits
 	self.atp_tween.remove_all()
 	for p in self.active_battler_portrait.get_children():
-		self.atp_tween.interpolate_property(p, "rect_position:x", 0, self.active_battler_portrait.rect_size.x, 0.5, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT)
+		self.atp_tween.interpolate_property(p, "rect_position:x", 0, self.active_battler_portrait.rect_size.x, 0.3, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT)
 	self.atp_tween.start()
 
 onready var atp_tween = $GUILayer/PortraitTween
@@ -203,9 +297,14 @@ func _on_Attack_button_up():
 	start_enemy_targeting()
 
 func calculate_enemy_actions():
+	var randomizer = RandomNumberGenerator.new()
 	self.enemy_actions.clear()
 	for i in self.enemy_battlers:
-		self.enemy_actions[i] = Actions.ATTACK
+		randomizer.randomize()
+		self.enemy_actions[i] = {
+			'action': Actions.ATTACK,
+			'target': self.party_battlers[round(randomizer.randi_range(0, 3))],
+		}
 
 var targeting_mode: bool = false
 
@@ -228,12 +327,11 @@ func _on_enemy_blur(node: Node, blurred_area: String):
 			remove_infotext(InfoTextType.ENEMY_INFO)
 
 func _on_enemy_click(node: Node, hovered_area: Array):
-	print("CLICK")
-	print([node, hovered_area])
 	if (targeting_mode):
 		end_targeting(node.enemy_data)
 
 func end_targeting(target_battler):
+	remove_infotext(InfoTextType.PROMPT)
 	self.targeting_mode = false
 	self.party_actions[self.party_battlers[self.active_input_index]] = {
 		'action': self.selected_action,
@@ -310,3 +408,4 @@ func _input(event):
 		print(self.party_status_container.get_child(round(rand_range(0, 3))).active)
 		self.party_status_container.get_child(round(rand_range(0, 3))).active = !self.party_status_container.get_child(round(rand_range(0, 3))).active
 		print(self.party_status_container.get_child(round(rand_range(0, 3))).active)
+

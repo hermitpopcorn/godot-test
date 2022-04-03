@@ -140,3 +140,6 @@ polygon = PoolVector2Array( -111.871, -302.792, -27.8707, -312.792, 40.1293, -30
 
 [node name="TextureRect" parent="Icon" index="0"]
 texture = SubResource( 12 )
+
+[node name="HPBar" parent="." index="4"]
+margin_left = 226.0

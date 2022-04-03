@@ -1,0 +1,269 @@
+[gd_scene load_steps=17 format=2]
+
+[ext_resource path="res://images/animations/pierce-slash.png" type="Texture" id=1]
+[ext_resource path="res://images/animations/slash-fire.png" type="Texture" id=2]
+[ext_resource path="res://scripts/animation_node.gd" type="Script" id=3]
+
+[sub_resource type="AtlasTexture" id=13]
+flags = 5
+atlas = ExtResource( 2 )
+region = Rect2( 0, 0, 192, 192 )
+
+[sub_resource type="AtlasTexture" id=14]
+flags = 5
+atlas = ExtResource( 2 )
+region = Rect2( 192, 0, 192, 192 )
+
+[sub_resource type="AtlasTexture" id=15]
+flags = 5
+atlas = ExtResource( 2 )
+region = Rect2( 384, 0, 192, 192 )
+
+[sub_resource type="AtlasTexture" id=16]
+flags = 5
+atlas = ExtResource( 2 )
+region = Rect2( 576, 0, 192, 192 )
+
+[sub_resource type="AtlasTexture" id=17]
+flags = 5
+atlas = ExtResource( 2 )
+region = Rect2( 768, 0, 192, 192 )
+
+[sub_resource type="AtlasTexture" id=18]
+flags = 5
+atlas = ExtResource( 2 )
+region = Rect2( 0, 192, 192, 192 )
+
+[sub_resource type="AtlasTexture" id=19]
+flags = 5
+atlas = ExtResource( 1 )
+region = Rect2( 0, 0, 192, 192 )
+
+[sub_resource type="AtlasTexture" id=20]
+flags = 5
+atlas = ExtResource( 1 )
+region = Rect2( 192, 0, 192, 192 )
+
+[sub_resource type="AtlasTexture" id=21]
+flags = 5
+atlas = ExtResource( 1 )
+region = Rect2( 384, 0, 192, 192 )
+
+[sub_resource type="SpriteFrames" id=7]
+animations = [ {
+"frames": [ null, SubResource( 13 ), SubResource( 14 ), SubResource( 15 ), SubResource( 16 ), SubResource( 17 ), SubResource( 18 ), null ],
+"loop": false,
+"name": "hit",
+"speed": 18.0
+}, {
+"frames": [ null, SubResource( 19 ), SubResource( 20 ), SubResource( 21 ), null ],
+"loop": true,
+"name": "pierce",
+"speed": 16.0
+} ]
+
+[sub_resource type="Animation" id=11]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/path = NodePath("AnimatedSprites:animation")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PoolRealArray( 0 ),
+"transitions": PoolRealArray( 1 ),
+"update": 0,
+"values": [ "hit" ]
+}
+tracks/1/type = "value"
+tracks/1/path = NodePath("AnimatedSprites:frame")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/keys = {
+"times": PoolRealArray( 0 ),
+"transitions": PoolRealArray( 1 ),
+"update": 0,
+"values": [ 0 ]
+}
+tracks/2/type = "value"
+tracks/2/path = NodePath("AnimatedSprites:scale")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/keys = {
+"times": PoolRealArray( 0 ),
+"transitions": PoolRealArray( 1 ),
+"update": 0,
+"values": [ Vector2( 1, 1 ) ]
+}
+tracks/3/type = "value"
+tracks/3/path = NodePath("AnimatedSprites:self_modulate")
+tracks/3/interp = 1
+tracks/3/loop_wrap = true
+tracks/3/imported = false
+tracks/3/enabled = true
+tracks/3/keys = {
+"times": PoolRealArray( 0 ),
+"transitions": PoolRealArray( 1 ),
+"update": 0,
+"values": [ Color( 1, 1, 1, 1 ) ]
+}
+tracks/4/type = "value"
+tracks/4/path = NodePath("AnimatedSprites:position")
+tracks/4/interp = 1
+tracks/4/loop_wrap = true
+tracks/4/imported = false
+tracks/4/enabled = true
+tracks/4/keys = {
+"times": PoolRealArray( 0 ),
+"transitions": PoolRealArray( 1 ),
+"update": 0,
+"values": [ Vector2( 32.5514, -31.4289 ) ]
+}
+
+[sub_resource type="Animation" id=12]
+resource_name = "hit"
+length = 0.611111
+tracks/0/type = "value"
+tracks/0/path = NodePath("AnimatedSprites:animation")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PoolRealArray( 0 ),
+"transitions": PoolRealArray( 1 ),
+"update": 1,
+"values": [ "hit" ]
+}
+tracks/1/type = "value"
+tracks/1/path = NodePath("AnimatedSprites:frame")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/keys = {
+"times": PoolRealArray( 0, 0.0555556, 0.222222, 0.333333, 0.388889, 0.444444, 0.5, 0.555556 ),
+"transitions": PoolRealArray( 1, 1, 1, 1, 1, 1, 1, 1 ),
+"update": 1,
+"values": [ 0, 1, 2, 3, 4, 5, 6, 7 ]
+}
+tracks/2/type = "value"
+tracks/2/path = NodePath("AnimatedSprites:scale")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/keys = {
+"times": PoolRealArray( 0, 0.0555556, 0.111111, 0.166667, 0.222222 ),
+"transitions": PoolRealArray( 1, 1, 1, 1, 1 ),
+"update": 0,
+"values": [ Vector2( 1, 1 ), Vector2( 0.660923, 0.672615 ), Vector2( 0.935692, 1.01754 ), Vector2( 1.31569, 1.304 ), Vector2( 1.31569, 1.304 ) ]
+}
+tracks/3/type = "value"
+tracks/3/path = NodePath("AnimatedSprites:self_modulate")
+tracks/3/interp = 1
+tracks/3/loop_wrap = true
+tracks/3/imported = false
+tracks/3/enabled = true
+tracks/3/keys = {
+"times": PoolRealArray( 0, 0.0555556, 0.111111, 0.166667, 0.277778 ),
+"transitions": PoolRealArray( 1, 1, 1, 1, 1 ),
+"update": 0,
+"values": [ Color( 1, 1, 1, 1 ), Color( 1, 1, 1, 0.133333 ), Color( 1, 1, 1, 0.419608 ), Color( 1, 1, 1, 0.815686 ), Color( 1, 1, 1, 1 ) ]
+}
+tracks/4/type = "value"
+tracks/4/path = NodePath("AnimatedSprites:position")
+tracks/4/interp = 1
+tracks/4/loop_wrap = true
+tracks/4/imported = false
+tracks/4/enabled = true
+tracks/4/keys = {
+"times": PoolRealArray( 0.0555556, 0.111111, 0.166667, 0.319204 ),
+"transitions": PoolRealArray( 1, 1, 1, 1 ),
+"update": 0,
+"values": [ Vector2( 32.5514, -31.4289 ), Vector2( 0.561215, -2.80614 ), Vector2( -23.5717, 26.9391 ), Vector2( 0, 0 ) ]
+}
+
+[sub_resource type="Animation" id=22]
+resource_name = "pierce"
+length = 0.555556
+loop = true
+tracks/0/type = "value"
+tracks/0/path = NodePath("AnimatedSprites:animation")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PoolRealArray( 0 ),
+"transitions": PoolRealArray( 1 ),
+"update": 1,
+"values": [ "pierce" ]
+}
+tracks/1/type = "value"
+tracks/1/path = NodePath("AnimatedSprites:frame")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/keys = {
+"times": PoolRealArray( 0, 0.0555556, 0.277778, 0.388889 ),
+"transitions": PoolRealArray( 1, 1, 1, 1 ),
+"update": 1,
+"values": [ 0, 1, 2, 3 ]
+}
+tracks/2/type = "value"
+tracks/2/path = NodePath("AnimatedSprites:scale")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/keys = {
+"times": PoolRealArray( 0, 0.0555556, 0.222222, 0.5 ),
+"transitions": PoolRealArray( 1, 1, 1, 1 ),
+"update": 0,
+"values": [ Vector2( 1, 1 ), Vector2( 3.46853, 3.46853 ), Vector2( 1, 1 ), Vector2( 1.83522, 1.83522 ) ]
+}
+tracks/3/type = "value"
+tracks/3/path = NodePath("AnimatedSprites:self_modulate")
+tracks/3/interp = 1
+tracks/3/loop_wrap = true
+tracks/3/imported = false
+tracks/3/enabled = true
+tracks/3/keys = {
+"times": PoolRealArray( 0, 0.0555556, 0.222222, 0.555556 ),
+"transitions": PoolRealArray( 1, 1, 1, 1 ),
+"update": 0,
+"values": [ Color( 1, 1, 1, 1 ), Color( 1, 1, 1, 0.188235 ), Color( 1, 1, 1, 1 ), Color( 1, 1, 1, 0 ) ]
+}
+tracks/4/type = "value"
+tracks/4/path = NodePath("AnimatedSprites:position")
+tracks/4/interp = 1
+tracks/4/loop_wrap = true
+tracks/4/imported = false
+tracks/4/enabled = true
+tracks/4/keys = {
+"times": PoolRealArray( 0 ),
+"transitions": PoolRealArray( 1 ),
+"update": 0,
+"values": [ Vector2( 0, 0 ) ]
+}
+
+[node name="Attacks" type="Node2D"]
+scale = Vector2( 3, 3 )
+script = ExtResource( 3 )
+
+[node name="AnimatedSprites" type="AnimatedSprite" parent="."]
+position = Vector2( 32.5514, -31.4289 )
+frames = SubResource( 7 )
+animation = "hit"
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+anims/RESET = SubResource( 11 )
+anims/hit = SubResource( 12 )
+anims/pierce = SubResource( 22 )

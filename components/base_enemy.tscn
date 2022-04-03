@@ -1,7 +1,9 @@
-[gd_scene load_steps=17 format=2]
+[gd_scene load_steps=25 format=2]
 
 [ext_resource path="res://addons/shaderV/rgba/blendAwithB.gd" type="Script" id=1]
+[ext_resource path="res://dynamic_fonts/hpap-flying_numbers.tres" type="DynamicFont" id=2]
 [ext_resource path="res://images/enemy_sprites/missingno.png" type="Texture" id=3]
+[ext_resource path="res://images/ui/stat_bar-over-vertical.png" type="Texture" id=4]
 
 [sub_resource type="GDScript" id=14]
 script/source = "extends Control
@@ -17,6 +19,57 @@ signal mouse_blur
 
 func _ready():
 	enemy_data = load(enemy_resource_script).new()
+
+func flash_action(): $Sprite/CommonAnimationPlayer.play(\"Flash\")
+
+onready var flying_text_container = $FlyingTexts
+onready var flying_text_basis = $FlyingTexts/Sample
+onready var flying_text_tween = $FlyingTextTween
+
+func flash_damage(number = null):
+	$Sprite/CommonAnimationPlayer.play(\"Flash Red\")
+	if (number != null):
+		var type = 'neutral'
+		if (number < 0): type = 'damage'
+		if (number > 0): type = 'heal'
+		
+		var flying_text = self.flying_text_basis.duplicate()
+		flying_text.modulate.a = 0
+		self.flying_text_container.add_child(flying_text)
+		match type:
+			'damage': flying_text.self_modulate = Color(\"e04747\")
+			'heal': flying_text.self_modulate = Color(\"92d481\")
+		flying_text.set_text(String(int(abs(number))))
+		flying_text.set_anchors_preset(Control.PRESET_CENTER_TOP)
+		flying_text.modulate.a = 1
+		flying_text.visible = true
+		flying_text_tween.interpolate_property(flying_text, \"rect_position:y\", 0.0, -150, 1.5, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT)
+		flying_text_tween.interpolate_property(flying_text, \"modulate:a\", 1.0, 0.0, 1.5, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT)
+		flying_text_tween.start()
+		
+		if (number < 0):
+			shake(1, max((abs(number) / enemy_data.maxhp) * 75, 20))
+
+onready var shake_tween = $ShakeTween
+onready var sprite = $Sprite
+onready var initial_sprite_position = $Sprite.rect_position
+
+func _move(vector):
+	sprite.rect_position = initial_sprite_position + Vector2(rand_range(-vector.x, vector.x), rand_range(-vector.y, vector.y))
+
+func shake(shake_length, shake_power):
+	self.shake_tween.interpolate_method(self, \"_move\", Vector2(shake_power, shake_power), Vector2(0, 0), shake_length, Tween.TRANS_SINE, Tween.EASE_OUT, 0)
+	self.shake_tween.start()
+
+onready var hp_bar = $HPBar
+
+func update_hp_bar():
+	var percentage = int(round((float(enemy_data.hp) / float(enemy_data.maxhp)) * 100))
+	hp_bar.value = percentage
+
+func _on_FlyingTextTween_tween_completed(object, key):
+	if (key == 'modulate:a' && object.modulate.a == 0):
+		object.queue_free()
 
 func _on_hover(area):
 	if not hovered_area.has(area): hovered_area.append(area)
@@ -164,6 +217,62 @@ func _on_blur(area):
 		common_animation_player.play(\"RESET\")
 "
 
+[sub_resource type="Animation" id=16]
+resource_name = "Flash"
+length = 0.5
+tracks/0/type = "value"
+tracks/0/path = NodePath(".:material:shader_param/apply_color_overlay")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PoolRealArray( 0 ),
+"transitions": PoolRealArray( 1 ),
+"update": 1,
+"values": [ true ]
+}
+tracks/1/type = "value"
+tracks/1/path = NodePath(".:material:shader_param/color_overlay")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/keys = {
+"times": PoolRealArray( 0, 0.1, 0.5 ),
+"transitions": PoolRealArray( 1, 1, 1 ),
+"update": 0,
+"values": [ Color( 1, 1, 1, 0 ), Color( 1, 1, 1, 0.92549 ), Color( 1, 1, 1, 0 ) ]
+}
+
+[sub_resource type="Animation" id=17]
+resource_name = "Flash Red"
+length = 0.3
+tracks/0/type = "value"
+tracks/0/path = NodePath(".:material:shader_param/apply_color_overlay")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PoolRealArray( 0 ),
+"transitions": PoolRealArray( 1 ),
+"update": 1,
+"values": [ true ]
+}
+tracks/1/type = "value"
+tracks/1/path = NodePath(".:material:shader_param/color_overlay")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/keys = {
+"times": PoolRealArray( 0, 0.1, 0.3 ),
+"transitions": PoolRealArray( 0.000821187, 1, 1 ),
+"update": 0,
+"values": [ Color( 1, 1, 1, 0 ), Color( 1, 0, 0, 0.92549 ), Color( 1, 1, 1, 0 ) ]
+}
+
 [sub_resource type="Animation" id=11]
 length = 0.001
 tracks/0/type = "value"
@@ -258,6 +367,18 @@ flags = 5
 atlas = ExtResource( 3 )
 region = Rect2( 20, 20, 300, 300 )
 
+[sub_resource type="Gradient" id=18]
+colors = PoolColorArray( 0.137255, 0.137255, 0.137255, 1, 0.298039, 0.298039, 0.298039, 1 )
+
+[sub_resource type="GradientTexture" id=19]
+gradient = SubResource( 18 )
+
+[sub_resource type="Gradient" id=20]
+colors = PoolColorArray( 0.513726, 0, 0, 1, 0.34902, 0, 0, 1 )
+
+[sub_resource type="GradientTexture" id=21]
+gradient = SubResource( 20 )
+
 [node name="BaseEnemy" type="Control"]
 mouse_filter = 1
 script = SubResource( 14 )
@@ -282,6 +403,8 @@ script = SubResource( 3 )
 
 [node name="CommonAnimationPlayer" type="AnimationPlayer" parent="Sprite"]
 autoplay = "RESET"
+anims/Flash = SubResource( 16 )
+"anims/Flash Red" = SubResource( 17 )
 anims/RESET = SubResource( 11 )
 anims/Selected = SubResource( 10 )
 
@@ -312,6 +435,52 @@ texture = SubResource( 15 )
 expand = true
 stretch_mode = 6
 
+[node name="HPBar" type="TextureProgress" parent="."]
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+margin_left = 143.5
+margin_top = -100.0
+margin_right = 163.5
+margin_bottom = 100.0
+grow_horizontal = 2
+grow_vertical = 0
+rect_min_size = Vector2( 20, 200 )
+value = 100.0
+texture_under = SubResource( 19 )
+texture_over = ExtResource( 4 )
+texture_progress = SubResource( 21 )
+fill_mode = 3
+tint_over = Color( 0.180392, 0.180392, 0.180392, 1 )
+nine_patch_stretch = true
+
+[node name="FlyingTexts" type="Control" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+__meta__ = {
+"_edit_lock_": true
+}
+
+[node name="Sample" type="Label" parent="FlyingTexts"]
+visible = false
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+margin_left = -443.0
+margin_top = -42.5
+margin_right = 443.0
+margin_bottom = 42.5
+custom_fonts/font = ExtResource( 2 )
+text = "WHAT DON'T SEE THIS"
+align = 1
+valign = 1
+
+[node name="FlyingTextTween" type="Tween" parent="."]
+
+[node name="ShakeTween" type="Tween" parent="."]
+
 [connection signal="gui_input" from="." to="." method="_on_BaseEnemy_gui_input"]
 [connection signal="mouse_entered" from="Body" to="." method="_on_hover" binds= [ "body" ]]
 [connection signal="mouse_entered" from="Body" to="Sprite" method="_on_hover" binds= [ "body" ]]
@@ -321,3 +490,4 @@ stretch_mode = 6
 [connection signal="mouse_entered" from="Head" to="Sprite" method="_on_hover" binds= [ "head" ]]
 [connection signal="mouse_exited" from="Head" to="." method="_on_blur" binds= [ "head" ]]
 [connection signal="mouse_exited" from="Head" to="Sprite" method="_on_blur" binds= [ "head" ]]
+[connection signal="tween_completed" from="FlyingTextTween" to="." method="_on_FlyingTextTween_tween_completed"]

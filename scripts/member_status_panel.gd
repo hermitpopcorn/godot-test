@@ -8,37 +8,24 @@ onready var full_overlay_container: Node = $Panel/FullOverlays
 func get_full_overlay_container(): return self.full_overlay_container
 
 var panel_background_battler: Node
+var unit: PartyUnit
 
 onready var animation_player: AnimationPlayer = $AnimationPlayer
 
-var maxhp = 100
-var hp = 100
-var maxap = 100
-var ap = 100
-
-func _ready():
-	$Panel/VBoxContainer/HBoxContainer/HPContainer/CenterContainer/HPNumber.text = String(self.hp)
-	$Panel/VBoxContainer/HBoxContainer/HPContainer/HPBar/Change.value = self.hp
-	$Panel/VBoxContainer/HBoxContainer/HPContainer/HPBar.value = self.hp
-	$Panel/VBoxContainer/HBoxContainer/APContainer/CenterContainer/APNumber.text = String(self.ap)
-	$Panel/VBoxContainer/HBoxContainer/APContainer/APBar/Change.value = self.ap
-	$Panel/VBoxContainer/HBoxContainer/APContainer/APBar.value = self.ap
-
-func attach(unit: PartyUnit):
+func attach(u: PartyUnit):
+	unit = u
 	$Panel/VBoxContainer/MarginContainer/Name.set_text(unit.name)
 	if (unit.battler_textures):
 		self.panel_background_battler = unit.battler_textures.get_node("PanelBackground").duplicate()
 		if (self.panel_background_battler):
 			$Panel/PanelBackground.add_child(self.panel_background_battler)
 	
-	self.maxhp = unit.maxhp
-	self.hp = unit.hp
-	self.maxap = unit.maxap
-	self.ap = unit.ap
-	update_hp_number()
-	update_ap_number()
-	update_hp_bar()
-	update_ap_bar()
+	self.hp_number.set_text(String(unit.hp))
+	self.ap_number.set_text(String(unit.ap))
+	var hp_percentage = int(floor((float(unit.hp) / float(unit.maxhp)) * 100))
+	self.hp_bar.value = hp_percentage
+	var ap_percentage = int(floor((float(unit.ap) / float(unit.maxap)) * 100))
+	self.ap_bar.value = ap_percentage
 
 # active status
 
@@ -64,19 +51,13 @@ func set_active(new_status: bool):
 # damage or heal
 
 func damage(amount):
-	self.hp -= amount
-	self.hp = min(max(0, self.hp), self.maxhp)
-	
 	if (amount > 0):
-		var shake_strength = max((amount / self.maxhp) * 75, 20)
+		self.heal_flash()
+	else:
+		var shake_strength = max((abs(amount) / unit.maxhp) * 75, 20)
 		self.shake(1, shake_strength, 1)
 		self.damage_flash()
-		self.create_flying_number('damage', amount)
-	else:
-		self.heal_flash()
-		self.create_flying_number('heal', amount * -1)
-	self.update_hp_number()
-	self.update_hp_bar()
+	self.create_flying_number(amount)
 
 # shake
 
@@ -96,13 +77,24 @@ func shake(shake_length, shake_power, shake_priority):
 func _on_ShakeTween_tween_completed(object, key):
 	self.current_shake_priority = 0
 
+# update hp/ap display
+
+func update_hp_display():
+	update_hp_number()
+	update_hp_bar()
+func update_ap_display():
+	update_ap_number()
+	update_ap_bar()
+
 # update hp/ap text
 
 onready var hp_number = $Panel/VBoxContainer/HBoxContainer/HPContainer/CenterContainer/HPNumber
 onready var ap_number = $Panel/VBoxContainer/HBoxContainer/APContainer/CenterContainer/APNumber
 
-func update_hp_number(): self.hp_number.set_text(String(self.hp))
-func update_ap_number(): self.ap_number.set_text(String(self.ap))
+func update_hp_number():
+	if unit != null: self.hp_number.set_text(String(unit.hp))
+func update_ap_number():
+	if unit != null: self.ap_number.set_text(String(unit.ap))
 
 # update hp/ap bar
 
@@ -118,6 +110,8 @@ func update_hp_bar(): self.update_bar('hp')
 func update_ap_bar(): self.update_bar('ap')
 
 func update_bar(type: String):
+	if (unit == null): return
+	
 	var new_percentage: int
 	var bar: TextureProgress
 	var bar_change: TextureProgress
@@ -125,12 +119,12 @@ func update_bar(type: String):
 	var decrease: bool
 	match type:
 		'hp':
-			new_percentage = int(floor((self.hp / self.maxhp) * 100))
+			new_percentage = int(floor((float(unit.hp) / float(unit.maxhp)) * 100))
 			bar = self.hp_bar
 			bar_change = self.hp_bar_change
 			tween = self.hp_bar_tween
 		'ap':
-			new_percentage = int(floor((self.ap / self.maxap) * 100))
+			new_percentage = int(floor((float(unit.ap) / float(unit.maxap)) * 100))
 			bar = self.ap_bar
 			bar_change = self.hp_bar_change
 			tween = self.ap_bar_tween
@@ -210,14 +204,18 @@ onready var flying_text_container = $FlyingTexts
 onready var flying_text_basis = $FlyingTexts/Sample
 onready var flying_text_tween = $Tweens/FlyingTextTween
 
-func create_flying_number(type: String, number: int):
+func create_flying_number(number):
+	var type = 'neutral'
+	if (number < 0): type = 'damage'
+	if (number > 0): type = 'heal'
+	
 	var flying_text = self.flying_text_basis.duplicate()
 	flying_text.modulate.a = 0
 	self.flying_text_container.add_child(flying_text)
 	match type:
 		'damage': flying_text.self_modulate = Color("e04747")
 		'heal': flying_text.self_modulate = Color("92d481")
-	flying_text.set_text(String(number))
+	flying_text.set_text(String(int(abs(number))))
 	flying_text.set_anchors_preset(Control.PRESET_CENTER_TOP)
 	flying_text.modulate.a = 1
 	flying_text.visible = true

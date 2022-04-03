@@ -2,6 +2,8 @@ extends Unit
 
 class_name PartyUnit
 
+signal ap_changed; signal ap_increased; signal ap_decreased
+
 # party unit exclusive stats
 
 var maxap = 1 setget set_maxap, get_maxap
@@ -16,6 +18,11 @@ func set_ap(new_value):
 		emit_signal("ap_increased")
 	ap = new_value
 func get_ap(): return ap
+
+func full_heal():
+	.full_heal()
+	self.ap = self.maxap
+	emit_signal("ap_changed")
 
 var level = 1
 var lck = 5

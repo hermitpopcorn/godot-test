@@ -183,6 +183,9 @@ __meta__ = {
 
 [node name="PortraitTween" type="Tween" parent="GUILayer"]
 
+[node name="AnimationLayer" type="CanvasLayer" parent="."]
+layer = 2
+
 [node name="Background" type="TextureRect" parent="."]
 margin_right = 1920.0
 margin_bottom = 1168.0
@@ -207,5 +210,8 @@ border_width = 5.0
 __meta__ = {
 "_edit_lock_": true
 }
+
+[node name="Timer" type="Timer" parent="."]
+one_shot = true
 
 [connection signal="button_up" from="GUILayer/GUI/CommandPanel/ButtonsContainer/Attack" to="." method="_on_Attack_button_up"]

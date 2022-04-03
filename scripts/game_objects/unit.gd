@@ -29,7 +29,6 @@ func get_eva(): return eva
 # hp, ap setter/getter
 
 signal hp_changed; signal hp_increased; signal hp_decreased
-signal ap_changed; signal ap_increased; signal ap_decreased
 
 func set_hp(new_value):
 	if (hp > new_value):
@@ -44,9 +43,7 @@ func get_hp(): return hp
 
 func full_heal():
 	self.hp = self.maxhp
-	self.ap = self.maxap
 	emit_signal("hp_changed")
-	emit_signal("ap_changed")
 
 # speed
 
