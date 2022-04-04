@@ -4,13 +4,14 @@
 
 [resource]
 script = ExtResource( 1 )
+item_type = 1
 name = "Shinai & Suru"
 description = "Kendo training swords Paul stole from Efraim."
 usable = false
+perish_on_use = true
 price = 0
-sellable = true
 sell_price = 2
-type = 2
+equipment_type = 2
 maxhp = 0
 maxap = 0
 atk = 5

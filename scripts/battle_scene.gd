@@ -543,7 +543,8 @@ func _input(event):
 	if (Input.is_physical_key_pressed(KEY_Y)):
 		self.party_status_container.get_child(round(rand_range(0, 3))).get_node("AnimationPlayer").play("RESET")
 	if (Input.is_physical_key_pressed(KEY_U)):
-		print(self.party_status_container.get_child(round(rand_range(0, 3))).active)
-		self.party_status_container.get_child(round(rand_range(0, 3))).active = !self.party_status_container.get_child(round(rand_range(0, 3))).active
-		print(self.party_status_container.get_child(round(rand_range(0, 3))).active)
+		print(party_battlers[0].weapon.item_type)
+		print(party_battlers[1].weapon.item_type)
+		print(party_battlers[2].weapon.item_type)
+		print(party_battlers[3].weapon.item_type)
 
