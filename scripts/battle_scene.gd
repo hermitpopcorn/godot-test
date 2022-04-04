@@ -328,6 +328,8 @@ func end_command_input():
 onready var atp_tween = $GUILayer/PortraitTween
 
 func show_active_input_member(index: int):
+	# update command panel button(s)
+	update_cancel_button()
 	# reset everyone else
 	for i in self.party_status_container.get_children(): i.active = false
 	self.active_battler_portrait.visible = false
@@ -345,6 +347,7 @@ func show_active_input_member(index: int):
 
 var selected_action = null
 
+onready var button_tween = $GUILayer/ButtonTween
 onready var attack_button = $GUILayer/GUI/CommandPanel/ButtonsContainer/Attack
 
 func _on_Attack_button_up():
@@ -352,7 +355,9 @@ func _on_Attack_button_up():
 	if targeting_mode: return
 	attack_button.disabled = true
 	selected_action = Actions.ATTACK
-	start_enemy_targeting()
+	start_targeting()
+
+onready var cancel_button = $GUILayer/GUI/CommandPanel/ButtonsContainer/Cancel
 
 func _on_Cancel_button_up():
 	if targeting_mode:
@@ -360,9 +365,30 @@ func _on_Cancel_button_up():
 			targeting_mode = false
 			attack_button.disabled = false
 			remove_infotext(InfoTextType.PROMPT)
-			return
 	else:
 		if active_input_index > 0: prev_command_input()
+	update_cancel_button()
+
+func update_cancel_button():
+	if targeting_mode:
+		show_cancel_button("Cancel")
+	elif active_input_index > 0:
+		show_cancel_button("Back")
+	else:
+		hide_cancel_button()
+
+func show_cancel_button(text = null):
+	if text != null:
+		cancel_button.set_text(text)
+	cancel_button.set_default_cursor_shape(Control.CURSOR_POINTING_HAND)
+	button_tween.remove_all()
+	button_tween.interpolate_property(cancel_button, "self_modulate:a", cancel_button.self_modulate.a, 1, 0.2)
+	button_tween.start()
+func hide_cancel_button():
+	cancel_button.set_default_cursor_shape(Control.CURSOR_ARROW)
+	button_tween.remove_all()
+	button_tween.interpolate_property(cancel_button, "self_modulate:a", cancel_button.self_modulate.a, 0, 0.2)
+	button_tween.start()
 
 func calculate_enemy_actions():
 	var randomizer = RandomNumberGenerator.new()
@@ -376,8 +402,9 @@ func calculate_enemy_actions():
 
 var targeting_mode: bool = false
 
-func start_enemy_targeting():
+func start_targeting():
 	targeting_mode = true
+	update_cancel_button()
 	add_infotext(InfoTextType.PROMPT, "Choose a target.")
 
 var hovered_objects = {}

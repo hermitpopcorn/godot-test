@@ -14,5 +14,5 @@ func _init():
 	
 	weapon = preload("res://data/weapons/comically_large_spoons/plastic_spoon.tres")
 	
-	battler_textures = preload("res://data/party_units/the_bonk/the_bonk-BattlerTextureRect.tscn").instance()
+	battler_textures = preload("res://data/party_units/the_bonk/the_bonk-battler_textures.tscn").instance()
 

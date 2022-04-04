@@ -647,6 +647,7 @@ margin_left = 730.0
 margin_right = 1190.0
 margin_bottom = 150.0
 rect_min_size = Vector2( 460, 0 )
+mouse_filter = 1
 size_flags_vertical = 3
 script = ExtResource( 6 )
 
