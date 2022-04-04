@@ -77,6 +77,8 @@ func start_turn():
 func process_turn():
 	calculate_enemy_actions()
 	
+	reorder_turns()
+	
 	while (turn_order.size() > 0):
 		var acting_battler = turn_order.pop_front()
 		
@@ -125,7 +127,7 @@ func execute_action(battler, action_dict: Dictionary):
 	var target = action_dict.target if action_dict.has('target') else null
 	
 	# TODO: randomize target if target is dead
-	if target.is_dead():
+	if target != null and target.is_dead():
 		if (battler is PartyUnit):
 			target = randomize_enemy_target()
 		elif (battler is EnemyUnit):
@@ -137,6 +139,10 @@ func execute_action(battler, action_dict: Dictionary):
 		Actions.ATTACK:
 			yield(
 				execute_attack(battler, target),
+			"completed")
+		Actions.DEFEND:
+			yield(
+				execute_defend(battler),
 			"completed")
 				
 func randomize_enemy_target(): return randomize_target(enemy_battlers)
@@ -171,10 +177,7 @@ func dehighlight_active_party_member(attacking_battler):
 	p.visible = false
 
 func execute_attack(attacking_battler, attacked_battler):
-	if (attacking_battler is PartyUnit):
-		highlight_active_party_member(attacking_battler)
-	elif (attacking_battler is EnemyUnit):
-		self.enemy_battlers_link[attacking_battler].flash_action()
+	highlight_action(attacking_battler)
 	add_infotext(InfoTextType.NARRATION, attacking_battler.name + " attacks " + attacked_battler.name + "!")
 	yield(get_tree().create_timer(0.4), "timeout")
 	
@@ -188,8 +191,33 @@ func execute_attack(attacking_battler, attacked_battler):
 		yield(
 			play_animation(animation, attacked_battler, result),
 		"completed")
-	if (attacking_battler is PartyUnit):
-		dehighlight_active_party_member(attacking_battler)
+	
+	# penalty
+	add_speed_penalty(attacking_battler, battle_calculations.ATTACK_SPEED_PENALTY)
+	
+	dehighlight_action(attacking_battler)
+
+func execute_defend(defending_battler):
+	highlight_action(defending_battler)
+	add_infotext(InfoTextType.NARRATION, defending_battler.name + " raises their guard!")
+	yield(get_tree().create_timer(1), "timeout")
+	
+	defending_battler.defending = true
+	dehighlight_action(defending_battler)
+
+func highlight_action(battler):
+	if (battler is PartyUnit):
+		highlight_active_party_member(battler)
+	elif (battler is EnemyUnit):
+		self.enemy_battlers_link[battler].flash_action()
+
+func dehighlight_action(battler):
+	if (battler is PartyUnit):
+		dehighlight_active_party_member(battler)
+
+func add_speed_penalty(battler, speed_penalty):
+	if not speed_penalties.has(battler): speed_penalties[battler] = 0
+	speed_penalties[battler] += speed_penalty
 
 onready var animation_layer = $AnimationLayer
 
@@ -219,8 +247,14 @@ func play_animation(animation: Dictionary, battler: Unit, result):
 	yield(get_tree().create_timer(0.5), "timeout")
 	animation_node.queue_free()
 
+func clear_defenses():
+	for i in party_battlers: i.defending = false
+	for i in enemy_battlers: i.defending = false
+
 func end_turn():
 	# do end turn things
+	clear_defenses()
+	
 	turn += 1
 	start_turn()
 
@@ -253,6 +287,25 @@ func sort_turn_order(a, b):
 		return true
 	else:
 		return false
+
+func reorder_turns():
+	var move_up = []
+	for battler in turn_order:
+		var action_dict
+		if (battler is PartyUnit):
+			action_dict = party_actions[battler]
+		else:
+			action_dict = enemy_actions[battler]
+		
+		if action_dict.action == Actions.DEFEND:
+			print("YES DEFEND")
+			move_up.append(battler)
+	
+	move_up.invert()
+	for to_be_moved in move_up:
+		var index = turn_order.find(to_be_moved)
+		var battler = turn_order.pop_at(index)
+		turn_order.push_front(battler)
 
 onready var turn_order_container = $GUILayer/GUI/TurnOrderDisplay/TurnOrderContainer
 var turn_order_link = {}
@@ -289,16 +342,20 @@ var active_input_index
 
 func start_command_input():
 	self.party_actions.clear()
+	for i in party_battlers: unset_party_member_action(i) # clear action indicators
+	
 	self.command_panel_tween.remove_all()
 	self.command_panel.visible = true
 	self.command_panel_tween.interpolate_property(self.command_panel, "rect_position:x", self.command_panel.rect_size.x * -1, 0, 0.5, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT)
 	self.command_panel_tween.start()
+	
 	active_input_index = -1
 	next_command_input()
 
 onready var command_buttons_container = $GUILayer/GUI/CommandPanel/ButtonsContainer
 
 func next_command_input():
+	selected_action = null
 	remove_infotext(InfoTextType.PROMPT)
 	for i in command_buttons_container.get_children(): i.disabled = false
 	active_input_index += 1
@@ -353,10 +410,19 @@ onready var attack_button = $GUILayer/GUI/CommandPanel/ButtonsContainer/Attack
 
 func _on_Attack_button_up():
 	if active_input_index < 0: return
-	if targeting_mode: return
+	if selected_action == Actions.ATTACK: return
 	attack_button.disabled = true
 	selected_action = Actions.ATTACK
 	start_targeting()
+
+onready var defend_button = $GUILayer/GUI/CommandPanel/ButtonsContainer/Defend
+
+func _on_Defend_button_up():
+	if active_input_index < 0: return
+	set_party_member_action(self.party_battlers[self.active_input_index], {
+		'action': Actions.DEFEND,
+	})
+	next_command_input()
 
 onready var cancel_button = $GUILayer/GUI/CommandPanel/ButtonsContainer/Cancel
 
@@ -443,7 +509,6 @@ func _on_party_click(node: Node):
 		end_targeting(node.unit)
 
 func end_targeting(target_battler):
-	remove_infotext(InfoTextType.PROMPT)
 	self.targeting_mode = false
 	set_party_member_action(self.party_battlers[self.active_input_index], {
 		'action': self.selected_action,
@@ -547,4 +612,3 @@ func _input(event):
 		print(party_battlers[1].weapon.item_type)
 		print(party_battlers[2].weapon.item_type)
 		print(party_battlers[3].weapon.item_type)
-

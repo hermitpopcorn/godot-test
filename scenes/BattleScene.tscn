@@ -271,4 +271,5 @@ __meta__ = {
 one_shot = true
 
 [connection signal="button_up" from="GUILayer/GUI/CommandPanel/ButtonsContainer/Attack" to="." method="_on_Attack_button_up"]
+[connection signal="button_up" from="GUILayer/GUI/CommandPanel/ButtonsContainer/Defend" to="." method="_on_Defend_button_up"]
 [connection signal="button_up" from="GUILayer/GUI/CommandPanel/ButtonsContainer/Cancel" to="." method="_on_Cancel_button_up"]

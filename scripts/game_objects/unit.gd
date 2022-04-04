@@ -52,7 +52,7 @@ var spd = 20 setget set_spd, get_spd
 func set_spd(new_value): spd = new_value
 func get_spd(): return spd
 
-# buffs
+# buffs and states
 
 var buffs = {}
 var states = {}
@@ -65,6 +65,8 @@ func add_state(state, data = true):
 
 func remove_state(state):
 	states.erase(state)
+
+var defending = false
 
 # visuals
 
