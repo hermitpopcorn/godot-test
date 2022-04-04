@@ -269,7 +269,8 @@ func display_turn_order():
 		if battler is EnemyUnit:
 			icon = self.enemy_battlers_link[battler].get_node("Icon").duplicate()
 		elif battler is PartyUnit:
-			icon = battler.battler_textures.get_node("Icon").duplicate()
+			icon = self.party_battlers_link[battler].get_node("Icon").duplicate()
+			self.party_battlers_link[battler].connect_icon(icon)
 		icon.set_h_size_flags(Control.SIZE_SHRINK_CENTER)
 		icon.set_v_size_flags(Control.SIZE_SHRINK_CENTER)
 		turn_order_container.add_child(icon)

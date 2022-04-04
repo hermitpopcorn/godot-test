@@ -20,7 +20,7 @@ signal mouse_blur
 signal death
 
 func _ready():
-	unit = load(enemy_resource_script).new()
+	unit = load(enemy_resource_script).new(self.name)
 
 onready var common_animation_player = $Sprite/CommonAnimationPlayer
 

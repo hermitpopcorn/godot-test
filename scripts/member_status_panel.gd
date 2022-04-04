@@ -18,11 +18,18 @@ onready var animation_player: AnimationPlayer = $AnimationPlayer
 
 func attach(u: PartyUnit):
 	unit = u
+	
+	# rewrite name
 	$Panel/VBoxContainer/MarginContainer/Name.set_text(unit.name)
-	if (unit.battler_textures):
-		self.panel_background_battler = unit.battler_textures.get_node("PanelBackground").duplicate()
-		if (self.panel_background_battler):
-			$Panel/PanelBackground.add_child(self.panel_background_battler)
+	
+	# set battler textures
+	self.panel_background_battler = unit.battler_textures.get_node("PanelBackground").duplicate()
+	if (self.panel_background_battler):
+		$Panel/PanelBackground.add_child(self.panel_background_battler)
+	# get icon, set invisible (to be copied by the battle scene script)
+	var icon: Control = unit.battler_textures.get_node("Icon").duplicate()
+	icon.visible = false
+	self.add_child(icon)
 	
 	self.hp_number.set_text(String(unit.hp))
 	self.ap_number.set_text(String(unit.ap))
@@ -30,6 +37,10 @@ func attach(u: PartyUnit):
 	self.hp_bar.value = hp_percentage
 	var ap_percentage = int(floor((float(unit.ap) / float(unit.maxap)) * 100))
 	self.ap_bar.value = ap_percentage
+
+func connect_icon(icon: Control):
+	icon.connect("mouse_entered", self, "_on_self_mouse_entered", ["icon"])
+	icon.connect("mouse_exited", self, "_on_self_mouse_exited", ["icon"])
 
 # active status
 
@@ -237,12 +248,12 @@ func _process(delta):
 	if Input.is_action_just_pressed("mouse_left") and hovered:
 		emit_signal("mouse_click", self)
 
-func _on_self_mouse_entered():
+func _on_self_mouse_entered(_area = null):
 	hovered = true
 	if not active: self.panel_background.self_modulate.a = 1
 	emit_signal("mouse_hover", self)
 
-func _on_self_mouse_exited():
+func _on_self_mouse_exited(_area = null):
 	hovered = false
 	if not active: self.panel_background.self_modulate.a = 125.0/255.0
 	emit_signal("mouse_blur", self)
