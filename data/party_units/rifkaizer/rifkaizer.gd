@@ -3,8 +3,8 @@ extends PartyUnit
 func _init():
 	name = "rif/KAIZER"
 	level = 1
-	maxhp_curve = { 1: 120 }
-	maxap_curve = { 1: 180 }
+	maxhp_curve = { 1: 75 }
+	maxap_curve = { 1: 110 }
 	atk_curve = { 1: 13 }
 	def_curve = { 1: 6 }
 	hit_curve = { 1: 9 }
