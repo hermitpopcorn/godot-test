@@ -257,3 +257,15 @@ func _on_self_mouse_exited(_area = null):
 	hovered = false
 	if not active: self.panel_background.self_modulate.a = 125.0/255.0
 	emit_signal("mouse_blur", self)
+
+onready var action_indicator = $Panel/ActionIndicatorContainer
+onready var action_indicator_label = $Panel/ActionIndicatorContainer/ActionIndicatorLabel
+
+func unset_action(): set_action(null)
+
+func set_action(text = null):
+	if text == null:
+		action_indicator.set_visible(false)
+	else:
+		action_indicator_label.set_text(text)
+		action_indicator.set_visible(true)

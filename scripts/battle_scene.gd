@@ -1,6 +1,6 @@
 extends Node
 
-enum Actions { ATTACK, DEFEND, RUN }
+enum Actions { ATTACK, SKILL, DEFEND, CHANGE_EQUIPMENT, USE_ITEM, RUN }
 enum InfoTextType { PROMPT, PARTY_INFO, ENEMY_INFO, NARRATION }
 
 var battle_calculations = preload("res://scripts/battle_calculations.gd").new()
@@ -310,7 +310,7 @@ func next_command_input():
 
 func prev_command_input():
 	if active_input_index <= 0: return
-	party_actions.erase(party_battlers[active_input_index - 1])
+	unset_party_member_action(party_battlers[active_input_index - 1])
 	active_input_index -= 1
 	show_active_input_member(active_input_index)
 
@@ -445,11 +445,29 @@ func _on_party_click(node: Node):
 func end_targeting(target_battler):
 	remove_infotext(InfoTextType.PROMPT)
 	self.targeting_mode = false
-	self.party_actions[self.party_battlers[self.active_input_index]] = {
+	set_party_member_action(self.party_battlers[self.active_input_index], {
 		'action': self.selected_action,
 		'target': target_battler,
-	}
+	})
 	next_command_input()
+
+func action_string(action):
+	match action:
+		Actions.ATTACK: return "Attack"
+		Actions.SKILL: return "Skill"
+		Actions.DEFEND: return "Defend"
+		Actions.CHANGE_EQUIPMENT: return "Equip"
+		Actions.USE_ITEM: return "Item"
+		Actions.RUN: return "Run"
+	return "???"
+
+func unset_party_member_action(battler):
+	party_actions.erase(battler)
+	party_battlers_link[battler].unset_action()
+
+func set_party_member_action(battler: PartyUnit, the_action: Dictionary):
+	party_actions[battler] = the_action
+	party_battlers_link[battler].set_action(action_string(the_action.action))
 
 var active_info_texts = {}
 onready var infopanel_text = $GUILayer/GUI/InfoPanel/InfoPanelText
