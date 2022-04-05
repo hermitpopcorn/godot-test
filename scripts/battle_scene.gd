@@ -5,14 +5,13 @@ enum InfoTextType { PROMPT, PARTY_INFO, ENEMY_INFO, NARRATION }
 
 var battle_calculations = preload("res://scripts/battle_calculations.gd").new()
 
-signal action_sequence_finished
-
 onready var gui: Node = $GUILayer/GUI
 
 func _ready():
 	_debug_ready()
 	start_battle()
 
+var stop = true
 var turn = 0
 var turn_order = []
 var party_battlers = []
@@ -38,6 +37,7 @@ func prepare_ui():
 		new_member_status_panel.connect("mouse_hover", self, "_on_party_hover")
 		new_member_status_panel.connect("mouse_blur", self, "_on_party_blur")
 		new_member_status_panel.connect("mouse_click", self, "_on_party_click")
+		unit.connect("death", self, "_on_party_death", [unit])
 	
 	# add portraits
 	for i in party_battlers:
@@ -63,12 +63,16 @@ func prepare_enemy_battlers(enemy_cluster: Node):
 		i.connect("mouse_hover", self, "_on_enemy_hover")
 		i.connect("mouse_blur", self, "_on_enemy_blur")
 		i.connect("mouse_click", self, "_on_enemy_click")
-		i.connect("death", self, "_on_enemy_death")
+		i.unit.connect("death", self, "_on_enemy_death", [i.unit])
 
 func start_battle():
 	# TODO: process pre battle things
 	turn = 1
+	stop = false
 	start_turn()
+
+func stop_battle():
+	stop = true
 
 func start_turn():
 	calculate_turn_order()
@@ -79,11 +83,12 @@ func process_turn():
 	
 	reorder_turns()
 	
-	while (turn_order.size() > 0):
+	while (turn_order.size() > 0) and !stop:
 		var acting_battler = turn_order.pop_front()
 		
 		# skip if dead
-		if acting_battler.is_dead():
+		if !acting_battler.can_move():
+			erase_turn_icon(acting_battler)
 			continue;
 		
 		# get action
@@ -101,26 +106,42 @@ func process_turn():
 		# wait
 		yield(get_tree().create_timer(0.2), "timeout")
 		
-		# TODO: check if party/enemy battlers are all dead
-		if check_battle_end(): return victory()
-		
 		# cleanup
 		erase_turn_icon(acting_battler)
 		remove_infotext(InfoTextType.NARRATION)
+		
+		# TODO: victory and defeat
+		check_battle_end()
 	
 	yield(get_tree().create_timer(0.5), "timeout")
 	end_turn()
 
-func check_battle_end() -> bool:
-	return check_enemy_all_dead()
+func check_battle_end():
+	if check_enemy_all_dead():
+		victory()
+	elif check_party_all_dead():
+		defeat()
 
 func check_enemy_all_dead():
 	for i in enemy_battlers:
 		if !i.is_dead(): return false
 	return true
 
+func check_party_all_dead():
+	for i in party_battlers:
+		if !i.is_dead(): return false
+	return true
+
 func victory():
+	stop_battle()
+	clear_defenses()
 	add_infotext(InfoTextType.NARRATION, "Glory to mankind.")
+
+func defeat():
+	stop_battle()
+	add_infotext(InfoTextType.NARRATION, "The party is wiped out...")
+	yield(get_tree().create_timer(0.5), "timeout")
+	# game_over()
 
 func execute_action(battler, action_dict: Dictionary):
 	var action = action_dict.action
@@ -153,6 +174,7 @@ func randomize_target(battlers):
 	var living_targets = []
 	for i in battlers:
 		if not i.is_dead(): living_targets.append(i)
+	if living_targets.empty(): return null
 	randomizer.randomize()
 	var random_index = randomizer.randi_range(0, living_targets.size() - 1)
 	return living_targets[random_index]
@@ -238,12 +260,6 @@ func play_animation(animation: Dictionary, battler: Unit, result):
 	yield(get_tree().create_timer(hit_frame), "timeout")
 	add_infotext(InfoTextType.NARRATION, "Dealt " + String(abs(int(result.hp))) + " damage!")
 	battler.hp += result.hp
-	if (battler is PartyUnit):
-		self.party_battlers_link[battler].damage(result.hp)
-		self.party_battlers_link[battler].update_hp_display()
-	elif (battler is EnemyUnit):
-		self.enemy_battlers_link[battler].flash_damage(result.hp)
-		self.enemy_battlers_link[battler].update_hp_bar()
 	yield(get_tree().create_timer(0.5), "timeout")
 	animation_node.queue_free()
 
@@ -255,8 +271,9 @@ func end_turn():
 	# do end turn things
 	clear_defenses()
 	
-	turn += 1
-	start_turn()
+	if !stop:
+		turn += 1
+		start_turn()
 
 func calculate_turn_order():
 	self.turn_order = []
@@ -264,7 +281,12 @@ func calculate_turn_order():
 	var speeds = []
 	var all_battlers = []
 	all_battlers.append_array(party_battlers)
-	all_battlers.append_array(enemy_battlers)
+	for unit in enemy_battlers:
+		if unit.multi_action_type == BattleDatabase.MultiActionType.SPREAD:
+			for times in unit.actions_per_turn:
+				all_battlers.append(unit)
+		else:
+			all_battlers.append(unit)
 	for battler in all_battlers:
 		if battler.is_dead(): continue
 		
@@ -279,6 +301,11 @@ func calculate_turn_order():
 		speeds.append({ 'battler': battler, 'speed': speed })
 	speeds.sort_custom(self, "sort_turn_order")
 	for i in speeds:
+		if i.battler.actions_per_turn > 1:
+			if i.battler.multi_action_type == BattleDatabase.MultiActionType.CONSECUTIVE:
+				for ii in i.battler.actions_per_turn:
+					self.turn_order.append(i.battler)
+				continue
 		self.turn_order.append(i.battler)
 	display_turn_order()
 
@@ -298,7 +325,6 @@ func reorder_turns():
 			action_dict = enemy_actions[battler]
 		
 		if action_dict.action == Actions.DEFEND:
-			print("YES DEFEND")
 			move_up.append(battler)
 	
 	move_up.invert()
@@ -359,7 +385,9 @@ func next_command_input():
 	remove_infotext(InfoTextType.PROMPT)
 	for i in command_buttons_container.get_children(): i.disabled = false
 	active_input_index += 1
+	
 	if (active_input_index < self.party_battlers.size()):
+		if !self.party_battlers[active_input_index].can_move(): return next_command_input()
 		show_active_input_member(active_input_index)
 	else:
 		end_command_input()
@@ -367,9 +395,31 @@ func next_command_input():
 
 func prev_command_input():
 	if active_input_index <= 0: return
+	if !get_backable_command_index(): return
 	unset_party_member_action(party_battlers[active_input_index - 1])
 	active_input_index -= 1
+	if (self.party_battlers[active_input_index].is_dead()): return prev_command_input()
 	show_active_input_member(active_input_index)
+
+func get_nextable_command_index():
+	var nextable = false
+	var index_change = 1
+	while !nextable:
+		if self.party_battlers[active_input_index - index_change].can_move():
+			return active_input_index + index_change
+		else:
+			index_change += 1
+		if active_input_index > (self.party_battlers.size() - 1): return false
+
+func get_backable_command_index():
+	var backable = false
+	var index_change = 1
+	while !backable:
+		if self.party_battlers[active_input_index - index_change].can_move():
+			return active_input_index - index_change
+		else:
+			index_change += 1
+		if (active_input_index - index_change) < 0: return false
 
 func end_command_input():
 	active_input_index = -1
@@ -418,6 +468,7 @@ func _on_Attack_button_up():
 onready var defend_button = $GUILayer/GUI/CommandPanel/ButtonsContainer/Defend
 
 func _on_Defend_button_up():
+	cancel_selected_action()
 	if active_input_index < 0: return
 	set_party_member_action(self.party_battlers[self.active_input_index], {
 		'action': Actions.DEFEND,
@@ -428,19 +479,25 @@ onready var cancel_button = $GUILayer/GUI/CommandPanel/ButtonsContainer/Cancel
 
 func _on_Cancel_button_up():
 	if targeting_mode:
-		if selected_action == Actions.ATTACK:
-			targeting_mode = false
-			attack_button.disabled = false
-			remove_infotext(InfoTextType.PROMPT)
+		cancel_selected_action()
 	else:
 		if active_input_index > 0: prev_command_input()
 	update_cancel_button()
+
+func cancel_selected_action():
+	if selected_action == Actions.ATTACK:
+		targeting_mode = false
+		attack_button.disabled = false
+		remove_infotext(InfoTextType.PROMPT)
 
 func update_cancel_button():
 	if targeting_mode:
 		show_cancel_button("Cancel")
 	elif active_input_index > 0:
-		show_cancel_button("Back")
+		if get_backable_command_index():
+			show_cancel_button("Back")
+		else:
+			hide_cancel_button()
 	else:
 		hide_cancel_button()
 
@@ -555,13 +612,16 @@ func refresh_infotext():
 	# sort by priority and display most important
 	infopanel_text.bbcode_text = active_info_texts[active_info_texts.keys().max()]
 
-func _on_enemy_death(node: Node):
+func _on_enemy_death(unit: EnemyUnit):
+	var node: Node = enemy_battlers_link[unit]
 	turn_order.erase(node.unit)
 	erase_turn_icon(node.unit, true)
-	node.unit.add_state(BattleDatabase.BattleStates.KNOCKOUT)
 	var death_animation_time = node.animate_death()
 	yield(get_tree().create_timer(death_animation_time), "timeout")
 	node.visible = false
+
+func _on_party_death(unit: PartyUnit):
+	pass
 
 # visual effect
 # shake

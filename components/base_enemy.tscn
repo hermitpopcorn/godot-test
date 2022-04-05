@@ -17,10 +17,10 @@ signal mouse_click
 signal mouse_hover
 signal mouse_blur
 
-signal death
-
 func _ready():
 	unit = load(enemy_resource_script).new(self.name)
+	unit.connect(\"hp_changed\", self, \"flash_damage_by_signal\")
+	unit.connect(\"hp_changed\", self, \"update_hp_bar_by_signal\")
 
 onready var common_animation_player = $Sprite/CommonAnimationPlayer
 
@@ -30,6 +30,7 @@ onready var flying_text_container = $FlyingTexts
 onready var flying_text_basis = $FlyingTexts/Sample
 onready var flying_text_tween = $FlyingTextTween
 
+func flash_damage_by_signal(change_data: Dictionary): return flash_damage(change_data.change)
 func flash_damage(number = null):
 	common_animation_player.play(\"Flash Red\")
 	if (number != null):
@@ -52,7 +53,7 @@ func flash_damage(number = null):
 		flying_text_tween.start()
 		
 		if (number < 0):
-			shake(1, min(max((abs(number) / unit.maxhp) * 75, 20), 150))
+			shake(1, min(max((abs(float(number)) / abs(float(unit.maxhp))) * 75, 20), 150))
 
 onready var shake_tween = $ShakeTween
 onready var sprite = $Sprite
@@ -67,8 +68,9 @@ func shake(shake_length, shake_power):
 
 onready var hp_bar = $HPBar
 
-func update_hp_bar():
-	var percentage = int(round((float(unit.hp) / float(unit.maxhp)) * 100))
+func update_hp_bar_by_signal(change_data: Dictionary): return update_hp_bar(change_data.new_hp)
+func update_hp_bar(new_value = null):
+	var percentage = int(round((float(new_value if new_value != null else unit.hp) / float(unit.maxhp)) * 100))
 	hp_bar.value = percentage
 
 func _on_FlyingTextTween_tween_completed(object, key):
@@ -83,15 +85,9 @@ func _on_blur(area):
 	hovered_area.erase(area)
 	emit_signal(\"mouse_blur\", self, area)
 
-var dead = false
-
 func _process(delta):
-	# death check
-	if !dead and unit.hp <= 0:
-		dead = true
-		emit_signal(\"death\", self)
 	# click check
-	if Input.is_action_just_pressed(\"mouse_left\") and hovered_area.size() > 0 and !dead:
+	if Input.is_action_just_pressed(\"mouse_left\") and hovered_area.size() > 0 and !unit.is_dead():
 		emit_signal(\"mouse_click\", self, hovered_area)
 
 func animate_death():
@@ -234,6 +230,7 @@ func _on_blur(area):
 
 func update_cursor():
 	if hovered_area.size() > 0:
+		if hovered_area.size() == 1 and hovered_area.has('icon'): return # don't apply to Control nodes
 		Input.set_default_cursor_shape(Input.CURSOR_POINTING_HAND)
 	else:
 		Input.set_default_cursor_shape(Input.CURSOR_ARROW)

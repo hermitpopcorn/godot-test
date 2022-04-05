@@ -9,3 +9,5 @@ func _init(assign_name = null):
 	hit = 8
 	eva = 3
 	full_heal()
+	actions_per_turn = 2
+	multi_action_type = BattleDatabase.MultiActionType.CONSECUTIVE

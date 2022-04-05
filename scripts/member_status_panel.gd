@@ -37,10 +37,21 @@ func attach(u: PartyUnit):
 	self.hp_bar.value = hp_percentage
 	var ap_percentage = int(floor((float(unit.ap) / float(unit.maxap)) * 100))
 	self.ap_bar.value = ap_percentage
+	
+	connect_hpap_changes()
+	connect_state_changes()
 
 func connect_icon(icon: Control):
 	icon.connect("mouse_entered", self, "_on_self_mouse_entered", ["icon"])
 	icon.connect("mouse_exited", self, "_on_self_mouse_exited", ["icon"])
+
+func connect_hpap_changes():
+	unit.connect("hp_changed", self, "update_hp_display_by_signal")
+	unit.connect("hp_changed", self, "damage_by_signal")
+	unit.connect("ap_changed", self, "update_ap_display_by_signal")
+
+func connect_state_changes():
+	unit.connect("state_changed", self, "update_state_by_signal")
 
 # active status
 
@@ -65,11 +76,12 @@ func set_active(new_status: bool):
 
 # damage or heal
 
+func damage_by_signal(change_data): return damage(change_data.change)
 func damage(amount):
 	if (amount > 0):
 		self.heal_flash()
 	else:
-		var shake_strength = min(max((abs(amount) / unit.maxhp) * 75, 20), 150)
+		var shake_strength = min(max((abs(float(amount)) / abs(float(unit.maxhp))) * 75, 20), 150)
 		self.shake(1, shake_strength, 1)
 		self.damage_flash()
 	self.create_flying_number(amount)
@@ -94,9 +106,16 @@ func _on_ShakeTween_tween_completed(object, key):
 
 # update hp/ap display
 
+func update_hp_display_by_signal(change_data: Dictionary):
+	update_hp_number(change_data.new_hp)
+	update_hp_bar(change_data.new_hp)
 func update_hp_display():
 	update_hp_number()
 	update_hp_bar()
+
+func update_ap_display_by_signal(change_data: Dictionary):
+	update_ap_number(change_data.new_ap)
+	update_ap_bar(change_data.new_ap)
 func update_ap_display():
 	update_ap_number()
 	update_ap_bar()
@@ -106,10 +125,10 @@ func update_ap_display():
 onready var hp_number = $Panel/VBoxContainer/HBoxContainer/HPContainer/CenterContainer/HPNumber
 onready var ap_number = $Panel/VBoxContainer/HBoxContainer/APContainer/CenterContainer/APNumber
 
-func update_hp_number():
-	if unit != null: self.hp_number.set_text(String(unit.hp))
-func update_ap_number():
-	if unit != null: self.ap_number.set_text(String(unit.ap))
+func update_hp_number(new_value = null):
+	if unit != null: self.hp_number.set_text(String(new_value) if new_value != null else String(unit.hp))
+func update_ap_number(new_value = null):
+	if unit != null: self.ap_number.set_text(String(new_value) if new_value != null else String(unit.ap))
 
 # update hp/ap bar
 
@@ -121,10 +140,10 @@ onready var ap_bar = $Panel/VBoxContainer/HBoxContainer/APContainer/APBar
 onready var ap_bar_change = $Panel/VBoxContainer/HBoxContainer/APContainer/APBar/Change
 onready var ap_bar_tween = $Tweens/HPBarTween
 
-func update_hp_bar(): self.update_bar('hp')
-func update_ap_bar(): self.update_bar('ap')
+func update_hp_bar(new_value = null): self.update_bar('hp', new_value)
+func update_ap_bar(new_value = null): self.update_bar('ap', new_value)
 
-func update_bar(type: String):
+func update_bar(type: String, new_value = null):
 	if (unit == null): return
 	
 	var new_percentage: int
@@ -134,12 +153,12 @@ func update_bar(type: String):
 	var decrease: bool
 	match type:
 		'hp':
-			new_percentage = int(floor((float(unit.hp) / float(unit.maxhp)) * 100))
+			new_percentage = int(floor((float(new_value if new_value != null else unit.hp) / float(unit.maxhp)) * 100))
 			bar = self.hp_bar
 			bar_change = self.hp_bar_change
 			tween = self.hp_bar_tween
 		'ap':
-			new_percentage = int(floor((float(unit.ap) / float(unit.maxap)) * 100))
+			new_percentage = int(floor((float(new_value if new_value != null else unit.ap) / float(unit.maxap)) * 100))
 			bar = self.ap_bar
 			bar_change = self.hp_bar_change
 			tween = self.ap_bar_tween
@@ -269,3 +288,8 @@ func set_action(text = null):
 	else:
 		action_indicator_label.set_text(text)
 		action_indicator.set_visible(true)
+
+onready var dead_overlay = full_overlay_container.get_node("DeadOverlayRect")
+
+func update_state_by_signal(change_data: Dictionary):
+	dead_overlay.visible = unit.is_dead()

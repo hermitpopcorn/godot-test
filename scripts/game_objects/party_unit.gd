@@ -11,18 +11,17 @@ var ap = 1 setget set_ap, get_ap
 func set_maxap(new_value): maxap = new_value
 func set_ap(new_value):
 	if (ap > new_value):
-		emit_signal("ap_changed")
 		emit_signal("ap_decreased")
 	elif (ap < new_value):
-		emit_signal("ap_changed")
 		emit_signal("ap_increased")
-	ap = new_value
+	var change = new_value - ap
+	ap = int(max(0, new_value))
+	emit_signal("ap_changed", { "new_ap": ap, "change": change })
 func get_ap(): return ap
 
 func full_heal():
 	.full_heal()
 	self.ap = self.maxap
-	emit_signal("ap_changed")
 
 var level = 1
 var lck = 5

@@ -29,21 +29,26 @@ func get_eva(): return eva
 # hp, ap setter/getter
 
 signal hp_changed; signal hp_increased; signal hp_decreased
+signal death
+signal state_changed
 
 func set_hp(new_value):
 	if (hp > new_value):
-		emit_signal("hp_changed")
 		emit_signal("hp_decreased")
 	elif (hp < new_value):
-		emit_signal("hp_changed")
 		emit_signal("hp_increased")
-	hp = new_value
+	var change = new_value - hp
+	hp = int(max(0, new_value))
+	emit_signal("hp_changed", { "new_hp": hp, "change": change })
+	if hp < 1:
+		clear_states()
+		add_state(BattleDatabase.BattleStates.KNOCKOUT)
+		emit_signal("death")
 
 func get_hp(): return hp
 
 func full_heal():
 	self.hp = self.maxhp
-	emit_signal("hp_changed")
 
 # speed
 
@@ -52,6 +57,9 @@ var spd = 20 setget set_spd, get_spd
 func set_spd(new_value): spd = new_value
 func get_spd(): return spd
 
+var actions_per_turn = 1
+var multi_action_type = BattleDatabase.MultiActionType.CONSECUTIVE
+
 # buffs and states
 
 var buffs = {}
@@ -59,12 +67,20 @@ var states = {}
 
 func is_dead(): return states.has(BattleDatabase.BattleStates.KNOCKOUT)
 func is_knocked_out(): return states.has(BattleDatabase.BattleStates.KNOCKOUT)
+func can_move(): return !states.has(BattleDatabase.BattleStates.KNOCKOUT)
 
 func add_state(state, data = true):
 	states[state] = data
+	emit_signal("state_changed", { "added": [state] })
 
 func remove_state(state):
 	states.erase(state)
+	emit_signal("state_changed", { "removed": [state] })
+
+func clear_states():
+	var current_states = states.duplicate()
+	states.clear()
+	emit_signal("state_changed", { "removed": current_states })
 
 var defending = false
 
