@@ -1,6 +1,5 @@
 extends Node
 
-enum Actions { ATTACK, SKILL, DEFEND, CHANGE_EQUIPMENT, USE_ITEM, RUN }
 enum InfoTextType { PROMPT, PARTY_INFO, ENEMY_INFO, NARRATION }
 
 var battle_calculations = preload("res://scripts/battle_calculations.gd").new()
@@ -81,7 +80,7 @@ func start_turn():
 	start_command_input()
 
 func process_turn():
-	calculate_enemy_actions()
+	decide_enemy_actions()
 	
 	reorder_turns()
 	
@@ -146,20 +145,21 @@ func execute_action(battler, action_dict: Dictionary):
 	var target = action_dict.target if action_dict.has('target') else null
 	
 	# TODO: randomize target if target is dead
-	if target != null and target.is_dead():
-		if (battler is PartyUnit):
-			target = randomize_enemy_target()
-		elif (battler is EnemyUnit):
-			target = randomize_party_target()
-		else:
-			return
+	if target != null:
+		if target is Unit and target.is_dead():
+			if (battler is PartyUnit):
+				target = randomize_enemy_target()
+			elif (battler is EnemyUnit):
+				target = randomize_party_target()
+			else:
+				return
 	
 	match action:
-		Actions.ATTACK:
+		BattleDatabase.Actions.ATTACK:
 			yield(
 				execute_attack(battler, target),
 			"completed")
-		Actions.DEFEND:
+		BattleDatabase.Actions.DEFEND:
 			yield(
 				execute_defend(battler),
 			"completed")
@@ -324,7 +324,7 @@ func reorder_turns():
 		var battler_actions = actions_link[battler]
 		var action_index = battler_actions[action_index_track[battler]]
 		var action_entry = actions[action_index]
-		if action_entry.action == Actions.DEFEND:
+		if action_entry.action == BattleDatabase.Actions.DEFEND:
 			move_up_battler.append(battler)
 			move_up_action.append({ "battler": battler, "action": action_index })
 	
@@ -474,9 +474,9 @@ onready var attack_button = $GUILayer/GUI/CommandPanel/ButtonsContainer/Attack
 
 func _on_Attack_button_up():
 	if active_input_index < 0: return
-	if selected_action == Actions.ATTACK: return
+	if selected_action == BattleDatabase.Actions.ATTACK: return
 	attack_button.disabled = true
-	selected_action = Actions.ATTACK
+	selected_action = BattleDatabase.Actions.ATTACK
 	start_targeting()
 
 onready var defend_button = $GUILayer/GUI/CommandPanel/ButtonsContainer/Defend
@@ -485,7 +485,7 @@ func _on_Defend_button_up():
 	cancel_selected_action()
 	if active_input_index < 0: return
 	set_party_member_action(self.party_battlers[self.active_input_index], {
-		'action': Actions.DEFEND,
+		'action': BattleDatabase.Actions.DEFEND,
 	})
 	next_command_input()
 
@@ -499,7 +499,7 @@ func _on_Cancel_button_up():
 	update_cancel_button()
 
 func cancel_selected_action():
-	if selected_action == Actions.ATTACK:
+	if selected_action == BattleDatabase.Actions.ATTACK:
 		targeting_mode = false
 		attack_button.disabled = false
 		remove_infotext(InfoTextType.PROMPT)
@@ -528,24 +528,11 @@ func hide_cancel_button():
 	button_tween.interpolate_property(cancel_button, "self_modulate:a", cancel_button.self_modulate.a, 0, 0.2)
 	button_tween.start()
 
-func calculate_enemy_actions():
+func decide_enemy_actions():
 	var randomizer = RandomNumberGenerator.new()
 	for unit in enemy_battlers:
 		actions_link[unit] = []
-		for act in unit.actions_per_turn:
-			randomizer.randomize()
-			var action
-			match round(randomizer.randf()):
-				0.0:
-					randomizer.randomize()
-					action = {
-						'action': Actions.ATTACK,
-						'target': party_battlers[round(randomizer.randi_range(0, 3))],
-					}
-				1.0:
-					action = {
-						'action': Actions.DEFEND,
-					}
+		for action in unit.decide_actions(party_battlers, enemy_battlers, party_actions):
 			actions.append(action)
 			var action_index = actions.size() - 1
 			actions_link[unit].append(action_index)
@@ -601,12 +588,12 @@ func end_targeting(target_battler):
 
 func action_string(action):
 	match action:
-		Actions.ATTACK: return "Attack"
-		Actions.SKILL: return "Skill"
-		Actions.DEFEND: return "Defend"
-		Actions.CHANGE_EQUIPMENT: return "Equip"
-		Actions.USE_ITEM: return "Item"
-		Actions.RUN: return "Run"
+		BattleDatabase.Actions.ATTACK: return "Attack"
+		BattleDatabase.Actions.SKILL: return "Skill"
+		BattleDatabase.Actions.DEFEND: return "Defend"
+		BattleDatabase.Actions.CHANGE_EQUIPMENT: return "Equip"
+		BattleDatabase.Actions.USE_ITEM: return "Item"
+		BattleDatabase.Actions.RUN: return "Run"
 	return "???"
 
 func unset_party_member_action(battler):

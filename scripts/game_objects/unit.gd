@@ -42,7 +42,7 @@ func set_hp(new_value):
 	emit_signal("hp_changed", { "new_hp": hp, "change": change })
 	if hp < 1:
 		clear_states()
-		add_state(BattleDatabase.BattleStates.KNOCKOUT)
+		add_state(BattleDatabase.UnitStates.KNOCKOUT)
 		emit_signal("death")
 
 func get_hp(): return hp
@@ -65,9 +65,9 @@ var multi_action_type = BattleDatabase.MultiActionType.CONSECUTIVE
 var buffs = {}
 var states = {}
 
-func is_dead(): return states.has(BattleDatabase.BattleStates.KNOCKOUT)
-func is_knocked_out(): return states.has(BattleDatabase.BattleStates.KNOCKOUT)
-func can_move(): return !states.has(BattleDatabase.BattleStates.KNOCKOUT)
+func is_dead(): return states.has(BattleDatabase.UnitStates.KNOCKOUT)
+func is_knocked_out(): return states.has(BattleDatabase.UnitStates.KNOCKOUT)
+func can_move(): return !states.has(BattleDatabase.UnitStates.KNOCKOUT)
 
 func add_state(state, data = true):
 	states[state] = data
