@@ -224,13 +224,15 @@ var hovered_area = []
 func _on_hover(area):
 	if not hovered_area.has(area):
 		hovered_area.append(area)
-		common_animation_player.play(\"Selected\")
+		if !common_animation_player.is_playing():
+			common_animation_player.play(\"Selected\")
 		update_cursor()
 
 func _on_blur(area):
 	hovered_area.erase(area)
 	if hovered_area.size() < 1:
-		common_animation_player.play(\"RESET\")
+		if common_animation_player.is_playing() and common_animation_player.get_current_animation() == \"Selected\":
+			common_animation_player.play(\"RESET\")
 		update_cursor()
 
 func update_cursor():
@@ -450,7 +452,7 @@ colors = PoolColorArray( 0.137255, 0.137255, 0.137255, 1, 0.298039, 0.298039, 0.
 gradient = SubResource( 18 )
 
 [sub_resource type="Gradient" id=20]
-colors = PoolColorArray( 0.513726, 0, 0, 1, 0.34902, 0, 0, 1 )
+colors = PoolColorArray( 0.937255, 0.101961, 0.101961, 1, 0.490196, 0.0352941, 0.0352941, 1 )
 
 [sub_resource type="GradientTexture" id=21]
 gradient = SubResource( 20 )
