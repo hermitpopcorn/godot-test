@@ -13,13 +13,14 @@ func _ready():
 
 var stop = true
 var turn = 0
-var turn_order = []
 var party_battlers = []
-var party_battlers_link = {}
-var party_actions = {}
+var party_battlers_link = {} # connects party battlers with the member status panel
 var enemy_battlers = []
-var enemy_battlers_link = {}
-var enemy_actions = {}
+var enemy_battlers_link = {} # connects enemy battlers with their respective nodes
+var party_actions = {} # temporary variable to store inputted party actions before merged to actions
+var actions = [] # all actions to be taken, both party's and enemies'
+var actions_link = {} # connectsbattlers with their chosen [actions]
+var turn_order = [] # array of battlers (units) showing who moves first
 var speed_penalties = {}
 
 onready var party_status_container = $GUILayer/GUI/PartyStatusContainer
@@ -40,8 +41,8 @@ func prepare_ui():
 		unit.connect("death", self, "_on_party_death", [unit])
 	
 	# add portraits
-	for i in party_battlers:
-		var portrait: TextureRect = i.battler_textures.get_node("PanelBackground").duplicate()
+	for unit in party_battlers:
+		var portrait: TextureRect = unit.battler_textures.get_node("PanelBackground").duplicate()
 		self.active_battler_portrait.add_child(portrait)
 		portrait.set_stretch_mode(TextureRect.STRETCH_KEEP_ASPECT_COVERED)
 		portrait.set_anchors_and_margins_preset(Control.PRESET_WIDE)
@@ -57,13 +58,13 @@ onready var enemies_container = $Enemies
 func prepare_enemy_battlers(enemy_cluster: Node):
 	self.enemy_battlers_link.clear()
 	self.enemies_container.add_child(enemy_cluster)
-	for i in enemy_cluster.get_children():
-		self.enemy_battlers.append(i.unit)
-		self.enemy_battlers_link[i.unit] = i
-		i.connect("mouse_hover", self, "_on_enemy_hover")
-		i.connect("mouse_blur", self, "_on_enemy_blur")
-		i.connect("mouse_click", self, "_on_enemy_click")
-		i.unit.connect("death", self, "_on_enemy_death", [i.unit])
+	for node in enemy_cluster.get_children():
+		self.enemy_battlers.append(node.unit)
+		self.enemy_battlers_link[node.unit] = node
+		node.connect("mouse_hover", self, "_on_enemy_hover")
+		node.connect("mouse_blur", self, "_on_enemy_blur")
+		node.connect("mouse_click", self, "_on_enemy_click")
+		node.unit.connect("death", self, "_on_enemy_death", [node.unit])
 
 func start_battle():
 	# TODO: process pre battle things
@@ -75,6 +76,7 @@ func stop_battle():
 	stop = true
 
 func start_turn():
+	actions.clear()
 	calculate_turn_order()
 	start_command_input()
 
@@ -92,11 +94,7 @@ func process_turn():
 			continue;
 		
 		# get action
-		var action
-		if (acting_battler is PartyUnit):
-			action = party_actions[acting_battler]
-		else:
-			action = enemy_actions[acting_battler]
+		var action = actions[actions_link[acting_battler].pop_front()]
 		
 		# do action
 		yield(
@@ -316,20 +314,28 @@ func sort_turn_order(a, b):
 		return false
 
 func reorder_turns():
-	var move_up = []
+	var move_up_battler = []
+	var move_up_action = []
+	var action_index_track = {}
 	for battler in turn_order:
-		var action_dict
-		if (battler is PartyUnit):
-			action_dict = party_actions[battler]
-		else:
-			action_dict = enemy_actions[battler]
+		if !action_index_track.has(battler): action_index_track[battler] = -1
+		action_index_track[battler] += 1
 		
-		if action_dict.action == Actions.DEFEND:
-			move_up.append(battler)
+		var battler_actions = actions_link[battler]
+		var action_index = battler_actions[action_index_track[battler]]
+		var action_entry = actions[action_index]
+		if action_entry.action == Actions.DEFEND:
+			move_up_battler.append(battler)
+			move_up_action.append({ "battler": battler, "action": action_index })
 	
-	move_up.invert()
-	for to_be_moved in move_up:
-		var index = turn_order.find(to_be_moved)
+	for to_be_moved in move_up_action:
+		var index = actions_link[to_be_moved.battler].find_last(to_be_moved.action)
+		var action = actions_link[to_be_moved.battler].pop_at(index)
+		actions_link[to_be_moved.battler].push_front(action)
+	
+	move_up_battler.invert()
+	for to_be_moved in move_up_battler:
+		var index = turn_order.find_last(to_be_moved)
 		var battler = turn_order.pop_at(index)
 		turn_order.push_front(battler)
 
@@ -423,15 +429,23 @@ func get_backable_command_index():
 
 func end_command_input():
 	active_input_index = -1
+
 	# shelve command panel
 	self.command_panel_tween.remove_all()
 	self.command_panel_tween.interpolate_property(self.command_panel, "rect_position:x", 0, self.command_panel.rect_size.x * -1, 0.3, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT)
 	self.command_panel_tween.start()
+
 	# shelve portraits
 	self.atp_tween.remove_all()
 	for p in self.active_battler_portrait.get_children():
 		self.atp_tween.interpolate_property(p, "rect_position:x", 0, self.active_battler_portrait.rect_size.x, 0.3, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT)
 	self.atp_tween.start()
+
+	# merge actions
+	for battler in party_actions.keys():
+		actions.append(party_actions[battler])
+		var action_index = actions.size() - 1
+		actions_link[battler] = [action_index]
 
 onready var atp_tween = $GUILayer/PortraitTween
 
@@ -516,13 +530,25 @@ func hide_cancel_button():
 
 func calculate_enemy_actions():
 	var randomizer = RandomNumberGenerator.new()
-	self.enemy_actions.clear()
-	for i in self.enemy_battlers:
-		randomizer.randomize()
-		self.enemy_actions[i] = {
-			'action': Actions.ATTACK,
-			'target': self.party_battlers[round(randomizer.randi_range(0, 3))],
-		}
+	for unit in enemy_battlers:
+		actions_link[unit] = []
+		for act in unit.actions_per_turn:
+			randomizer.randomize()
+			var action
+			match round(randomizer.randf()):
+				0.0:
+					randomizer.randomize()
+					action = {
+						'action': Actions.ATTACK,
+						'target': party_battlers[round(randomizer.randi_range(0, 3))],
+					}
+				1.0:
+					action = {
+						'action': Actions.DEFEND,
+					}
+			actions.append(action)
+			var action_index = actions.size() - 1
+			actions_link[unit].append(action_index)
 
 var targeting_mode: bool = false
 
