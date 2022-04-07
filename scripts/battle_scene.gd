@@ -11,7 +11,7 @@ func _ready():
 	start_battle()
 
 var stop = true
-var turn = 0
+var turn_number = 0
 var party_battlers = []
 var party_battlers_link = {} # connects party battlers with the member status panel
 var enemy_battlers = []
@@ -67,7 +67,7 @@ func prepare_enemy_battlers(enemy_cluster: Node):
 
 func start_battle():
 	# TODO: process pre battle things
-	turn = 1
+	turn_number = 1
 	stop = false
 	start_turn()
 
@@ -270,7 +270,7 @@ func end_turn():
 	clear_defenses()
 	
 	if !stop:
-		turn += 1
+		turn_number += 1
 		start_turn()
 
 func calculate_turn_order():
@@ -529,10 +529,9 @@ func hide_cancel_button():
 	button_tween.start()
 
 func decide_enemy_actions():
-	var randomizer = RandomNumberGenerator.new()
 	for unit in enemy_battlers:
 		actions_link[unit] = []
-		for action in unit.decide_actions(party_battlers, enemy_battlers, party_actions):
+		for action in unit.decide_actions(party_battlers, enemy_battlers, party_actions, turn_number):
 			actions.append(action)
 			var action_index = actions.size() - 1
 			actions_link[unit].append(action_index)
