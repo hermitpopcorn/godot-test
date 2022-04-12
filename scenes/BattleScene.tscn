@@ -1,4 +1,4 @@
-[gd_scene load_steps=21 format=2]
+[gd_scene load_steps=23 format=2]
 
 [ext_resource path="res://images/bg/dark-dungeon-stock-photo.jpg" type="Texture" id=1]
 [ext_resource path="res://fonts/montreal/Montreal-Bold.ttf" type="DynamicFontData" id=2]
@@ -6,6 +6,18 @@
 [ext_resource path="res://dynamic_fonts/command_panel.tres" type="DynamicFont" id=4]
 [ext_resource path="res://themes/command_panel_theme.tres" type="Theme" id=5]
 [ext_resource path="res://scripts/battle_scene.gd" type="Script" id=8]
+
+[sub_resource type="DynamicFont" id=16]
+size = 42
+use_mipmaps = true
+use_filter = true
+font_data = ExtResource( 3 )
+
+[sub_resource type="DynamicFont" id=15]
+size = 100
+use_mipmaps = true
+use_filter = true
+font_data = ExtResource( 3 )
 
 [sub_resource type="DynamicFont" id=2]
 size = 48
@@ -69,6 +81,66 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 mouse_filter = 2
 border_color = Color( 0, 1, 0.0156863, 1 )
+
+[node name="SkillPanel" type="Panel" parent="GUILayer/GUI"]
+self_modulate = Color( 1, 1, 1, 0.47451 )
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+margin_top = -400.0
+margin_bottom = 400.0
+mouse_filter = 2
+theme = ExtResource( 5 )
+
+[node name="MarginContainer" type="MarginContainer" parent="GUILayer/GUI/SkillPanel"]
+anchor_left = 0.25
+anchor_right = 0.753
+anchor_bottom = 1.0
+mouse_filter = 2
+custom_constants/margin_right = 24
+custom_constants/margin_top = 24
+custom_constants/margin_left = 24
+custom_constants/margin_bottom = 24
+
+[node name="ScrollContainer" type="ScrollContainer" parent="GUILayer/GUI/SkillPanel/MarginContainer"]
+margin_left = 24.0
+margin_top = 24.0
+margin_right = 941.0
+margin_bottom = 776.0
+mouse_filter = 2
+
+[node name="SkillList" type="ItemList" parent="GUILayer/GUI/SkillPanel/MarginContainer/ScrollContainer"]
+margin_right = 917.0
+margin_bottom = 752.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme = ExtResource( 5 )
+custom_fonts/font = SubResource( 16 )
+max_text_lines = 2
+max_columns = 2
+same_column_width = true
+fixed_column_width = 420
+
+[node name="Control" type="Control" parent="GUILayer/GUI/SkillPanel"]
+anchor_left = 0.172
+anchor_right = 0.25
+anchor_bottom = 1.0
+grow_horizontal = 2
+mouse_filter = 2
+
+[node name="Head" type="Label" parent="GUILayer/GUI/SkillPanel/Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_top = 800.0
+margin_right = 650.24
+margin_bottom = 150.0
+grow_horizontal = 2
+grow_vertical = 2
+rect_rotation = -90.0
+custom_fonts/font = SubResource( 15 )
+text = "Skills List"
+align = 1
+valign = 1
 
 [node name="InfoPanel" type="Panel" parent="GUILayer/GUI"]
 self_modulate = Color( 1, 1, 1, 0.490196 )
@@ -239,6 +311,8 @@ __meta__ = {
 
 [node name="ButtonTween" type="Tween" parent="GUILayer"]
 
+[node name="SkillPanelTween" type="Tween" parent="GUILayer"]
+
 [node name="AnimationLayer" type="CanvasLayer" parent="."]
 layer = 2
 
@@ -270,6 +344,9 @@ __meta__ = {
 [node name="Timer" type="Timer" parent="."]
 one_shot = true
 
+[connection signal="item_activated" from="GUILayer/GUI/SkillPanel/MarginContainer/ScrollContainer/SkillList" to="." method="_on_SkillList_item_activated"]
+[connection signal="item_selected" from="GUILayer/GUI/SkillPanel/MarginContainer/ScrollContainer/SkillList" to="." method="_on_SkillList_item_selected"]
 [connection signal="button_up" from="GUILayer/GUI/CommandPanel/ButtonsContainer/Attack" to="." method="_on_Attack_button_up"]
+[connection signal="button_up" from="GUILayer/GUI/CommandPanel/ButtonsContainer/Skill" to="." method="_on_Skill_button_up"]
 [connection signal="button_up" from="GUILayer/GUI/CommandPanel/ButtonsContainer/Defend" to="." method="_on_Defend_button_up"]
 [connection signal="button_up" from="GUILayer/GUI/CommandPanel/ButtonsContainer/Cancel" to="." method="_on_Cancel_button_up"]

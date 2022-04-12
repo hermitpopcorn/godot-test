@@ -49,6 +49,7 @@ func connect_hpap_changes():
 	unit.connect("hp_changed", self, "update_hp_display_by_signal")
 	unit.connect("hp_changed", self, "damage_by_signal")
 	unit.connect("ap_changed", self, "update_ap_display_by_signal")
+	unit.connect("miss", self, "miss_by_signal")
 
 func connect_state_changes():
 	unit.connect("state_changed", self, "update_state_by_signal")
@@ -85,6 +86,20 @@ func damage(amount):
 		self.shake(1, shake_strength, 1)
 		self.damage_flash()
 	self.create_flying_number(amount)
+
+func miss_by_signal(): return miss()
+func miss():
+	var flying_text = self.flying_text_basis.duplicate()
+	flying_text.modulate.a = 0
+	flying_text_container.add_child(flying_text)
+	flying_text.self_modulate = Color("7529e4")
+	flying_text.set_text("MISS")
+	flying_text.set_anchors_preset(Control.PRESET_CENTER_TOP)
+	flying_text.modulate.a = 1
+	flying_text.visible = true
+	flying_text_tween.interpolate_property(flying_text, "rect_position:y", 0.0, -150, 1.5, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT)
+	flying_text_tween.interpolate_property(flying_text, "modulate:a", 1.0, 0.0, 0.5, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT, 1.0)
+	flying_text_tween.start()
 
 # shake
 
@@ -160,7 +175,7 @@ func update_bar(type: String, new_value = null):
 		'ap':
 			new_percentage = int(floor((float(new_value if new_value != null else unit.ap) / float(unit.maxap)) * 100))
 			bar = self.ap_bar
-			bar_change = self.hp_bar_change
+			bar_change = self.ap_bar_change
 			tween = self.ap_bar_tween
 	
 	decrease = new_percentage < bar.value
@@ -293,3 +308,14 @@ onready var dead_overlay = full_overlay_container.get_node("DeadOverlayRect")
 
 func update_state_by_signal(change_data: Dictionary):
 	dead_overlay.visible = unit.is_dead()
+
+func get_infotext():
+	var name = unit.name
+	
+	var buffs_text = ""
+	var buffs = unit.get_buffs_in_string()
+	for i in buffs:
+		buffs_text += i + ", "
+	buffs_text = buffs_text.trim_suffix(", ")
+	
+	return name + (" [" + buffs_text + "]" if buffs_text.length() > 0 else "")

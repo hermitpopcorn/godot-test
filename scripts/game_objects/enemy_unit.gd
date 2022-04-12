@@ -5,7 +5,8 @@ class_name EnemyUnit
 func determine_target(party_battlers: Array, enemy_battlers: Array, party_actions: Dictionary, turn_number: int):
 	var randomizer = RandomNumberGenerator.new()
 	randomizer.randomize()
-	return party_battlers[randomizer.randi_range(0, party_battlers.size() - 1)]
+	var index = round(randomizer.randf_range(0, party_battlers.size() - 1))
+	return party_battlers[index]
 
 func decide_actions(party_battlers: Array, enemy_battlers: Array, party_actions: Dictionary, turn_number: int) -> Array:
 	var actions = []

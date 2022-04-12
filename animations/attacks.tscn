@@ -1,8 +1,43 @@
-[gd_scene load_steps=17 format=2]
+[gd_scene load_steps=22 format=2]
 
 [ext_resource path="res://images/animations/pierce-slash.png" type="Texture" id=1]
 [ext_resource path="res://images/animations/slash-fire.png" type="Texture" id=2]
 [ext_resource path="res://scripts/animation_node.gd" type="Script" id=3]
+
+[sub_resource type="AtlasTexture" id=23]
+flags = 5
+atlas = ExtResource( 1 )
+region = Rect2( 576, 0, 192, 192 )
+
+[sub_resource type="AtlasTexture" id=24]
+flags = 5
+atlas = ExtResource( 1 )
+region = Rect2( 768, 0, 192, 192 )
+
+[sub_resource type="AtlasTexture" id=25]
+flags = 5
+atlas = ExtResource( 1 )
+region = Rect2( 0, 192, 192, 192 )
+
+[sub_resource type="AtlasTexture" id=26]
+flags = 5
+atlas = ExtResource( 1 )
+region = Rect2( 192, 192, 192, 192 )
+
+[sub_resource type="AtlasTexture" id=19]
+flags = 5
+atlas = ExtResource( 1 )
+region = Rect2( 0, 0, 192, 192 )
+
+[sub_resource type="AtlasTexture" id=20]
+flags = 5
+atlas = ExtResource( 1 )
+region = Rect2( 192, 0, 192, 192 )
+
+[sub_resource type="AtlasTexture" id=21]
+flags = 5
+atlas = ExtResource( 1 )
+region = Rect2( 384, 0, 192, 192 )
 
 [sub_resource type="AtlasTexture" id=13]
 flags = 5
@@ -34,32 +69,22 @@ flags = 5
 atlas = ExtResource( 2 )
 region = Rect2( 0, 192, 192, 192 )
 
-[sub_resource type="AtlasTexture" id=19]
-flags = 5
-atlas = ExtResource( 1 )
-region = Rect2( 0, 0, 192, 192 )
-
-[sub_resource type="AtlasTexture" id=20]
-flags = 5
-atlas = ExtResource( 1 )
-region = Rect2( 192, 0, 192, 192 )
-
-[sub_resource type="AtlasTexture" id=21]
-flags = 5
-atlas = ExtResource( 1 )
-region = Rect2( 384, 0, 192, 192 )
-
 [sub_resource type="SpriteFrames" id=7]
 animations = [ {
-"frames": [ null, SubResource( 13 ), SubResource( 14 ), SubResource( 15 ), SubResource( 16 ), SubResource( 17 ), SubResource( 18 ), null ],
-"loop": false,
-"name": "hit",
-"speed": 18.0
+"frames": [ null, SubResource( 23 ), SubResource( 24 ), SubResource( 25 ), SubResource( 26 ), null ],
+"loop": true,
+"name": "strike",
+"speed": 5.0
 }, {
 "frames": [ null, SubResource( 19 ), SubResource( 20 ), SubResource( 21 ), null ],
 "loop": true,
 "name": "pierce",
 "speed": 16.0
+}, {
+"frames": [ null, SubResource( 13 ), SubResource( 14 ), SubResource( 15 ), SubResource( 16 ), SubResource( 17 ), SubResource( 18 ), null ],
+"loop": false,
+"name": "hit",
+"speed": 18.0
 } ]
 
 [sub_resource type="Animation" id=11]
@@ -254,6 +279,71 @@ tracks/4/keys = {
 "values": [ Vector2( 0, 0 ) ]
 }
 
+[sub_resource type="Animation" id=27]
+resource_name = "strike"
+length = 0.611111
+step = 0.0166667
+tracks/0/type = "value"
+tracks/0/path = NodePath("AnimatedSprites:animation")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PoolRealArray( 0 ),
+"transitions": PoolRealArray( 1 ),
+"update": 1,
+"values": [ "strike" ]
+}
+tracks/1/type = "value"
+tracks/1/path = NodePath("AnimatedSprites:frame")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/keys = {
+"times": PoolRealArray( 0, 0.0555556, 0.222222, 0.333333, 0.389851, 0.555556 ),
+"transitions": PoolRealArray( 1, 1, 1, 1, 1, 1 ),
+"update": 1,
+"values": [ 0, 1, 2, 3, 4, 7 ]
+}
+tracks/2/type = "value"
+tracks/2/path = NodePath("AnimatedSprites:scale")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/keys = {
+"times": PoolRealArray( 0, 0.379978, 0.501187 ),
+"transitions": PoolRealArray( 1, 1, 1 ),
+"update": 0,
+"values": [ Vector2( 1, 1 ), Vector2( 1.23358, 1.05548 ), Vector2( 0.889048, 0.842332 ) ]
+}
+tracks/3/type = "value"
+tracks/3/path = NodePath("AnimatedSprites:self_modulate")
+tracks/3/interp = 1
+tracks/3/loop_wrap = true
+tracks/3/imported = false
+tracks/3/enabled = true
+tracks/3/keys = {
+"times": PoolRealArray( 0, 0.0555556, 0.111111, 0.166667, 0.277778, 0.406914, 0.556019 ),
+"transitions": PoolRealArray( 1, 1, 1, 1, 1, 1, 1 ),
+"update": 0,
+"values": [ Color( 1, 1, 1, 1 ), Color( 1, 1, 1, 0.133333 ), Color( 1, 1, 1, 0.419608 ), Color( 1, 1, 1, 0.815686 ), Color( 1, 1, 1, 1 ), Color( 1, 1, 1, 1 ), Color( 1, 1, 1, 0 ) ]
+}
+tracks/4/type = "value"
+tracks/4/path = NodePath("AnimatedSprites:position")
+tracks/4/interp = 1
+tracks/4/loop_wrap = true
+tracks/4/imported = false
+tracks/4/enabled = true
+tracks/4/keys = {
+"times": PoolRealArray( 0, 0.0913872, 0.233759, 0.379978 ),
+"transitions": PoolRealArray( 1, 1, 1, 1 ),
+"update": 0,
+"values": [ Vector2( 0, 0 ), Vector2( 17.9391, -8.40898 ), Vector2( 36.4388, -22.4239 ), Vector2( 14.0149, -27.7496 ) ]
+}
+
 [node name="Attacks" type="Node2D"]
 scale = Vector2( 3, 3 )
 script = ExtResource( 3 )
@@ -267,3 +357,4 @@ animation = "hit"
 anims/RESET = SubResource( 11 )
 anims/hit = SubResource( 12 )
 anims/pierce = SubResource( 22 )
+anims/strike = SubResource( 27 )

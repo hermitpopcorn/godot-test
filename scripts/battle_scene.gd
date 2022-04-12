@@ -1,6 +1,6 @@
 extends Node
 
-enum InfoTextType { PROMPT, PARTY_INFO, ENEMY_INFO, NARRATION }
+enum InfoTextType { PROMPT, ITEM_EXPLANATION, PARTY_INFO, ENEMY_INFO, NARRATION }
 
 var battle_calculations = preload("res://scripts/battle_calculations.gd").new()
 
@@ -159,6 +159,10 @@ func execute_action(battler, action_dict: Dictionary):
 			yield(
 				execute_attack(battler, target),
 			"completed")
+		BattleDatabase.Actions.SKILL:
+			yield(
+				execute_skill(battler, target, action_dict.skill),
+			"completed")
 		BattleDatabase.Actions.DEFEND:
 			yield(
 				execute_defend(battler),
@@ -202,20 +206,50 @@ func execute_attack(attacking_battler, attacked_battler):
 	yield(get_tree().create_timer(0.4), "timeout")
 	
 	var result = battle_calculations.process_attack(attacking_battler, attacked_battler)
-	if not result.hit:
-		add_infotext(InfoTextType.NARRATION, "But they missed...")
-		yield(get_tree().create_timer(1), "timeout")
-	else:
-		var animation
-		animation = attacking_battler.get_attack_animation()
-		yield(
-			play_animation(animation, attacked_battler, result),
-		"completed")
+	var animation = attacking_battler.get_attack_animation()
+	yield(
+		play_animation(animation, attacked_battler, result),
+	"completed")
 	
 	# penalty
 	add_speed_penalty(attacking_battler, battle_calculations.ATTACK_SPEED_PENALTY)
 	
 	dehighlight_action(attacking_battler)
+
+func execute_skill(skill_user: Unit, skill_targets, skill: Skill):
+	highlight_action(skill_user)
+	
+	if skill.targeting_type == BattleDatabase.TargetingType.NONE:
+		skill_targets = null
+	elif skill.targeting_type == BattleDatabase.TargetingType.SINGLE:
+		skill_targets = [skill_targets]
+	elif skill.targeting_type == BattleDatabase.TargetingType.TEAM:
+		if skill_targets is PartyUnit:
+			skill_targets = party_battlers
+		elif skill_targets is EnemyUnit:
+			skill_targets = enemy_battlers
+	add_infotext(InfoTextType.NARRATION, skill.get_infotext_string(skill_user, skill_targets))
+	yield(get_tree().create_timer(0.4), "timeout")
+	
+	var drain_ap = skill.drain_ap(skill_user)
+	if !drain_ap:
+		add_infotext(InfoTextType.NARRATION, "Not enough AP...")
+		yield(get_tree().create_timer(1.5), "timeout")
+		dehighlight_action(skill_user)
+		return
+	
+	var animation = skill.get_animation()
+	var results = skill.apply_effect(skill_user, skill_targets, battle_calculations)
+	for target in results.keys():
+		var result = results[target]
+		yield(
+			play_skill_animation(animation, skill_user, target, result),
+		"completed")
+	
+	# penalty
+	add_speed_penalty(skill_user, skill.speed_penalty)
+	
+	dehighlight_action(skill_user)
 
 func execute_defend(defending_battler):
 	highlight_action(defending_battler)
@@ -241,6 +275,25 @@ func add_speed_penalty(battler, speed_penalty):
 
 onready var animation_layer = $AnimationLayer
 
+func play_skill_animation(animation: Dictionary, user: Unit, target: Unit, result):
+	if animation.user != null:
+		pass # TODO animate skill user
+	
+	if animation.target != null:
+		if animation.target.has('panel') and target is PartyUnit:
+			for a in animation.target.panel:
+				yield(
+					play_panel_animation(a, target, result),
+				"completed")
+		else:
+			for a in animation.target.sprite:
+				yield(
+					play_animation(a, target, result),
+				"completed")
+
+	if animation.scene != null:
+		pass # TODO animate whole bullshit
+
 func play_animation(animation: Dictionary, battler: Unit, result):
 	var position: Vector2 = Vector2(0, 0)
 	if (battler is PartyUnit):
@@ -256,10 +309,25 @@ func play_animation(animation: Dictionary, battler: Unit, result):
 	animation_node.set_position(position)
 	var hit_frame = animation_node.play(animation.animation_name)
 	yield(get_tree().create_timer(hit_frame), "timeout")
-	add_infotext(InfoTextType.NARRATION, "Dealt " + String(abs(int(result.hp))) + " damage!")
-	battler.hp += result.hp
+	if result.hit == false:
+		add_infotext(InfoTextType.NARRATION, "But they missed...")
+		battler.signal_miss()
+	elif result.has('hp'):
+		if result.hp < 0:
+			add_infotext(InfoTextType.NARRATION, "Dealt " + String(abs(int(result.hp))) + " damage!")
+		elif result.hp > 0:
+			add_infotext(InfoTextType.NARRATION, "Healed " + String(abs(int(result.hp))) + " HP!")
+		battler.hp += result.hp
 	yield(get_tree().create_timer(0.5), "timeout")
 	animation_node.queue_free()
+
+func play_panel_animation(animation: String, target: PartyUnit, result):
+	var panel = party_battlers_link[target]
+	if (animation == "buff_flash"):
+		panel.buff()
+	elif (animation == "debuff_flash"):
+		panel.debuff()
+	yield(get_tree().create_timer(0.6), "timeout")
 
 func clear_defenses():
 	for i in party_battlers: i.defending = false
@@ -388,6 +456,7 @@ onready var command_buttons_container = $GUILayer/GUI/CommandPanel/ButtonsContai
 
 func next_command_input():
 	selected_action = null
+	selected_skill = null
 	remove_infotext(InfoTextType.PROMPT)
 	for i in command_buttons_container.get_children(): i.disabled = false
 	active_input_index += 1
@@ -395,17 +464,19 @@ func next_command_input():
 	if (active_input_index < self.party_battlers.size()):
 		if !self.party_battlers[active_input_index].can_move(): return next_command_input()
 		show_active_input_member(active_input_index)
+		populate_skill_list()
 	else:
 		end_command_input()
 		process_turn()
 
 func prev_command_input():
 	if active_input_index <= 0: return
-	if !get_backable_command_index(): return
+	if not get_backable_command_index() is int: return
 	unset_party_member_action(party_battlers[active_input_index - 1])
 	active_input_index -= 1
 	if (self.party_battlers[active_input_index].is_dead()): return prev_command_input()
 	show_active_input_member(active_input_index)
+	populate_skill_list()
 
 func get_nextable_command_index():
 	var nextable = false
@@ -421,11 +492,11 @@ func get_backable_command_index():
 	var backable = false
 	var index_change = 1
 	while !backable:
+		if (active_input_index - index_change) < 0: return false
 		if self.party_battlers[active_input_index - index_change].can_move():
 			return active_input_index - index_change
 		else:
 			index_change += 1
-		if (active_input_index - index_change) < 0: return false
 
 func end_command_input():
 	active_input_index = -1
@@ -468,16 +539,88 @@ func show_active_input_member(index: int):
 	self.atp_tween.start()
 
 var selected_action = null
+var selected_skill = null
 
 onready var button_tween = $GUILayer/ButtonTween
 onready var attack_button = $GUILayer/GUI/CommandPanel/ButtonsContainer/Attack
 
+func reenable_buttons():
+	attack_button.disabled = false
+	skill_button.disabled = false
+
 func _on_Attack_button_up():
 	if active_input_index < 0: return
 	if selected_action == BattleDatabase.Actions.ATTACK: return
-	attack_button.disabled = true
+	if selected_action != null: cancel_selected_action()
 	selected_action = BattleDatabase.Actions.ATTACK
+	attack_button.disabled = true
 	start_targeting()
+
+onready var skill_button = $GUILayer/GUI/CommandPanel/ButtonsContainer/Skill
+
+func _on_Skill_button_up():
+	if active_input_index < 0: return
+	if selected_action == BattleDatabase.Actions.SKILL: return
+	if selected_action != null: cancel_selected_action()
+	selected_action = BattleDatabase.Actions.SKILL
+	skill_button.disabled = true
+	show_skill_panel()
+	item_selecting_mode = true
+	update_cancel_button()
+
+onready var skill_list = $GUILayer/GUI/SkillPanel/MarginContainer/ScrollContainer/SkillList
+
+func populate_skill_list():
+	skill_list.clear()
+	var index = 0
+	var skills = party_battlers[active_input_index].get_skills()
+	for skill in skills:
+		skill_list.add_item(skill.name + " (" + String(skill.ap_cost) + "AP)", null, party_battlers[active_input_index].ap >= skill.ap_cost)
+		skill_list.set_item_tooltip_enabled(index, false)
+		index += 1
+	print(skill_list.items)
+
+onready var skill_panel = $GUILayer/GUI/SkillPanel
+onready var skill_panel_head = $GUILayer/GUI/SkillPanel/Control/Head
+onready var skill_panel_tween = $GUILayer/SkillPanelTween
+func show_skill_panel():
+	skill_panel_tween.stop_all()
+	skill_panel.visible = true
+	skill_panel_tween.interpolate_property(skill_panel, 'anchor_right', 0, 1, 0.2)
+	skill_panel_head.modulate.a = 0
+	skill_panel_tween.interpolate_property(skill_panel_head, 'modulate:a', 0, 1, 0.2, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT, 0.2)
+	skill_list.modulate.a = 0
+	skill_panel_tween.interpolate_property(skill_list, 'modulate:a', 0, 1, 0.2, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT, 0.2)
+	skill_panel_tween.start()
+func hide_skill_panel():
+	remove_infotext(InfoTextType.ITEM_EXPLANATION)
+	skill_list.unselect_all()
+	skill_panel_tween.stop_all()
+	skill_panel_tween.interpolate_property(skill_panel_head, 'modulate:a', skill_panel_head.modulate.a, 0, 0.1)
+	skill_panel_tween.interpolate_property(skill_list, 'modulate:a', skill_list.modulate.a, 0, 0.1)
+	skill_panel_tween.interpolate_property(skill_panel, 'anchor_right', skill_panel.anchor_right, 0, 0.1, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT, 0.2)
+	skill_panel_tween.start()
+	yield(get_tree().create_timer(0.3), "timeout")
+	skill_panel.visible = false
+
+func _on_SkillList_item_selected(index):
+	var skill = party_battlers[active_input_index].get_skills()[index]
+	add_infotext(InfoTextType.ITEM_EXPLANATION, skill.description)
+
+func _on_SkillList_item_activated(index):
+	var skill = party_battlers[active_input_index].get_skills()[index]
+	selected_skill = skill
+	if selected_skill.ap_cost > party_battlers[active_input_index].ap: return
+	if selected_skill.targeting_type == BattleDatabase.TargetingType.NONE:
+		set_party_member_action(party_battlers[active_input_index], {
+			'action': selected_action,
+			'skill': selected_skill,
+		})
+		next_command_input()
+	else:
+		hide_skill_panel()
+		item_selecting_mode = false
+		start_targeting()
 
 onready var defend_button = $GUILayer/GUI/CommandPanel/ButtonsContainer/Defend
 
@@ -492,7 +635,7 @@ func _on_Defend_button_up():
 onready var cancel_button = $GUILayer/GUI/CommandPanel/ButtonsContainer/Cancel
 
 func _on_Cancel_button_up():
-	if targeting_mode:
+	if targeting_mode or item_selecting_mode:
 		cancel_selected_action()
 	else:
 		if active_input_index > 0: prev_command_input()
@@ -500,15 +643,30 @@ func _on_Cancel_button_up():
 
 func cancel_selected_action():
 	if selected_action == BattleDatabase.Actions.ATTACK:
+		selected_action = null
 		targeting_mode = false
-		attack_button.disabled = false
 		remove_infotext(InfoTextType.PROMPT)
+		reenable_buttons()
+	elif selected_action == BattleDatabase.Actions.SKILL:
+		if item_selecting_mode:
+			hide_skill_panel()
+			selected_action = null
+			item_selecting_mode = false
+			remove_infotext(InfoTextType.ITEM_EXPLANATION)
+			reenable_buttons()
+		elif targeting_mode:
+			selected_action = null
+			targeting_mode = false
+			remove_infotext(InfoTextType.PROMPT)
+			reenable_buttons()
 
 func update_cancel_button():
 	if targeting_mode:
 		show_cancel_button("Cancel")
-	elif active_input_index > 0:
-		if get_backable_command_index():
+	elif item_selecting_mode:
+		show_cancel_button("Cancel")
+	elif active_input_index >= 0:
+		if get_backable_command_index() is int:
 			show_cancel_button("Back")
 		else:
 			hide_cancel_button()
@@ -537,6 +695,7 @@ func decide_enemy_actions():
 			actions_link[unit].append(action_index)
 
 var targeting_mode: bool = false
+var item_selecting_mode: bool = false
 
 func start_targeting():
 	targeting_mode = true
@@ -548,7 +707,7 @@ var hovered_objects = {}
 func _on_enemy_hover(node: Node, hovered_area: Array):
 	if not hovered_objects.has(node):
 		hovered_objects[node] = hovered_area
-		add_infotext(InfoTextType.ENEMY_INFO, node.unit.name)
+		add_infotext(InfoTextType.ENEMY_INFO, node.get_infotext())
 
 func _on_enemy_blur(node: Node, blurred_area: String):
 	if hovered_objects.has(node):
@@ -564,7 +723,7 @@ func _on_enemy_click(node: Node, hovered_area: Array):
 func _on_party_hover(node: Node):
 	if not hovered_objects.has(node):
 		hovered_objects[node] = ['status_panel']
-		add_infotext(InfoTextType.PARTY_INFO, node.unit.name)
+		add_infotext(InfoTextType.PARTY_INFO, node.get_infotext())
 
 func _on_party_blur(node: Node):
 	if hovered_objects.has(node):
@@ -578,11 +737,19 @@ func _on_party_click(node: Node):
 		end_targeting(node.unit)
 
 func end_targeting(target_battler):
-	self.targeting_mode = false
-	set_party_member_action(self.party_battlers[self.active_input_index], {
-		'action': self.selected_action,
-		'target': target_battler,
-	})
+	targeting_mode = false
+	var battler = self.party_battlers[self.active_input_index]
+	if selected_action == BattleDatabase.Actions.ATTACK:
+		set_party_member_action(battler, {
+			'action': selected_action,
+			'target': target_battler,
+		})
+	elif selected_action == BattleDatabase.Actions.SKILL:
+		set_party_member_action(battler, {
+			'action': selected_action,
+			'skill': selected_skill,
+			'target': target_battler,
+		})
 	next_command_input()
 
 func action_string(action):

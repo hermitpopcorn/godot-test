@@ -1,4 +1,4 @@
-[gd_resource type="Theme" load_steps=8 format=2]
+[gd_resource type="Theme" load_steps=9 format=2]
 
 [ext_resource path="res://dynamic_fonts/command_panel.tres" type="DynamicFont" id=1]
 [ext_resource path="res://images/ui/panel.png" type="Texture" id=2]
@@ -43,6 +43,8 @@ content_margin_top = 8.0
 content_margin_bottom = 8.0
 bg_color = Color( 0.101961, 0.266667, 0.368627, 1 )
 
+[sub_resource type="StyleBoxEmpty" id=9]
+
 [sub_resource type="StyleBoxTexture" id=4]
 texture = ExtResource( 2 )
 region_rect = Rect2( 0, 0, 460, 252 )
@@ -53,4 +55,11 @@ Button/styles/disabled = SubResource( 8 )
 Button/styles/hover = SubResource( 6 )
 Button/styles/normal = SubResource( 5 )
 Button/styles/pressed = SubResource( 7 )
+ItemList/colors/font_color = Color( 1, 1, 1, 1 )
+ItemList/colors/font_color_selected = Color( 0.509804, 0.647059, 1, 1 )
+ItemList/constants/hseparation = 32
+ItemList/constants/line_separation = 16
+ItemList/constants/vseparation = 16
+ItemList/styles/bg = SubResource( 9 )
+ItemList/styles/bg_focus = null
 Panel/styles/panel = SubResource( 4 )

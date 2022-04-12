@@ -17,3 +17,16 @@ enum MultiActionType {
 	SPREAD,
 	CONSECUTIVE,
 }
+
+enum BuffsDebuffs {
+	ATK,
+	DEF,
+	HIT,
+	EVA,
+}
+
+enum TargetingType {
+	NONE,
+	SINGLE,
+	TEAM,
+}

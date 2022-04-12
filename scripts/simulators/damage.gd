@@ -2,11 +2,15 @@ extends Node
 
 onready var rng = RandomNumberGenerator.new()
 
+onready var battle_calculations = preload("res://scripts/battle_calculations.gd").new()
+onready var unit1 = preload("res://data/enemy_units/si_kompret/si_kompret.gd").new()
+onready var unit2 = preload("res://data/enemy_units/si_kompret/si_kompret.gd").new()
+
 var base_damage_factor = 100
 var damage_variance = 12
 
-var simulator_atk = 50
-var simulator_def = 50
+var simulator_atk = 15
+var simulator_def = 6
 
 func calculate_damage(atk, def):
 	rng.randomize()
@@ -26,23 +30,24 @@ func _input(event):
 	if (Input.is_key_pressed(KEY_B)): hit()
 	if (Input.is_key_pressed(KEY_N)): simulate(100)
 	if (Input.is_key_pressed(KEY_Z)):
-		self.simulator_atk -= 1
-		print("ATK reduced to ", [self.simulator_atk])
+		unit1.atk -= 1
+		print("ATK reduced to ", [unit1.atk])
 	if (Input.is_key_pressed(KEY_X)):
-		self.simulator_atk += 1
-		print("ATK increased to ", [self.simulator_atk])
+		unit1.atk += 1
+		print("ATK increased to ", [unit1.atk])
 	if (Input.is_key_pressed(KEY_C)):
-		self.simulator_def -= 1
-		print("DEF reduced to ", [self.simulator_def])
+		unit2.def -= 1
+		print("DEF reduced to ", [unit2.def])
 	if (Input.is_key_pressed(KEY_V)):
-		self.simulator_def += 1
-		print("DEF increased to ", [self.simulator_def])
+		unit2.def += 1
+		print("DEF increased to ", [unit2.def])
 
 func hit():
-	print("====== ", self.simulator_atk, " ATK -> ", self.simulator_def, " DEF ======")
-	var damage = self.calculate_damage(self.simulator_atk, self.simulator_def)
-	print("DAMAGE: ", damage)
-	return damage
+	# print("====== ", self.simulator_atk, " ATK -> ", self.simulator_def, " DEF ======")
+	var result = battle_calculations.calculate_damage(unit1, unit2)
+	# var damage = self.calculate_damage(self.simulator_atk, self.simulator_def)
+	print(result)
+	return result
 
 func simulate(times: int):
 	var damage_numbers = []

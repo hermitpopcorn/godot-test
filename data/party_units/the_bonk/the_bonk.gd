@@ -9,6 +9,9 @@ func _init():
 	def_curve = { 1: 12 }
 	hit_curve = { 1: 7 }
 	eva_curve = { 1: 5 }
+	skills_curve = {
+		1: [SkillDatabase.get_skill('harden')],
+	}
 	
 	full_heal()
 	
