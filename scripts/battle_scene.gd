@@ -270,6 +270,7 @@ func dehighlight_action(battler):
 		dehighlight_active_party_member(battler)
 
 func add_speed_penalty(battler, speed_penalty):
+	print("[BATS]", battler.name, " got speed penalty: ", speed_penalty)
 	if not speed_penalties.has(battler): speed_penalties[battler] = 0
 	speed_penalties[battler] += speed_penalty
 
@@ -334,8 +335,8 @@ func clear_defenses():
 	for i in enemy_battlers: i.defending = false
 
 func end_turn():
-	# do end turn things
 	clear_defenses()
+	remove_infotext()
 	
 	if !stop:
 		turn_number += 1
@@ -568,17 +569,55 @@ func _on_Skill_button_up():
 	item_selecting_mode = true
 	update_cancel_button()
 
-onready var skill_list = $GUILayer/GUI/SkillPanel/MarginContainer/ScrollContainer/SkillList
+onready var skill_list = $GUILayer/GUI/SkillPanel/MarginContainer/ScrollContainer/HBoxContainer
 
+onready var skill_list_left = $GUILayer/GUI/SkillPanel/MarginContainer/ScrollContainer/HBoxContainer/ListLeft
+onready var skill_list_right = $GUILayer/GUI/SkillPanel/MarginContainer/ScrollContainer/HBoxContainer/ListRight
+onready var skill_entry_sample = $GUILayer/GUI/SkillPanel/MarginContainer/ScrollContainer/HBoxContainer/ListLeft/SkillEntrySample
 func populate_skill_list():
-	skill_list.clear()
+	skill_entry_sample.visible = false
+	for i in skill_list_left.get_children(): if i != skill_entry_sample: i.queue_free()
+	for i in skill_list_right.get_children(): if i != skill_entry_sample: i.queue_free()
 	var index = 0
 	var skills = party_battlers[active_input_index].get_skills()
 	for skill in skills:
-		skill_list.add_item(skill.name + " (" + String(skill.ap_cost) + "AP)", null, party_battlers[active_input_index].ap >= skill.ap_cost)
-		skill_list.set_item_tooltip_enabled(index, false)
+		var entry = skill_entry_sample.duplicate()
+		entry.get_child(0).set_text(skill.name)
+		entry.get_child(1).set_text(String(skill.ap_cost) + " AP")
+		if party_battlers[active_input_index].ap < skill.ap_cost:
+			entry.get_child(0).self_modulate = Color("9c9c9c")
+			entry.get_child(1).self_modulate = Color("9c9c9c")
+		var stylebox = entry.get_stylebox("panel").duplicate()
+		entry.add_stylebox_override("panel", stylebox)
+		entry.connect("mouse_entered", self, "on_skill_entry_hover", [entry, skill])
+		entry.connect("mouse_exited", self, "on_skill_entry_blur", [entry, skill])
+		entry.connect("gui_input", self, "on_skill_entry_input", [entry, skill])
+		(skill_list_left if index % 2 == 0 else skill_list_right).add_child(entry)
+		entry.visible = true
 		index += 1
-	print(skill_list.items)
+
+func on_skill_entry_hover(entry: PanelContainer, skill: Skill):
+	add_infotext(InfoTextType.ITEM_EXPLANATION, skill.description)
+	entry.get_stylebox("panel").bg_color.a = 0.5
+
+func on_skill_entry_blur(entry: PanelContainer, skill: Skill):
+	remove_infotext(InfoTextType.ITEM_EXPLANATION)
+	entry.get_stylebox("panel").bg_color.a = 0
+
+func on_skill_entry_input(event: InputEvent, entry: PanelContainer, skill: Skill):
+	if not event.is_action("mouse_left"): return
+	selected_skill = skill
+	if selected_skill.ap_cost > party_battlers[active_input_index].ap: return
+	if selected_skill.targeting_type == BattleDatabase.TargetingType.NONE:
+		set_party_member_action(party_battlers[active_input_index], {
+			'action': selected_action,
+			'skill': selected_skill,
+		})
+		next_command_input()
+	else:
+		hide_skill_panel()
+		item_selecting_mode = false
+		start_targeting()
 
 onready var skill_panel = $GUILayer/GUI/SkillPanel
 onready var skill_panel_head = $GUILayer/GUI/SkillPanel/Control/Head
@@ -594,7 +633,6 @@ func show_skill_panel():
 	skill_panel_tween.start()
 func hide_skill_panel():
 	remove_infotext(InfoTextType.ITEM_EXPLANATION)
-	skill_list.unselect_all()
 	skill_panel_tween.stop_all()
 	skill_panel_tween.interpolate_property(skill_panel_head, 'modulate:a', skill_panel_head.modulate.a, 0, 0.1)
 	skill_panel_tween.interpolate_property(skill_list, 'modulate:a', skill_list.modulate.a, 0, 0.1)
@@ -602,25 +640,6 @@ func hide_skill_panel():
 	skill_panel_tween.start()
 	yield(get_tree().create_timer(0.3), "timeout")
 	skill_panel.visible = false
-
-func _on_SkillList_item_selected(index):
-	var skill = party_battlers[active_input_index].get_skills()[index]
-	add_infotext(InfoTextType.ITEM_EXPLANATION, skill.description)
-
-func _on_SkillList_item_activated(index):
-	var skill = party_battlers[active_input_index].get_skills()[index]
-	selected_skill = skill
-	if selected_skill.ap_cost > party_battlers[active_input_index].ap: return
-	if selected_skill.targeting_type == BattleDatabase.TargetingType.NONE:
-		set_party_member_action(party_battlers[active_input_index], {
-			'action': selected_action,
-			'skill': selected_skill,
-		})
-		next_command_input()
-	else:
-		hide_skill_panel()
-		item_selecting_mode = false
-		start_targeting()
 
 onready var defend_button = $GUILayer/GUI/CommandPanel/ButtonsContainer/Defend
 
@@ -777,8 +796,11 @@ func add_infotext(type: int, text: String):
 	active_info_texts[type] = text
 	refresh_infotext()
 
-func remove_infotext(type: int):
-	active_info_texts.erase(type)
+func remove_infotext(type: int = -1):
+	if type == -1:
+		active_info_texts.clear()
+	else:
+		active_info_texts.erase(type)
 	refresh_infotext()
 
 func refresh_infotext():
@@ -832,7 +854,7 @@ func _debug_ready():
 	party_battlers.append(paul)
 	party_battlers.append(rifkaizer)
 	party_battlers.append(the_bonk)
-	prepare_enemy_battlers(preload("res://data/enemy_clusters/si_kompret_bunshin.tscn").instance())
+	prepare_enemy_battlers(preload("res://data/enemy_clusters/si_trio_kompret.tscn").instance())
 	prepare_ui()
 
 func _input(event):

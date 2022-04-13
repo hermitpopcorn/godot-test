@@ -9,7 +9,7 @@ func _init():
 	def_curve = { 1: 6 }
 	hit_curve = { 1: 9 }
 	eva_curve = { 1: 6 }
-	skills_curve = { 1: [SkillDatabase.get_skill('break')] }
+	skills_curve = { 1: [SkillDatabase.get_skill('break'), SkillDatabase.get_skill('harden')] }
 	
 	full_heal()
 	

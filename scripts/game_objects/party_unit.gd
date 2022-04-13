@@ -63,7 +63,6 @@ func get_stat(stat):
 	var equipment = get_equipment_stat(stat)
 	var buff_modifier = get_buff_modifier(stat, base)
 	var calculated = round(float(base) + float(equipment) + float(buff_modifier))
-	if stat == 'def': print([stat, base, equipment, buff_modifier, calculated])
 	return calculated
 
 func get_maxhp(): return get_stat('maxhp')
@@ -96,13 +95,13 @@ func get_skills(at_level = null, from_level = 1) -> Array:
 	if at_level != null:
 		if (from_level > at_level):
 			return []
-	var skills = []
+	var skill_list = []
 	var on_level = at_level if at_level != null else self.level
 	while (from_level <= on_level):
 		if skills_curve.has(from_level):
-			skills.append_array(skills_curve[from_level])
+			skill_list.append_array(skills_curve[from_level])
 		from_level += 1
-	return skills
+	return skill_list
 
 # visuals
 

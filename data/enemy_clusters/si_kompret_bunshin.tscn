@@ -2,7 +2,7 @@
 
 [ext_resource path="res://data/enemy_units/si_kompret/si_kompret.tscn" type="PackedScene" id=1]
 
-[node name="Si Kompret Lonesome" type="Control"]
+[node name="Si Kompret Bunshin" type="Control"]
 anchor_right = 1.0
 anchor_bottom = 1.0
 mouse_filter = 2

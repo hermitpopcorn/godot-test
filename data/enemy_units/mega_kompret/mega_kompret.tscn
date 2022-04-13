@@ -123,24 +123,23 @@ flags = 5
 atlas = ExtResource( 2 )
 region = Rect2( 20, 20, 300, 300 )
 
-[node name="Si Kompret" instance=ExtResource( 1 )]
-enemy_resource_script = "res://data/enemy_units/si_kompret/si_kompret.gd"
+[node name="MEGA Kompret" instance=ExtResource( 1 )]
+enemy_resource_script = "res://data/enemy_units/mega_kompret/mega_kompret.gd"
 
 [node name="Sprite" parent="." index="0"]
+self_modulate = Color( 0.815686, 0.196078, 0.196078, 1 )
 material = SubResource( 11 )
-margin_top = -291.0
-margin_bottom = 291.0
-rect_pivot_offset = Vector2( 291, 291 )
+margin_top = -333.002
+margin_bottom = 338.998
+rect_pivot_offset = Vector2( 290, 336 )
 texture = ExtResource( 2 )
 
 [node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="Body" index="0"]
-position = Vector2( 0.328455, 12.3721 )
-scale = Vector2( 0.888519, 0.882547 )
+position = Vector2( 0, 17.3529 )
 polygon = PoolVector2Array( -99.8707, -348.792, 0.129272, -346.792, 56.1293, -314.792, 74.1293, -242.792, 64.1293, -204.792, 60.1293, -172.792, 76.1293, -154.792, 72.1293, -122.792, 94.1293, -88.7917, 138.129, -34.7917, 148.129, -4.79166, 136.129, 63.2083, 126.129, 99.2083, 120.129, 133.208, 116.129, 161.208, 158.129, 161.208, 192.129, 187.208, 222.129, 205.208, 228.129, 231.208, 194.129, 241.208, 162.129, 245.208, 150.129, 227.208, 150.129, 213.208, 122.129, 209.208, 118.129, 227.208, 80.1293, 239.208, 18.1293, 247.208, 38.1293, 267.208, 54.1293, 305.208, 14.1293, 329.208, -31.8707, 291.208, -43.8707, 247.208, -79.8707, 251.208, -81.8707, 283.208, -103.871, 329.208, -151.871, 327.208, -145.871, 297.208, -111.871, 263.208, -167.871, 237.208, -213.871, 233.208, -215.871, 167.208, -197.871, 51.2083, -205.871, -26.7917, -189.871, -72.7917, -97.8707, -156.792, -107.871, -216.792, -139.871, -284.792 )
 
 [node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="Head" index="0"]
-position = Vector2( -0.929961, 18.8172 )
-scale = Vector2( 0.899559, 0.899559 )
+position = Vector2( 0, 14.6832 )
 polygon = PoolVector2Array( -111.871, -302.792, -27.8707, -312.792, 40.1293, -304.792, 60.1293, -276.792, 64.1293, -228.792, 48.1293, -174.792, 26.1293, -150.792, -17.8707, -136.792, -49.8707, -144.792, -96.4008, -159.016, -110.174, -203.514, -115.871, -242.792, -117.871, -272.792 )
 
 [node name="TextureRect" parent="Icon" index="0"]

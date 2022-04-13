@@ -1,13 +1,13 @@
 extends EnemyUnit
 
 func _init(assign_name = null):
-	name = "Si Kompret"
+	name = "M.E.G.A. Kompret"
 	if assign_name != null: name = assign_name
-	maxhp = 80
-	atk = 15
-	def = 9
-	hit = 8
-	eva = 3
+	maxhp = 295
+	atk = 25
+	def = 18
+	hit = 14
+	eva = 8
 	full_heal()
 	actions_per_turn = 1
 	multi_action_type = BattleDatabase.MultiActionType.CONSECUTIVE

@@ -139,7 +139,6 @@ func get_buff_modifier(stat: String, base_stat: int) -> float:
 		else:
 			bm = [0.0, 0.15, 0.25, 0.4][int(abs(buff_amount))]
 			bm = bm * -1
-		print("BUFF MODIFIER: ", [bm, bm * base_stat])
 		return float(bm) * float(base_stat)
 	return 0.0
 
