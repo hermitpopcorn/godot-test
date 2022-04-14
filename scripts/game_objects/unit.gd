@@ -38,6 +38,7 @@ func set_hp(new_value):
 	emit_signal("hp_changed", { "new_hp": hp, "change": change })
 	if hp < 1:
 		clear_states()
+		clear_buffs()
 		add_state(BattleDatabase.UnitStates.KNOCKOUT)
 		emit_signal("death")
 

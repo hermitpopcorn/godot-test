@@ -9,6 +9,7 @@ export(int) var base_power = 0
 export(String) var description
 export(bool) var usable_outside_battle: bool = false
 export(BattleDatabase.TargetingType) var targeting_type = BattleDatabase.TargetingType.NONE
+export(BattleDatabase.SkillType) var skill_type = BattleDatabase.SkillType.DAMAGE
 export(int) var speed_penalty = 3
 
 func get_ap_cost():

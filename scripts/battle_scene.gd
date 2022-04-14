@@ -147,12 +147,21 @@ func execute_action(battler, action_dict: Dictionary):
 	# TODO: randomize target if target is dead
 	if target != null:
 		if target is Unit and target.is_dead():
-			if (battler is PartyUnit):
-				target = randomize_enemy_target()
-			elif (battler is EnemyUnit):
-				target = randomize_party_target()
-			else:
-				return
+			if action == BattleDatabase.Actions.ATTACK:
+				if (battler is PartyUnit):
+					target = randomize_enemy_target()
+				elif (battler is EnemyUnit):
+					target = randomize_party_target()
+				else:
+					return
+			if action == BattleDatabase.Actions.SKILL:
+				# TODO: refactor this
+				if (action_dict.skill.skill_type == BattleDatabase.SkillType.DAMAGE and battler is PartyUnit) or (action_dict.skill.skill_type == BattleDatabase.SkillType.SUPPORT and battler is EnemyUnit):
+					target = randomize_enemy_target()
+				elif action_dict.skill.skill_type == BattleDatabase.SkillType.DAMAGE and battler is EnemyUnit:
+					target = randomize_party_target()
+				elif action_dict.skill.skill_type == BattleDatabase.SkillType.SUPPORT and battler is PartyUnit:
+					target = battler
 	
 	match action:
 		BattleDatabase.Actions.ATTACK:

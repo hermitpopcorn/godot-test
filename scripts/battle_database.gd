@@ -30,3 +30,8 @@ enum TargetingType {
 	SINGLE,
 	TEAM,
 }
+
+enum SkillType {
+	DAMAGE,
+	SUPPORT,
+}

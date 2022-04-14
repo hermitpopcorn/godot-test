@@ -7,6 +7,7 @@ func _init():
 	base_power = 0
 	description = "Raise defense for one unit."
 	targeting_type = BattleDatabase.TargetingType.SINGLE
+	skill_type = BattleDatabase.SkillType.SUPPORT
 	speed_penalty = 3
 
 func apply_effect(user: Unit, targets: Array, battle_calculations = null):

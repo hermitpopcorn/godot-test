@@ -7,6 +7,7 @@ func _init():
 	base_power = 5
 	description = "Attacks one unit and lowers their defense."
 	targeting_type = BattleDatabase.TargetingType.SINGLE
+	skill_type = BattleDatabase.SkillType.DAMAGE
 	speed_penalty = 5
 
 func apply_effect(user: Unit, targets: Array, battle_calculations = null):
