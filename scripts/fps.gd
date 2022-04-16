@@ -22,7 +22,12 @@ var movement = Vector3()
 
 onready var head = $Head
 onready var camera = $Head/Camera
-onready var root_scene = get_tree().root.get_child(0)
+onready var root_scene = get_root_scene()
+
+func get_root_scene():
+	for i in get_tree().root.get_children():
+		if i is BaseScene: return i
+	push_error("[FPS] Root scene was not found")
 
 func disallow_move(): self.move_allowed = false
 func allow_move(): self.move_allowed = true

@@ -75,7 +75,7 @@ func _on_CursorLayer_hide_info_text(text = \"\"):
 script = SubResource( 1 )
 
 [node name="PausedUILayer" type="CanvasLayer" parent="."]
-layer = 10
+layer = 100
 
 [node name="PausedIndicator" type="TextureRect" parent="PausedUILayer"]
 pause_mode = 2
@@ -97,7 +97,7 @@ __meta__ = {
 
 [node name="CursorLayer" type="CanvasLayer" parent="."]
 pause_mode = 2
-layer = 20
+layer = 90
 script = ExtResource( 7 )
 
 [node name="CursorSprite" type="Node2D" parent="CursorLayer"]
@@ -120,6 +120,7 @@ scale = Vector2( 0.105, 0.105 )
 texture = ExtResource( 4 )
 
 [node name="InfoLayer" type="CanvasLayer" parent="."]
+layer = 80
 script = SubResource( 6 )
 
 [node name="Microtimer" type="Timer" parent="InfoLayer"]

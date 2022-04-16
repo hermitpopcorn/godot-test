@@ -633,7 +633,7 @@ _global_script_class_icons={
 [application]
 
 config/name="Test"
-run/main_scene="res://scenes/BattleScene.tscn"
+run/main_scene="res://scenes/Test3DSpace.tscn"
 config/icon="res://icon.png"
 
 [autoload]
@@ -789,9 +789,9 @@ cancel_shortcut={
 "events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":0,"physical_scancode":90,"unicode":0,"echo":false,"script":null)
  ]
 }
-use_shortcut={
+items_shortcut={
 "deadzone": 0.5,
-"events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":0,"physical_scancode":85,"unicode":0,"echo":false,"script":null)
+"events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":0,"physical_scancode":81,"unicode":0,"echo":false,"script":null)
  ]
 }
 

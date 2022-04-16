@@ -35,3 +35,10 @@ enum SkillType {
 	DAMAGE,
 	SUPPORT,
 }
+
+enum BattleResult {
+	DEFEAT,
+	VICTORY,
+	ESCAPE,
+	FORCED_END,
+}

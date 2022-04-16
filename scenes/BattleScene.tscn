@@ -58,7 +58,7 @@ action = "defend_shortcut"
 shortcut = SubResource( 9 )
 
 [sub_resource type="InputEventAction" id=11]
-action = "use_shortcut"
+action = "items_shortcut"
 
 [sub_resource type="ShortCut" id=12]
 shortcut = SubResource( 11 )
@@ -81,14 +81,14 @@ use_mipmaps = true
 use_filter = true
 font_data = ExtResource( 2 )
 
-[node name="BattleScene" type="Node"]
+[node name="BattleScene" type="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
 script = ExtResource( 8 )
-__meta__ = {
-"_edit_horizontal_guides_": [ 1079.79, 98.8725, 540.222, 939.542, 746.991 ],
-"_edit_vertical_guides_": [ 959.757, 480.0, 1440.49, -0.292374, 1919.53 ]
-}
 
 [node name="GUILayer" type="CanvasLayer" parent="."]
+layer = 60
 
 [node name="GUI" type="ReferenceRect" parent="GUILayer"]
 anchor_right = 1.0
@@ -268,7 +268,7 @@ shortcut = SubResource( 10 )
 text = "Defend"
 align = 2
 
-[node name="Use" type="Button" parent="GUILayer/GUI/CommandPanel/ButtonsContainer"]
+[node name="Items" type="Button" parent="GUILayer/GUI/CommandPanel/ButtonsContainer"]
 margin_top = 311.0
 margin_right = 330.0
 margin_bottom = 389.0
@@ -276,7 +276,7 @@ mouse_default_cursor_shape = 2
 custom_fonts/font = ExtResource( 4 )
 shortcut_in_tooltip = false
 shortcut = SubResource( 12 )
-text = "Use"
+text = "Items"
 align = 2
 
 [node name="Equipment" type="Button" parent="GUILayer/GUI/CommandPanel/ButtonsContainer"]
@@ -383,13 +383,16 @@ __meta__ = {
 
 [node name="SkillPanelTween" type="Tween" parent="GUILayer"]
 
+[node name="GUITween" type="Tween" parent="GUILayer"]
+
 [node name="AnimationLayer" type="CanvasLayer" parent="."]
-layer = 2
+layer = 61
 
 [node name="Background" type="TextureRect" parent="."]
+visible = false
 margin_right = 1920.0
 margin_bottom = 1168.0
-mouse_filter = 2
+mouse_filter = 0
 texture = ExtResource( 1 )
 expand = true
 stretch_mode = 1

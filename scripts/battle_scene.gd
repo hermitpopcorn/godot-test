@@ -4,10 +4,14 @@ enum InfoTextType { PROMPT, ITEM_EXPLANATION, PARTY_INFO, ENEMY_INFO, NARRATION 
 
 var battle_calculations = preload("res://scripts/battle_calculations.gd").new()
 
+signal battle_end
+
 onready var gui: Node = $GUILayer/GUI
 
-func _ready():
-	_debug_ready()
+func init(enemies: PackedScene):
+	self.party_battlers = Player.active_party_members
+	prepare_enemy_battlers(enemies.instance())
+	prepare_ui()
 	start_battle()
 
 var stop = true
@@ -108,7 +112,7 @@ func process_turn():
 		remove_infotext(InfoTextType.NARRATION)
 		
 		# TODO: victory and defeat
-		check_battle_end()
+		if check_battle_end(): return
 	
 	yield(get_tree().create_timer(0.5), "timeout")
 	end_turn()
@@ -116,8 +120,11 @@ func process_turn():
 func check_battle_end():
 	if check_enemy_all_dead():
 		victory()
+		return true
 	elif check_party_all_dead():
 		defeat()
+		return true
+	return false
 
 func check_enemy_all_dead():
 	for i in enemy_battlers:
@@ -133,12 +140,25 @@ func victory():
 	stop_battle()
 	clear_defenses()
 	add_infotext(InfoTextType.NARRATION, "Glory to mankind.")
+	
+	# TODO: display results screen first
+	
+	yield(get_tree().create_timer(2), "timeout")
+	yield(hide_ui(), "completed")
+	emit_signal("battle_end", self, { "result": BattleDatabase.BattleResult.VICTORY })
 
 func defeat():
 	stop_battle()
 	add_infotext(InfoTextType.NARRATION, "The party is wiped out...")
-	yield(get_tree().create_timer(0.5), "timeout")
+	yield(get_tree().create_timer(2), "timeout")
 	# game_over()
+	emit_signal("battle_end", self, { "result": BattleDatabase.BattleResult.DEFEAT })
+
+onready var gui_tween = $GUILayer/GUITween
+func hide_ui():
+	gui_tween.interpolate_property(gui, "modulate:a", gui.modulate.a, 0, 0.5)
+	gui_tween.start()
+	yield(gui_tween, "tween_all_completed")
 
 func execute_action(battler, action_dict: Dictionary):
 	var action = action_dict.action
@@ -331,12 +351,17 @@ func play_animation(animation: Dictionary, battler: Unit, result):
 	yield(get_tree().create_timer(0.5), "timeout")
 	animation_node.queue_free()
 
-func play_panel_animation(animation: String, target: PartyUnit, result):
-	var panel = party_battlers_link[target]
-	if (animation == "buff_flash"):
-		panel.buff()
-	elif (animation == "debuff_flash"):
-		panel.debuff()
+func play_panel_animation(animation, target: PartyUnit, result):
+	if animation is String:
+		var panel = party_battlers_link[target]
+		if (animation == "buff_flash"):
+			panel.buff()
+		elif (animation == "debuff_flash"):
+			panel.debuff()
+	elif animation is Dictionary:
+		yield(
+			play_animation(animation, target, result),
+		"completed")
 	yield(get_tree().create_timer(0.6), "timeout")
 
 func clear_defenses():
@@ -854,7 +879,7 @@ func _on_ShakeTween_tween_completed(object, key):
 
 # debug
 
-func _debug_ready():
+func _debug_battle():
 	var kaput = preload("res://data/party_units/kaput_hunter/kaput_hunter.gd").new()
 	var paul = preload("res://data/party_units/paul_kirigaya/paul_kirigaya.gd").new()
 	var rifkaizer = preload("res://data/party_units/rifkaizer/rifkaizer.gd").new()
@@ -865,19 +890,22 @@ func _debug_ready():
 	party_battlers.append(the_bonk)
 	prepare_enemy_battlers(preload("res://data/enemy_clusters/si_trio_kompret.tscn").instance())
 	prepare_ui()
+	start_battle()
 
 func _input(event):
-	if (Input.is_physical_key_pressed(KEY_Q)):
+	if (Input.is_physical_key_pressed(KEY_0)):
+		_debug_battle()
+	if (Input.is_physical_key_pressed(KEY_P)):
 		gui_shake(1, 50, 1)
-	if (Input.is_physical_key_pressed(KEY_W)):
+	if (Input.is_physical_key_pressed(KEY_O)):
 		self.party_status_container.get_child(round(rand_range(0, 3))).damage(round(rand_range(-10.0, 10.0)) * 10)
-	if (Input.is_physical_key_pressed(KEY_E)):
+	if (Input.is_physical_key_pressed(KEY_L)):
 		self.party_status_container.get_child(round(rand_range(0, 3))).buff()
-	if (Input.is_physical_key_pressed(KEY_R)):
+	if (Input.is_physical_key_pressed(KEY_K)):
 		self.party_status_container.get_child(round(rand_range(0, 3))).debuff()
-	if (Input.is_physical_key_pressed(KEY_Y)):
+	if (Input.is_physical_key_pressed(KEY_M)):
 		self.party_status_container.get_child(round(rand_range(0, 3))).get_node("AnimationPlayer").play("RESET")
-	if (Input.is_physical_key_pressed(KEY_U)):
+	if (Input.is_physical_key_pressed(KEY_N)):
 		print(party_battlers[0].weapon.item_type)
 		print(party_battlers[1].weapon.item_type)
 		print(party_battlers[2].weapon.item_type)
