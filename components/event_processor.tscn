@@ -16,6 +16,7 @@ size = Vector2( 1900, 1080 )
 script = ExtResource( 5 )
 
 [node name="EventDisplayLayer" type="CanvasLayer" parent="."]
+layer = 81
 
 [node name="DisplayContainer" type="Sprite" parent="EventDisplayLayer"]
 
@@ -32,9 +33,6 @@ margin_bottom = 1079.5
 rect_pivot_offset = Vector2( 960, 540 )
 mouse_filter = 2
 texture = SubResource( 2 )
-__meta__ = {
-"_edit_use_anchors_": false
-}
 
 [node name="TextureRect" type="TextureRect" parent="EventDisplayLayer/DisplayContainer/BackgroundContainer"]
 visible = false
@@ -90,6 +88,7 @@ bus = "BGM"
 [node name="TweensContainer" type="Node" parent="."]
 
 [node name="MessageBoxUILayer" type="CanvasLayer" parent="."]
+layer = 81
 
 [node name="MessageBox" parent="MessageBoxUILayer" instance=ExtResource( 1 )]
 visible = false

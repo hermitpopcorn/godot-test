@@ -114,6 +114,10 @@ func _execute_sequence(index: int):
 				self.play_audio(entry.options)
 			"pause_sequence":
 				self.pause()
+			"queue_free_sprites":
+				for i in self.sprites:
+					i.queue_free()
+				self.sprites.clear()
 			_:
 				push_error("invalid event command")
 				self._advance_sequence()
@@ -212,11 +216,11 @@ func show_sprite(options: Dictionary):
 	if (options.action == "show" || options.action == "take"):
 		# remove existing one beforehand
 		if (self.sprites.has(options.key)):
-			self.sprites[options.key].queue_free()
 			if (options.key.substr(0, 2) == "bg"):
 				self.background_container.remove_child(self.sprites[options.key])
 			else:
 				self.sprites_container.remove_child(self.sprites[options.key])
+			self.sprites[options.key].queue_free()
 			self.sprites.erase(options.key)
 		# create new sprite
 		if (options.action == "show"):
@@ -322,6 +326,7 @@ func _manipulate_sprite(target: Node, options: Dictionary):
 			target.rect_position = Vector2(0, 0)
 		"remove":
 			target.queue_free()
+			if sprites.has(options.key): sprites.erase(options.key)
 	
 	# immediately advance if queue is empty
 	if (self.wait_queue.size() == 0):

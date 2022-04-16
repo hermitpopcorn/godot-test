@@ -5,11 +5,11 @@ class_name MessageBox
 export var message_speed: int = 50 # in miliseconds
 export var play_advance_click_sound = true
 
-onready var background = $ClickableArea/Background
-onready var message = $ClickableArea/Message
-onready var nameplate = $ClickableArea/Nameplate
-onready var nameplate_text = $ClickableArea/Nameplate/NameText
-onready var next_caret = $ClickableArea/NextCaret
+onready var background = $Background
+onready var message = $Background/Message
+onready var nameplate = $Background/Nameplate
+onready var nameplate_text = $Background/Nameplate/NameText
+onready var next_caret = $Background/NextCaret
 onready var tween = $Tween
 onready var message_tick_timer = $MessageTickTimer
 onready var click_sound_player = $ClickSound
@@ -205,7 +205,7 @@ func toggle_visibility(target_visibility: bool, animate: bool = true):
 		self.message.text = ""
 	if (animate):
 		self.tween.interpolate_property(self, "modulate:a", (0 if target_visibility else 1), (1 if target_visibility else 0), 0.5, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT)
-		self.tween.interpolate_property(self.background, "position:y", (670 if target_visibility else 410), (410 if target_visibility else 670), 0.5, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT)
+		self.tween.interpolate_property( self.background, "margin_top", (0 if target_visibility else -260), (-260 if target_visibility else 0), 0.5, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT)
 		self.tweening_finished = false
 		self.tween.start()
 	else:
@@ -216,7 +216,7 @@ func toggle_visibility(target_visibility: bool, animate: bool = true):
 		else:
 			self.state = "disabled"
 		if self.modulate.a == 0: self.visible = false
-		self.background.position.y = (410 if target_visibility else 670)
+		self.background.margin_top = (-260 if target_visibility else 0)
 		self._end_tween()
 
 func _skip_tween():
@@ -247,7 +247,7 @@ func _play_click_sfx():
 	if (self.state != "waiting_input"): return
 	self.click_sound_player.play()
 
-func _on_click(viewport, event, shape_idx):
+func _on_click(event):
 	if (event is InputEventMouseButton):
 		if (event.button_index == BUTTON_LEFT and event.pressed):
 			emit_signal("clicked")
@@ -273,3 +273,6 @@ func _on_tween_completed(object, key):
 
 func _on_ClickableArea_mouse_entered(): emit_signal("hover_on")
 func _on_ClickableArea_mouse_exited(): emit_signal("hover_off")
+
+func _on_hover(): emit_signal("hover_on")
+func _on_blur(): emit_signal("hover_off")
