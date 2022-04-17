@@ -3,7 +3,8 @@ extends Skill
 func _init():
 	name = "Break"
 	key = "break"
-	ap_cost = 20
+	hp_cost = 0.05
+	ap_cost = 15
 	base_power = 5
 	description = "Attacks one unit and lowers their defense."
 	targeting_type = BattleDatabase.TargetingType.SINGLE

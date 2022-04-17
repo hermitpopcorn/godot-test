@@ -260,9 +260,9 @@ func execute_skill(skill_user: Unit, skill_targets, skill: Skill):
 	add_infotext(InfoTextType.NARRATION, skill.get_infotext_string(skill_user, skill_targets))
 	yield(get_tree().create_timer(0.4), "timeout")
 	
-	var drain_ap = skill.drain_ap(skill_user)
-	if !drain_ap:
-		add_infotext(InfoTextType.NARRATION, "Not enough AP...")
+	var drain = skill.drain_hpap(skill_user)
+	if !drain:
+		add_infotext(InfoTextType.NARRATION, "Not enough points...")
 		yield(get_tree().create_timer(1.5), "timeout")
 		dehighlight_action(skill_user)
 		return
@@ -535,6 +535,7 @@ func get_backable_command_index():
 
 func end_command_input():
 	active_input_index = -1
+	set_party_panels_inactive()
 
 	# shelve command panel
 	self.command_panel_tween.remove_all()
@@ -559,7 +560,7 @@ func show_active_input_member(index: int):
 	# update command panel button(s)
 	update_cancel_button()
 	# reset everyone else
-	for i in self.party_status_container.get_children(): i.active = false
+	set_party_panels_inactive()
 	self.active_battler_portrait.visible = false
 	for i in self.active_battler_portrait.get_children():
 		i.visible = false
@@ -572,6 +573,9 @@ func show_active_input_member(index: int):
 	self.atp_tween.remove_all()
 	self.atp_tween.interpolate_property(p, "rect_position:x", self.active_battler_portrait.rect_size.x, 0, 0.5, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT)
 	self.atp_tween.start()
+
+func set_party_panels_inactive():
+	for i in self.party_status_container.get_children(): i.active = false
 
 var selected_action = null
 var selected_skill = null
@@ -617,8 +621,14 @@ func populate_skill_list():
 	for skill in skills:
 		var entry = skill_entry_sample.duplicate()
 		entry.get_child(0).set_text(skill.name)
-		entry.get_child(1).set_text(String(skill.ap_cost) + " AP")
-		if party_battlers[active_input_index].ap < skill.ap_cost:
+		
+		var cost = ""
+		if skill.hp_cost > 0:
+			cost += (String(skill.calc_hp_cost(party_battlers[active_input_index].maxhp)) + " HP ")
+		if skill.ap_cost > 0:
+			cost += (String(skill.ap_cost) + " AP ")
+		entry.get_child(1).set_text(cost.substr(0, cost.length() - 1))
+		if party_battlers[active_input_index].ap < skill.ap_cost || party_battlers[active_input_index].hp <= skill.calc_hp_cost(party_battlers[active_input_index].maxhp):
 			entry.get_child(0).self_modulate = Color("9c9c9c")
 			entry.get_child(1).self_modulate = Color("9c9c9c")
 		var stylebox = entry.get_stylebox("panel").duplicate()

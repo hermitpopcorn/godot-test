@@ -35,8 +35,10 @@ func attach(u: PartyUnit):
 	self.ap_number.set_text(String(unit.ap))
 	var hp_percentage = int(floor((float(unit.hp) / float(unit.maxhp)) * 100))
 	self.hp_bar.value = hp_percentage
+	self.hp_bar_change.value = hp_percentage
 	var ap_percentage = int(floor((float(unit.ap) / float(unit.maxap)) * 100))
 	self.ap_bar.value = ap_percentage
+	self.ap_bar_change.value = ap_percentage
 	
 	connect_hpap_changes()
 	connect_state_changes()
@@ -60,20 +62,25 @@ var active = false setget set_active
 onready var active_tween = $Tweens/ActiveTween
 onready var looping_active_tween = $Tweens/ActiveTween/LoopingActiveTween
 
-func set_active(new_status: bool):
+func set_flashing(new_status: bool):
 	active = new_status
 	self.active_tween.remove_all()
 	if (new_status == true):
-		self.active_tween.interpolate_property(self.panel_background, "self_modulate:a", self.panel_background.self_modulate.a, 1, 0.2, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT)
-		self.looping_active_tween.interpolate_method(self.panel_background, "set_hue", 1, 0.9, 1, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT)
-		self.looping_active_tween.interpolate_method(self.panel_background, "set_hue", 0.9, 1, 1, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT, 1)
-		self.active_tween.start()
+		self.looping_active_tween.interpolate_method(self.panel_background, "set_hue", 1, 0.9, 0.5, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT)
+		self.looping_active_tween.interpolate_method(self.panel_background, "set_hue", 0.9, 1, 0.5, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT, 0.5)
 		self.looping_active_tween.start()
 	else:
 		self.looping_active_tween.remove_all()
-		self.active_tween.interpolate_property(self.panel_background, "self_modulate:a", self.panel_background.self_modulate.a, 0.5, 0.2, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT)
 		self.active_tween.interpolate_method(self.panel_background, "set_hue", self.panel_background.get_material().get_shader_param("hue"), 1, 0.2, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT)
 		self.active_tween.start()
+
+func set_active(new_status: bool):
+	if (new_status == true):
+		self.panel_background.self_modulate.a = 1
+		self.panel_background_battler.modulate = Color(1, 1, 1, 1)
+	else:
+		self.panel_background.self_modulate.a = 175.0/255.0
+		self.panel_background_battler.modulate = Color(0.5, 0.5, 0.5, 0.5)
 
 # damage or heal
 
@@ -153,7 +160,7 @@ onready var hp_bar_tween = $Tweens/HPBarTween
 
 onready var ap_bar = $Panel/VBoxContainer/HBoxContainer/APContainer/APBar
 onready var ap_bar_change = $Panel/VBoxContainer/HBoxContainer/APContainer/APBar/Change
-onready var ap_bar_tween = $Tweens/HPBarTween
+onready var ap_bar_tween = $Tweens/APBarTween
 
 func update_hp_bar(new_value = null): self.update_bar('hp', new_value)
 func update_ap_bar(new_value = null): self.update_bar('ap', new_value)
@@ -284,12 +291,12 @@ func _process(delta):
 
 func _on_self_mouse_entered(_area = null):
 	hovered = true
-	if not active: self.panel_background.self_modulate.a = 1
+	set_flashing(true)
 	emit_signal("mouse_hover", self)
 
 func _on_self_mouse_exited(_area = null):
 	hovered = false
-	if not active: self.panel_background.self_modulate.a = 125.0/255.0
+	set_flashing(false)
 	emit_signal("mouse_blur", self)
 
 onready var action_indicator = $Panel/ActionIndicatorContainer
